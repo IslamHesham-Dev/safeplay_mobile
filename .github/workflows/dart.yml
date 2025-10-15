@@ -6,69 +6,21 @@ on:
 jobs:
   build-ios:
     name: 🎉 iOS Build
-    runs-on: macos-13  # Changed from macos-latest to macos-13 for better Xcode compatibility
+    runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4  # Updated to v4
+      - uses: actions/checkout@v3
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.5'  # Specify stable version
           channel: 'stable'
           architecture: x64
-          cache: true
-      
-      # Cache Flutter dependencies
-      - name: Cache Flutter dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.pub-cache
-            **/.packages
-            **/.flutter-plugins
-            **/.flutter-plugin-dependencies
-          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-
-
-      - name: Verify Flutter installation
-        run: |
-          flutter --version
-          flutter doctor -v
-
       - run: flutter pub get
       
-      # Clean and regenerate iOS configuration
-      - name: Clean and regenerate iOS configuration
-        run: |
-          # Clean Flutter build cache
-          flutter clean
-          
-          # Remove iOS build artifacts
-          cd ios
-          rm -rf Pods/
-          rm -rf Podfile.lock
-          rm -rf .symlinks/
-          rm -rf build/
-          rm -rf DerivedData/
-          rm -rf Flutter/Generated.xcconfig
-          rm -rf Flutter/flutter_export_environment.sh
-          cd ..
-          
-          # Regenerate Flutter configuration
-          flutter pub get
-          flutter precache --ios
-      
-      - name: Install CocoaPods dependencies
-        run: |
-          cd ios
-          # Update CocoaPods repo
-          pod repo update
-          # Install with verbose output to catch issues
-          pod install --repo-update --verbose
-          cd ..
 
-      - name: Build iOS Release
-        run: flutter build ios --release --no-codesign --verbose
+      - run: pod repo update
+        working-directory: ios
+
+      - run: flutter build ios --release --no-codesign
 
       - run: mkdir Payload
         working-directory: build/ios/iphoneos
