@@ -14,11 +14,44 @@ jobs:
         with:
           channel: 'stable'
           architecture: x64
+          cache: true
+      
+      # Cache Flutter dependencies
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pub-cache
+            **/.packages
+            **/.flutter-plugins
+            **/.flutter-plugin-dependencies
+          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-
+
       - run: flutter pub get
       
+      # Cache CocoaPods dependencies
+      - name: Cache CocoaPods
+        uses: actions/cache@v3
+        with:
+          path: ios/Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
 
-      - run: pod repo update
-        working-directory: ios
+      # Optimized pod install with caching
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios
+          # Only update repo if Podfile.lock doesn't exist
+          if [ ! -f Podfile.lock ]; then
+            echo "Podfile.lock not found, updating repo..."
+            pod repo update
+          else
+            echo "Podfile.lock found, skipping repo update for faster build"
+          fi
+          pod install --repo-update
 
       - run: flutter build ios --release --no-codesign
 
