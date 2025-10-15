@@ -31,9 +31,29 @@ jobs:
 
       - run: flutter pub get
       
-      # Let Flutter handle pod installation automatically
-      - run: pod repo update
-        working-directory: ios
+      # Clean and regenerate iOS configuration
+      - name: Clean and regenerate iOS configuration
+        run: |
+          # Clean Flutter build cache
+          flutter clean
+          
+          # Remove iOS build artifacts
+          cd ios
+          rm -rf Pods/
+          rm -rf Podfile.lock
+          rm -rf .symlinks/
+          rm -rf build/
+          rm -rf DerivedData/
+          rm -rf Flutter/Generated.xcconfig
+          rm -rf Flutter/flutter_export_environment.sh
+          
+          # Go back to root and regenerate
+          cd ..
+          flutter pub get
+          
+          # Install pods with fresh configuration
+          cd ios
+          pod install --repo-update
 
       - run: flutter build ios --release --no-codesign
 
