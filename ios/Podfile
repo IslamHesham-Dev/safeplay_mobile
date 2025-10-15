@@ -1,5 +1,5 @@
 # Uncomment this line to define a global platform for your project
-platform :ios, '13.0'
+platform :ios, '14.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -76,7 +76,7 @@ post_install do |installer|
       config.build_settings['COMPILER_INDEX_STORE_ENABLE'] = 'NO'
       
       # iOS deployment target
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
       
       # Fix for arm64 compilation issues
       config.build_settings['ARCHS'] = 'arm64'
