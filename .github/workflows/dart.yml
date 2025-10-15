@@ -40,6 +40,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pods-
 
+      # Clean build environment to ensure Podfile changes take effect
+      - name: Clean iOS build environment
+        run: |
+          cd ios
+          rm -rf Pods/
+          rm -rf Podfile.lock
+          rm -rf .symlinks/
+          rm -rf build/
+          rm -rf DerivedData/
+
       # Optimized pod install with caching
       - name: Install CocoaPods dependencies
         run: |
