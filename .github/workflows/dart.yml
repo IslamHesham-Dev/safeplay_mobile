@@ -6,12 +6,13 @@ on:
 jobs:
   build-ios:
     name: 🎉 iOS Build
-    runs-on: macos-latest
+    runs-on: macos-13  # Changed from macos-latest to macos-13 for better Xcode compatibility
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4  # Updated to v4
 
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.24.5'  # Specify stable version
           channel: 'stable'
           architecture: x64
           cache: true
@@ -28,6 +29,11 @@ jobs:
           key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: |
             ${{ runner.os }}-flutter-
+
+      - name: Verify Flutter installation
+        run: |
+          flutter --version
+          flutter doctor -v
 
       - run: flutter pub get
       
@@ -46,16 +52,23 @@ jobs:
           rm -rf DerivedData/
           rm -rf Flutter/Generated.xcconfig
           rm -rf Flutter/flutter_export_environment.sh
-          
-          # Go back to root and regenerate
           cd ..
-          flutter pub get
           
-          # Install pods with fresh configuration
+          # Regenerate Flutter configuration
+          flutter pub get
+          flutter precache --ios
+      
+      - name: Install CocoaPods dependencies
+        run: |
           cd ios
-          pod install --repo-update
+          # Update CocoaPods repo
+          pod repo update
+          # Install with verbose output to catch issues
+          pod install --repo-update --verbose
+          cd ..
 
-      - run: flutter build ios --release --no-codesign
+      - name: Build iOS Release
+        run: flutter build ios --release --no-codesign --verbose
 
       - run: mkdir Payload
         working-directory: build/ios/iphoneos
