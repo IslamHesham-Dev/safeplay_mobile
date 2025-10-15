@@ -1,0 +1,107 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../design_system/colors.dart';
+import '../../navigation/route_names.dart';
+
+/// Main login screen with role selection
+class LoginScreen extends StatelessWidget {
+  const LoginScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Logo
+              const Icon(
+                Icons.security,
+                size: 80,
+                color: SafePlayColors.brandTeal500,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'SafePlay Portal',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      color: SafePlayColors.brandTeal500,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 48),
+
+              // Parent Login Button
+              ElevatedButton(
+                onPressed: () => context.push(RouteNames.parentLogin),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: SafePlayColors.brandTeal500,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.person, size: 24),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Parent Login',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Child Login Button
+              ElevatedButton(
+                onPressed: () => context.push(RouteNames.childSelector),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: SafePlayColors.brandOrange500,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.child_care, size: 24),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Child Login',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              // Sign up link
+              TextButton(
+                onPressed: () => context.push(RouteNames.parentSignup),
+                child: const Text(
+                  "Don't have an account? Sign Up",
+                  style: TextStyle(color: SafePlayColors.brandTeal500),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
