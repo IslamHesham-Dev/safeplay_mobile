@@ -85,4 +85,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'safeplay-portal.firebasestorage.app',
     measurementId: 'G-S9CCZ632VB',
   );
+
 }
