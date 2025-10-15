@@ -31,37 +31,9 @@ jobs:
 
       - run: flutter pub get
       
-      # Cache CocoaPods dependencies
-      - name: Cache CocoaPods
-        uses: actions/cache@v3
-        with:
-          path: ios/Pods
-          key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pods-
-
-      # Clean build environment to ensure Podfile changes take effect
-      - name: Clean iOS build environment
-        run: |
-          cd ios
-          rm -rf Pods/
-          rm -rf Podfile.lock
-          rm -rf .symlinks/
-          rm -rf build/
-          rm -rf DerivedData/
-
-      # Optimized pod install with caching
-      - name: Install CocoaPods dependencies
-        run: |
-          cd ios
-          # Only update repo if Podfile.lock doesn't exist
-          if [ ! -f Podfile.lock ]; then
-            echo "Podfile.lock not found, updating repo..."
-            pod repo update
-          else
-            echo "Podfile.lock found, skipping repo update for faster build"
-          fi
-          pod install --repo-update
+      # Let Flutter handle pod installation automatically
+      - run: pod repo update
+        working-directory: ios
 
       - run: flutter build ios --release --no-codesign
 
