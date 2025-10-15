@@ -712,7 +712,8 @@ class AuthService {
   }) async {
     // Firebase Functions removed to fix iOS build issues
     // Parents can manually share child login credentials
-    print('[AuthService]: Email functionality disabled. Please share credentials manually.');
+    print(
+        '[AuthService]: Email functionality disabled. Please share credentials manually.');
   }
 
   /// Delete user account and all associated data

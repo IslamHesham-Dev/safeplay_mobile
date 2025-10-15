@@ -172,6 +172,14 @@ class ActivityProvider extends ChangeNotifier {
     }
   }
 
+  /// Move to the next question in the current activity.
+  Future<void> nextQuestion() async {
+    // This method is called when moving to the next question
+    // The actual question progression is handled by the UI state
+    // This is a placeholder for any server-side tracking if needed
+    notifyListeners();
+  }
+
   /// Mark the activity complete and refresh local state.
   Future<void> completeActivity({int? pointsEarned}) async {
     final progress = _currentProgress;
