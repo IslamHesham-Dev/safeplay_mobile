@@ -151,6 +151,7 @@
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
+				3B06AD1F1E4923F5004D2609 /* Firebase Crashlytics */,
 			);
 			buildRules = (
 			);
@@ -252,6 +253,23 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build";
+		};
+		3B06AD1F1E4923F5004D2609 /* Firebase Crashlytics */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}",
+			);
+			name = "Firebase Crashlytics";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\n# Check if this is NOT a Debug configuration AND if an App Store/Distribution signing identity exists.\n# The `EXPANDED_CODE_SIGN_IDENTITY` variable is typically empty when codesigning is skipped.\nif [ \"${CONFIGURATION}\" != \"Debug\" ]; then\n  # This section runs ONLY for Release or Profile builds\n  if [ -n \"$EXPANDED_CODE_SIGN_IDENTITY\" ]; then\n    # Only upload if the build is actually signed and intended for distribution\n    \"${PODS_ROOT}/FirebaseCrashlytics/upload-symbols\" -gsp \"${PROJECT_DIR}/Runner/GoogleService-Info.plist\" -p ios \"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}\"\n  else\n    # Log a skip message instead of the generic warning\n    echo \"Firebase Crashlytics dSYM upload skipped. Build is unsigned.\"\n  fi\nfi";
 		};
 /* End PBXShellScriptBuildPhase section */
 

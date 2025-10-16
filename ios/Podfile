@@ -49,9 +49,14 @@ post_install do |installer|
     end
     # End of BoringSSL-GRPC Fix
     
-    # Enforce modern deployment target (as recommended in the Flutter community)
+    # Enforce modern deployment target and C++17 standard (as recommended in the Flutter community)
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      
+      # 🎯 FIX FOR 'A template argument list is expected' ERROR (C++ Standard issue)
+      # Enforce C++17 standard for all pod targets to resolve gRPC-Core compilation issues
+      config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+      config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
     end
   end
 end
