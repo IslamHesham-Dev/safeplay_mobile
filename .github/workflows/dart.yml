@@ -14,28 +14,18 @@ jobs:
         with:
           channel: 'stable'
           architecture: x64
-
-      - name: Select Xcode
-        run: sudo xcode-select -s "/Applications/Xcode.app/Contents/Developer"
-
+          
       - run: flutter pub get
-
-      - name: Update CocoaPods specs
-        run: pod repo update
-        working-directory: ios
-
-      - name: Install CocoaPods
+      
+      # Recommended: Use 'pod install --repo-update' for speed and to apply Podfile fixes
+      - name: Install Pods (and apply fixes)
         run: pod install --repo-update
         working-directory: ios
 
-      - name: Build iOS (no codesign)
-        env:
-          CFLAGS: ""
-          CXXFLAGS: ""
-          CPPFLAGS: ""
-          LDFLAGS: ""
-        run: flutter build ios --release --no-codesign
+      # NOTE: This step relies on the fix you added to the Podfile to pass compilation.
+      - run: flutter build ios --release --no-codesign
 
+      # --- Manual IPA Packaging Steps ---
       - run: mkdir Payload
         working-directory: build/ios/iphoneos
 

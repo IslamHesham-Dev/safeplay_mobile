@@ -35,68 +35,23 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+
+    # 🎯 FIX FOR 'unsupported option -G' ERROR
+    # This specifically targets BoringSSL-GRPC, which is known to cause the -G compilation issue
+    if target.name == 'BoringSSL-GRPC'
+      target.source_build_phase.files.each do |file|
+        if file.settings && file.settings['COMPILER_FLAGS']
+          flags = file.settings['COMPILER_FLAGS'].split
+          flags.reject! { |flag| flag == '-GCC_WARN_INHIBIT_ALL_WARNINGS' }
+          file.settings['COMPILER_FLAGS'] = flags.join(' ')
+        end
+      end
+    end
+    # End of BoringSSL-GRPC Fix
     
+    # Enforce modern deployment target (as recommended in the Flutter community)
     target.build_configurations.each do |config|
-      # Force iOS deployment target to 15.0
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
-      
-      # Disable bitcode
-      config.build_settings['ENABLE_BITCODE'] = 'NO'
-      
-      # Fix for arm64 compilation issues
-      config.build_settings['ARCHS'] = 'arm64'
-      config.build_settings['VALID_ARCHS'] = 'arm64'
-      
-      # ULTRA-AGGRESSIVE removal of -G flag from ALL possible sources
-      config.build_settings['GCC_GENERATE_DEBUGGING_SYMBOLS'] = 'NO'
-      config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf'
-      
-      # Completely override ALL compiler flags to remove -G
-      config.build_settings['OTHER_CFLAGS'] = (config.build_settings['OTHER_CFLAGS'] || []).reject { |flag| flag.include?('-G') }
-      config.build_settings['OTHER_CPLUSPLUSFLAGS'] = (config.build_settings['OTHER_CPLUSPLUSFLAGS'] || []).reject { |flag| flag.include?('-G') }
-      config.build_settings['OTHER_SWIFT_FLAGS'] = (config.build_settings['OTHER_SWIFT_FLAGS'] || []).reject { |flag| flag.include?('-G') }
-      config.build_settings['GCC_OTHER_FLAGS'] = (config.build_settings['GCC_OTHER_FLAGS'] || []).reject { |flag| flag.include?('-G') }
-      config.build_settings['OTHER_LDFLAGS'] = (config.build_settings['OTHER_LDFLAGS'] || []).reject { |flag| flag.include?('-G') }
-      
-      # Force remove any remaining -G flags with multiple passes
-      config.build_settings['OTHER_CFLAGS'] = config.build_settings['OTHER_CFLAGS'].reject { |flag| flag == '-G' || flag.include?('-G') }
-      config.build_settings['OTHER_CPLUSPLUSFLAGS'] = config.build_settings['OTHER_CPLUSPLUSFLAGS'].reject { |flag| flag == '-G' || flag.include?('-G') }
-      config.build_settings['OTHER_SWIFT_FLAGS'] = config.build_settings['OTHER_SWIFT_FLAGS'].reject { |flag| flag == '-G' || flag.include?('-G') }
-      config.build_settings['GCC_OTHER_FLAGS'] = config.build_settings['GCC_OTHER_FLAGS'].reject { |flag| flag == '-G' || flag.include?('-G') }
-      config.build_settings['OTHER_LDFLAGS'] = config.build_settings['OTHER_LDFLAGS'].reject { |flag| flag == '-G' || flag.include?('-G') }
-      
-      # Additional aggressive -G removal
-      config.build_settings['OTHER_CFLAGS'] = config.build_settings['OTHER_CFLAGS'].map { |flag| flag.to_s.gsub(/-G/, '') }.reject(&:empty?)
-      config.build_settings['OTHER_CPLUSPLUSFLAGS'] = config.build_settings['OTHER_CPLUSPLUSFLAGS'].map { |flag| flag.to_s.gsub(/-G/, '') }.reject(&:empty?)
-      config.build_settings['OTHER_SWIFT_FLAGS'] = config.build_settings['OTHER_SWIFT_FLAGS'].map { |flag| flag.to_s.gsub(/-G/, '') }.reject(&:empty?)
-      config.build_settings['GCC_OTHER_FLAGS'] = config.build_settings['GCC_OTHER_FLAGS'].map { |flag| flag.to_s.gsub(/-G/, '') }.reject(&:empty?)
-      config.build_settings['OTHER_LDFLAGS'] = config.build_settings['OTHER_LDFLAGS'].map { |flag| flag.to_s.gsub(/-G/, '') }.reject(&:empty?)
-      
-      # Disable ALL debug symbol generation that might trigger -G
-      config.build_settings['ENABLE_NS_ASSERTIONS'] = 'NO'
-      config.build_settings['GCC_DYNAMIC_NO_PIC'] = 'NO'
-      config.build_settings['GCC_OPTIMIZATION_LEVEL'] = 's'
-      config.build_settings['SWIFT_OPTIMIZATION_LEVEL'] = '-O'
-      config.build_settings['GCC_GENERATE_DEBUGGING_SYMBOLS'] = 'NO'
-      config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf'
-      config.build_settings['DWARF_DSYM_FOLDER_PATH'] = ''
-      config.build_settings['DWARF_DSYM_FILE_NAME'] = ''
-      config.build_settings['DWARF_DSYM_FILE_SHOULD_ACCOMPANY_PRODUCT'] = 'NO'
-      
-      # Additional compiler fixes
-      config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
-      config.build_settings['CLANG_WARN_DOCUMENTATION_COMMENTS'] = 'NO'
-      config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
-      
-      # Fix for Firebase/Google dependencies
-      config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
-      config.build_settings['DEFINES_MODULE'] = 'YES'
-      config.build_settings['CLANG_ENABLE_MODULES'] = 'YES'
-      config.build_settings['CLANG_MODULES_AUTOLINK'] = 'YES'
-      
-      # Ensure proper module search paths
-      config.build_settings['FRAMEWORK_SEARCH_PATHS'] = (config.build_settings['FRAMEWORK_SEARCH_PATHS'] || []) + ['$(inherited)']
-      config.build_settings['HEADER_SEARCH_PATHS'] = (config.build_settings['HEADER_SEARCH_PATHS'] || []) + ['$(inherited)']
     end
   end
 end
