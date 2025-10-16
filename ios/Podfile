@@ -48,31 +48,17 @@ post_install do |installer|
       end
     end
     # End of BoringSSL-GRPC Fix
-  end
-  
-  # 🎯 CRITICAL: Apply C++17 settings as the FINAL step to override any conflicting settings
-  # This must be done AFTER all other modifications to ensure it takes precedence
-  installer.pods_project.targets.each do |target|
+
     target.build_configurations.each do |config|
-      # Enforce modern deployment target
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      # CRITICAL FIX for BoringSSL C11 Requirement
+      config.build_settings['CLANG_C_LANGUAGE_STANDARD'] = 'c11' 
       
-      # 🎯 FIX FOR 'A template argument list is expected' ERROR (C++ Standard issue)
-      # FORCE C++17 standard for ALL pod targets - this MUST be the final setting applied
+      # Ensure C++17 is also set (to avoid the other Parse Issues)
       config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
       config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
       
-      # 🎯 FIX FOR BoringSSL C Standard requirement (C11)
-      # Enforce C11 standard for all pod targets to resolve BoringSSL compilation issues
-      config.build_settings['CLANG_C_LANGUAGE_STANDARD'] = 'c11'
-      
-      # Additional aggressive C++ settings to ensure compatibility
-      config.build_settings['GCC_C_LANGUAGE_STANDARD'] = 'gnu99'
-      config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
-      
-      # Remove any conflicting C++ standard settings that might override our fix
-      config.build_settings.delete('CLANG_CXX_LANGUAGE_STANDARD_OVERRIDE')
-      config.build_settings.delete('CLANG_CXX_LANGUAGE_STANDARD_OVERRIDE_OVERRIDE')
+      # Ensure minimum deployment target (already verified, but safest to keep)
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
     end
   end
 end
