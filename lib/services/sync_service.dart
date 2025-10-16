@@ -13,7 +13,7 @@ class SyncService {
   final ActivityService _activityService;
   final Connectivity _connectivity = Connectivity();
 
-  StreamSubscription<ConnectivityResult>? _connectivitySubscription;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _syncTimer;
   bool _isSyncing = false;
   DateTime? _lastSyncTime;
@@ -23,8 +23,8 @@ class SyncService {
   /// Initialize sync service
   Future<void> initialize() async {
     _connectivitySubscription =
-        _connectivity.onConnectivityChanged.listen((result) {
-      if (result != ConnectivityResult.none) {
+        _connectivity.onConnectivityChanged.listen((results) {
+      if (!results.contains(ConnectivityResult.none)) {
         unawaited(syncData());
       }
     });
@@ -41,8 +41,8 @@ class SyncService {
   Future<void> syncData() async {
     if (_isSyncing) return;
 
-    final connectivityResult = await _connectivity.checkConnectivity();
-    if (connectivityResult == ConnectivityResult.none) {
+    final connectivityResults = await _connectivity.checkConnectivity();
+    if (connectivityResults.contains(ConnectivityResult.none)) {
       debugPrint('No internet connection, skipping sync');
       return;
     }
@@ -111,11 +111,11 @@ class SyncService {
   /// Get sync status
   Future<SyncStatus> getSyncStatus() async {
     final pendingItems = await _offlineStorage.getPendingSyncItems();
-    final connectivityResult = await _connectivity.checkConnectivity();
+    final connectivityResults = await _connectivity.checkConnectivity();
 
     return SyncStatus(
       pendingItemsCount: pendingItems.length,
-      isOnline: connectivityResult != ConnectivityResult.none,
+      isOnline: !connectivityResults.contains(ConnectivityResult.none),
       isSyncing: _isSyncing,
       lastSyncTime: _lastSyncTime ?? DateTime.fromMillisecondsSinceEpoch(0),
     );

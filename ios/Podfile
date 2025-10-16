@@ -29,9 +29,5 @@ target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
-  # FINAL FIX: Pin stable gRPC versions to resolve C++ compilation error
-  pod 'gRPC-Core', '~> 1.44.0'
-  pod 'gRPC-C++', '~> 1.44.0'
-
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 end
