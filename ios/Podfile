@@ -62,6 +62,10 @@ post_install do |installer|
       config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
       config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
       
+      # 🎯 FIX FOR BoringSSL C Standard requirement (C11)
+      # Enforce C11 standard for all pod targets to resolve BoringSSL compilation issues
+      config.build_settings['CLANG_C_LANGUAGE_STANDARD'] = 'c11'
+      
       # Additional aggressive C++ settings to ensure compatibility
       config.build_settings['GCC_C_LANGUAGE_STANDARD'] = 'gnu99'
       config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
