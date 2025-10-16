@@ -139,7 +139,6 @@ local.properties
 
 # API Keys and secrets (but allow .env)
 **/google-services.json
-**/GoogleService-Info.plist
 **/firebase-adminsdk-*.json
 **/service-account-*.json
 **/key.json
