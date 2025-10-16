@@ -17,6 +17,13 @@ jobs:
           
       - run: flutter pub get
       
+      # CRITICAL: Clean up old Pods and Artifacts for fresh build
+      - name: Clean up old Pods and Artifacts
+        run: |
+          rm -rf ios/Pods
+          rm ios/Podfile.lock
+          rm -rf build/ios
+      
       # Recommended: Use 'pod install --repo-update' for speed and to apply Podfile fixes
       - name: Install Pods (and apply fixes)
         run: pod install --repo-update

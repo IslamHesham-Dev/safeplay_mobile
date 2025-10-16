@@ -29,71 +29,9 @@ target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
+  # FINAL FIX: Pin stable gRPC versions to resolve C++ compilation error
+  pod 'gRPC-Core', '~> 1.44.0'
+  pod 'gRPC-C++', '~> 1.44.0'
+
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
-end
-
-post_install do |installer|
-  installer.pods_project.targets.each do |target|
-    flutter_additional_ios_build_settings(target)
-
-    # 🎯 FIX FOR 'unsupported option -G' ERROR
-    # This specifically targets BoringSSL-GRPC, which is known to cause the -G compilation issue
-    if target.name == 'BoringSSL-GRPC'
-      target.source_build_phase.files.each do |file|
-        if file.settings && file.settings['COMPILER_FLAGS']
-          flags = file.settings['COMPILER_FLAGS'].split
-          flags.reject! { |flag| flag == '-GCC_WARN_INHIBIT_ALL_WARNINGS' }
-          file.settings['COMPILER_FLAGS'] = flags.join(' ')
-        end
-      end
-    end
-    # End of BoringSSL-GRPC Fix
-
-    target.build_configurations.each do |config|
-      # CRITICAL FIX for BoringSSL C11 Requirement
-      config.build_settings['CLANG_C_LANGUAGE_STANDARD'] = 'c11' 
-      
-      # Ensure C++17 is also set (to avoid the other Parse Issues)
-      config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
-      config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
-      
-      # Ensure minimum deployment target (already verified, but safest to keep)
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
-    end
-  end
-  
-  # 🎯 FINAL TARGETED FIX: Explicitly enforce C++17 for problematic pods
-  # This runs LAST to override any internal pod configurations
-  installer.pods_project.targets.each do |target|
-    target.build_configurations.each do |config|
-      # Explicitly enforce C++17 for the problematic pods
-      if target.name.start_with?('gRPC') || target.name.start_with?('BoringSSL')
-        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
-        config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
-      end
-    end
-  end
-  
-  # 🚀 NUCLEAR OPTION: Source-level patch for gRPC-Core compilation error
-  # This bypasses all compiler flag conflicts by fixing the buggy source code directly
-  if !File.exist?('Pods/gRPC-Core/src/core/lib/promise/detail/basic_seq.h')
-    raise "gRPC-Core file not found. Ensure Pods are installed correctly before patching."
-  end
-
-  patch_file = 'Pods/gRPC-Core/src/core/lib/promise/detail/basic_seq.h'
-  text = File.read(patch_file)
-
-  # The problematic line that causes the "A template argument list is expected" error:
-  problematic_line = 'return Traits::template CallSeqFactory(f_, *cur_, std::move(arg));'
-
-  # The fix: inserting the empty template argument list (<>)
-  fixed_line = 'return Traits::template CallSeqFactory<>(f_, *cur_, std::move(arg));'
-
-  if text.include?(problematic_line)
-    text.gsub!(problematic_line, fixed_line)
-    File.open(patch_file, 'w') { |file| file.puts text }
-    puts "✅ Successfully patched gRPC-Core source file."
-  else
-    puts "⚠️ gRPC-Core source file already patched or content changed."
-  end
 end
