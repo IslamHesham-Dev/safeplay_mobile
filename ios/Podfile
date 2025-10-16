@@ -61,4 +61,39 @@ post_install do |installer|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
     end
   end
+  
+  # 🎯 FINAL TARGETED FIX: Explicitly enforce C++17 for problematic pods
+  # This runs LAST to override any internal pod configurations
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      # Explicitly enforce C++17 for the problematic pods
+      if target.name.start_with?('gRPC') || target.name.start_with?('BoringSSL')
+        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+        config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+      end
+    end
+  end
+  
+  # 🚀 NUCLEAR OPTION: Source-level patch for gRPC-Core compilation error
+  # This bypasses all compiler flag conflicts by fixing the buggy source code directly
+  if !File.exist?('Pods/gRPC-Core/src/core/lib/promise/detail/basic_seq.h')
+    raise "gRPC-Core file not found. Ensure Pods are installed correctly before patching."
+  end
+
+  patch_file = 'Pods/gRPC-Core/src/core/lib/promise/detail/basic_seq.h'
+  text = File.read(patch_file)
+
+  # The problematic line that causes the "A template argument list is expected" error:
+  problematic_line = 'return Traits::template CallSeqFactory(f_, *cur_, std::move(arg));'
+
+  # The fix: inserting the empty template argument list (<>)
+  fixed_line = 'return Traits::template CallSeqFactory<>(f_, *cur_, std::move(arg));'
+
+  if text.include?(problematic_line)
+    text.gsub!(problematic_line, fixed_line)
+    File.open(patch_file, 'w') { |file| file.puts text }
+    puts "✅ Successfully patched gRPC-Core source file."
+  else
+    puts "⚠️ gRPC-Core source file already patched or content changed."
+  end
 end
