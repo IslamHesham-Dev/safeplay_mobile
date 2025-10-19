@@ -493,3 +493,13 @@ functions/.env.local
 .firebase/
 firebase-debug.log
 firebase-debug.*.log
+
+# ===========================================
+# ADDITIONAL FILES TO IGNORE
+# ===========================================
+
+# Flutter dependency lock file
+pubspec.lock
+
+# macOS Flutter generated files
+**/macos/Flutter/GeneratedPluginRegistrant.swift
