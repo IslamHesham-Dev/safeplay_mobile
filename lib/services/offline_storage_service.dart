@@ -1,105 +1,23 @@
 import 'dart:convert';
 
-import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/activity.dart';
 import '../models/user_type.dart';
 
-/// Offline storage service using SQLite for caching and sync queues.
+/// Simplified offline storage service using SharedPreferences for basic caching.
 class OfflineStorageService {
-  static const _dbName = 'safeplay.db';
-  static const _dbVersion = 2;
-  static const _tableActivities = 'activities';
-  static const _tableProgress = 'activity_progress';
-  static const _tableSyncQueue = 'sync_queue';
+  static const _keyActivities = 'safeplay_activities';
+  static const _keyProgress = 'safeplay_progress';
   static const _syncStatusSynced = 'synced';
   static const _syncStatusPending = 'pending';
 
-  Database? _database;
+  SharedPreferences? _prefs;
 
-  Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDatabase();
-    return _database!;
-  }
-
-  Future<Database> _initDatabase() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, _dbName);
-
-    return openDatabase(
-      path,
-      version: _dbVersion,
-      onCreate: (db, version) async => _createSchema(db),
-      onUpgrade: (db, oldVersion, newVersion) async =>
-          _upgradeSchema(db, oldVersion, newVersion),
-    );
-  }
-
-  Future<void> _createSchema(Database db) async {
-    await db.execute('''
-      CREATE TABLE $_tableActivities (
-        id TEXT PRIMARY KEY,
-        ageGroup TEXT NOT NULL,
-        subject TEXT NOT NULL,
-        payload TEXT NOT NULL,
-        updatedAt TEXT NOT NULL
-      )
-    ''');
-
-    await db.execute(
-        'CREATE INDEX idx_activities_age ON $_tableActivities(ageGroup)');
-
-    await db.execute('''
-      CREATE TABLE $_tableProgress (
-        id TEXT PRIMARY KEY,
-        childId TEXT NOT NULL,
-        activityId TEXT NOT NULL,
-        status TEXT NOT NULL,
-        payload TEXT NOT NULL,
-        updatedAt TEXT NOT NULL,
-        syncStatus TEXT NOT NULL DEFAULT '$_syncStatusSynced',
-        lastSyncedAt TEXT
-      )
-    ''');
-
-    await db
-        .execute('CREATE INDEX idx_progress_child ON $_tableProgress(childId)');
-    await db.execute(
-        'CREATE INDEX idx_progress_sync ON $_tableProgress(syncStatus)');
-
-    await db.execute('''
-      CREATE TABLE $_tableSyncQueue (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        entityType TEXT NOT NULL,
-        entityId TEXT NOT NULL,
-        operation TEXT NOT NULL,
-        data TEXT NOT NULL,
-        createdAt TEXT NOT NULL,
-        attempts INTEGER NOT NULL DEFAULT 0,
-        lastAttempt TEXT,
-        error TEXT
-      )
-    ''');
-
-    await db.execute(
-        'CREATE INDEX idx_sync_entity ON $_tableSyncQueue(entityType, entityId)');
-    await db.execute(
-        'CREATE INDEX idx_sync_created ON $_tableSyncQueue(createdAt)');
-  }
-
-  Future<void> _upgradeSchema(
-    Database db,
-    int oldVersion,
-    int newVersion,
-  ) async {
-    if (oldVersion < 2) {
-      await db.execute('DROP TABLE IF EXISTS $_tableActivities');
-      await db.execute('DROP TABLE IF EXISTS $_tableProgress');
-      await db.execute('DROP TABLE IF EXISTS $_tableSyncQueue');
-      await _createSchema(db);
-    }
+  Future<SharedPreferences> get prefs async {
+    if (_prefs != null) return _prefs!;
+    _prefs = await SharedPreferences.getInstance();
+    return _prefs!;
   }
 
   // ---------------------------------------------------------------------------
@@ -108,24 +26,22 @@ class OfflineStorageService {
 
   Future<void> upsertActivities(List<Activity> activities) async {
     if (activities.isEmpty) return;
-    final db = await database;
-    final batch = db.batch();
+    final prefs = await this.prefs;
     final timestamp = DateTime.now().toIso8601String();
+    
+    // Get existing activities
+    final existingJson = prefs.getString(_keyActivities) ?? '{}';
+    final existing = jsonDecode(existingJson) as Map<String, dynamic>;
+    
+    // Update with new activities
     for (final activity in activities) {
-      final payload = jsonEncode(activity.toJson());
-      batch.insert(
-        _tableActivities,
-        {
-          'id': activity.id,
-          'ageGroup': activity.ageGroup.name,
-          'subject': activity.subject.name,
-          'payload': payload,
-          'updatedAt': timestamp,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      existing[activity.id] = {
+        'activity': activity.toJson(),
+        'updatedAt': timestamp,
+      };
     }
-    await batch.commit(noResult: true);
+    
+    await prefs.setString(_keyActivities, jsonEncode(existing));
   }
 
   Future<void> upsertActivity(Activity activity) async {
@@ -133,29 +49,43 @@ class OfflineStorageService {
   }
 
   Future<List<Activity>> getActivitiesByAgeGroup(AgeGroup ageGroup) async {
-    final db = await database;
-    final rows = await db.query(
-      _tableActivities,
-      where: 'ageGroup = ?',
-      whereArgs: [ageGroup.name],
-      orderBy: 'updatedAt DESC',
-    );
-    return rows
-        .map((row) => _activityFromRow(row))
-        .whereType<Activity>()
-        .toList(growable: false);
+    final prefs = await this.prefs;
+    final activitiesJson = prefs.getString(_keyActivities) ?? '{}';
+    final activities = jsonDecode(activitiesJson) as Map<String, dynamic>;
+    
+    final result = <Activity>[];
+    for (final entry in activities.values) {
+      try {
+        final data = entry as Map<String, dynamic>;
+        final activityData = data['activity'] as Map<String, dynamic>;
+        final activity = Activity.fromJson(activityData);
+        if (activity.ageGroup == ageGroup) {
+          result.add(activity);
+        }
+      } catch (e) {
+        // Skip invalid entries
+        continue;
+      }
+    }
+    
+    return result;
   }
 
   Future<Activity?> getActivity(String activityId) async {
-    final db = await database;
-    final rows = await db.query(
-      _tableActivities,
-      where: 'id = ?',
-      whereArgs: [activityId],
-      limit: 1,
-    );
-    if (rows.isEmpty) return null;
-    return _activityFromRow(rows.first);
+    final prefs = await this.prefs;
+    final activitiesJson = prefs.getString(_keyActivities) ?? '{}';
+    final activities = jsonDecode(activitiesJson) as Map<String, dynamic>;
+    
+    final entry = activities[activityId];
+    if (entry == null) return null;
+    
+    try {
+      final data = entry as Map<String, dynamic>;
+      final activityData = data['activity'] as Map<String, dynamic>;
+      return Activity.fromJson(activityData);
+    } catch (e) {
+      return null;
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -166,64 +96,73 @@ class OfflineStorageService {
     ActivityProgress progress, {
     required bool synced,
   }) async {
-    final db = await database;
-    final payload = jsonEncode(progress.toJson());
-    final now = DateTime.now().toIso8601String();
-
-    await db.insert(
-      _tableProgress,
-      {
-        'id': progress.id,
-        'childId': progress.childId,
-        'activityId': progress.activityId,
-        'status': progress.status.rawValue,
-        'payload': payload,
-        'updatedAt': progress.updatedAt.toIso8601String(),
-        'syncStatus': synced ? _syncStatusSynced : _syncStatusPending,
-        'lastSyncedAt': synced ? now : null,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    final prefs = await this.prefs;
+    final progressJson = prefs.getString(_keyProgress) ?? '{}';
+    final progressMap = jsonDecode(progressJson) as Map<String, dynamic>;
+    
+    progressMap[progress.id] = {
+      'progress': progress.toJson(),
+      'syncStatus': synced ? _syncStatusSynced : _syncStatusPending,
+      'lastSyncedAt': synced ? DateTime.now().toIso8601String() : null,
+    };
+    
+    await prefs.setString(_keyProgress, jsonEncode(progressMap));
   }
 
   Future<List<ActivityProgress>> getProgressForChild(String childId) async {
-    final db = await database;
-    final rows = await db.query(
-      _tableProgress,
-      where: 'childId = ?',
-      whereArgs: [childId],
-      orderBy: 'updatedAt DESC',
-    );
-    return rows
-        .map((row) => _progressFromRow(row))
-        .whereType<ActivityProgress>()
-        .toList(growable: false);
+    final prefs = await this.prefs;
+    final progressJson = prefs.getString(_keyProgress) ?? '{}';
+    final progressMap = jsonDecode(progressJson) as Map<String, dynamic>;
+    
+    final result = <ActivityProgress>[];
+    for (final entry in progressMap.values) {
+      try {
+        final data = entry as Map<String, dynamic>;
+        final progressData = data['progress'] as Map<String, dynamic>;
+        final progress = ActivityProgress.fromJson(progressData);
+        if (progress.childId == childId) {
+          result.add(progress);
+        }
+      } catch (e) {
+        // Skip invalid entries
+        continue;
+      }
+    }
+    
+    return result;
   }
 
   Future<ActivityProgress?> getProgressById(String progressId) async {
-    final db = await database;
-    final rows = await db.query(
-      _tableProgress,
-      where: 'id = ?',
-      whereArgs: [progressId],
-      limit: 1,
-    );
-    if (rows.isEmpty) return null;
-    return _progressFromRow(rows.first);
+    final prefs = await this.prefs;
+    final progressJson = prefs.getString(_keyProgress) ?? '{}';
+    final progressMap = jsonDecode(progressJson) as Map<String, dynamic>;
+    
+    final entry = progressMap[progressId];
+    if (entry == null) return null;
+    
+    try {
+      final data = entry as Map<String, dynamic>;
+      final progressData = data['progress'] as Map<String, dynamic>;
+      return ActivityProgress.fromJson(progressData);
+    } catch (e) {
+      return null;
+    }
   }
 
   Future<void> deleteProgress(String progressId) async {
-    final db = await database;
-    await db.delete(
-      _tableProgress,
-      where: 'id = ?',
-      whereArgs: [progressId],
-    );
+    final prefs = await this.prefs;
+    final progressJson = prefs.getString(_keyProgress) ?? '{}';
+    final progressMap = jsonDecode(progressJson) as Map<String, dynamic>;
+    
+    progressMap.remove(progressId);
+    await prefs.setString(_keyProgress, jsonEncode(progressMap));
   }
 
   // ---------------------------------------------------------------------------
-  // Sync queue helpers
+  // Simplified sync queue (in-memory only)
   // ---------------------------------------------------------------------------
+
+  final List<Map<String, dynamic>> _syncQueue = [];
 
   Future<void> queueSyncItem({
     required String entityType,
@@ -231,117 +170,62 @@ class OfflineStorageService {
     required String operation,
     required Map<String, dynamic> data,
   }) async {
-    final db = await database;
-    await db.insert(
-      _tableSyncQueue,
-      {
-        'entityType': entityType,
-        'entityId': entityId,
-        'operation': operation,
-        'data': jsonEncode(data),
-        'createdAt': DateTime.now().toIso8601String(),
-        'attempts': 0,
-        'error': null,
-      },
-    );
+    _syncQueue.add({
+      'entityType': entityType,
+      'entityId': entityId,
+      'operation': operation,
+      'data': data,
+      'createdAt': DateTime.now().toIso8601String(),
+      'attempts': 0,
+      'error': null,
+    });
   }
 
-  Future<List<Map<String, dynamic>>> getPendingSyncItems(
-      {int limit = 50}) async {
-    final db = await database;
-    final rows = await db.query(
-      _tableSyncQueue,
-      orderBy: 'createdAt ASC',
-      limit: limit,
-    );
-
-    return rows.map((row) {
-      final dataJson = row['data'] as String? ?? '{}';
-      final decoded = jsonDecode(dataJson) as Map<String, dynamic>;
-      return {
-        ...row,
-        'data': decoded,
-      };
-    }).toList(growable: false);
+  Future<List<Map<String, dynamic>>> getPendingSyncItems({int limit = 50}) async {
+    return _syncQueue.take(limit).toList();
   }
 
   Future<void> markSyncItemCompleted(int id) async {
-    final db = await database;
-    await db.delete(
-      _tableSyncQueue,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    if (id < _syncQueue.length) {
+      _syncQueue.removeAt(id);
+    }
   }
 
   Future<void> markSyncItemFailed(int id, String error) async {
-    final db = await database;
-    await db.rawUpdate(
-      '''
-      UPDATE $_tableSyncQueue
-         SET attempts = attempts + 1,
-             lastAttempt = ?,
-             error = ?
-       WHERE id = ?
-      ''',
-      [DateTime.now().toIso8601String(), error, id],
-    );
+    if (id < _syncQueue.length) {
+      _syncQueue[id]['attempts'] = (_syncQueue[id]['attempts'] ?? 0) + 1;
+      _syncQueue[id]['lastAttempt'] = DateTime.now().toIso8601String();
+      _syncQueue[id]['error'] = error;
+    }
   }
 
-  Future<void> clearQueuedItems(
-      {required String entityType, required String entityId}) async {
-    final db = await database;
-    await db.delete(
-      _tableSyncQueue,
-      where: 'entityType = ? AND entityId = ?',
-      whereArgs: [entityType, entityId],
-    );
+  Future<void> clearQueuedItems({
+    required String entityType,
+    required String entityId,
+  }) async {
+    _syncQueue.removeWhere((item) =>
+        item['entityType'] == entityType && item['entityId'] == entityId);
   }
 
   Future<void> clearCache() async {
-    final db = await database;
-    await db.delete(_tableActivities);
-    await db.delete(_tableProgress);
+    final prefs = await this.prefs;
+    await prefs.remove(_keyActivities);
+    await prefs.remove(_keyProgress);
+    _syncQueue.clear();
   }
 
   Future<int> getCacheSize() async {
-    final db = await database;
-    final counts = await db.rawQuery('''
-      SELECT
-        (SELECT COUNT(*) FROM $_tableActivities) AS activities,
-        (SELECT COUNT(*) FROM $_tableProgress) AS progress,
-        (SELECT COUNT(*) FROM $_tableSyncQueue) AS pending
-    ''');
-    final row = counts.first;
-    return (row['activities'] as int? ?? 0) +
-        (row['progress'] as int? ?? 0) +
-        (row['pending'] as int? ?? 0);
-  }
-
-  Activity? _activityFromRow(Map<String, Object?> row) {
-    final payload = row['payload'] as String?;
-    if (payload == null) return null;
-    final Map<String, dynamic> json = jsonDecode(payload);
-    json['id'] = json['id'] ?? row['id'];
-    json['ageGroup'] = json['ageGroup'] ?? row['ageGroup'];
-    json['subject'] = json['subject'] ?? row['subject'];
-    return Activity.fromJson(json);
-  }
-
-  ActivityProgress? _progressFromRow(Map<String, Object?> row) {
-    final payload = row['payload'] as String?;
-    if (payload == null) return null;
-    final Map<String, dynamic> json = jsonDecode(payload);
-    json['id'] = json['id'] ?? row['id'];
-    json['childId'] = json['childId'] ?? row['childId'];
-    json['activityId'] = json['activityId'] ?? row['activityId'];
-    json['status'] = json['status'] ?? row['status'];
-    return ActivityProgress.fromJson(json);
+    final prefs = await this.prefs;
+    final activitiesJson = prefs.getString(_keyActivities) ?? '{}';
+    final progressJson = prefs.getString(_keyProgress) ?? '{}';
+    
+    final activities = jsonDecode(activitiesJson) as Map<String, dynamic>;
+    final progress = jsonDecode(progressJson) as Map<String, dynamic>;
+    
+    return activities.length + progress.length + _syncQueue.length;
   }
 
   Future<void> close() async {
-    if (_database == null) return;
-    await _database!.close();
-    _database = null;
+    // No-op for SharedPreferences
   }
 }

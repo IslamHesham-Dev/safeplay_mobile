@@ -90,9 +90,9 @@ class _BrightPicturePinLoginState extends State<BrightPicturePinLogin> {
     });
   }
 
-  void _onPicturesSelected(List<String> pictures) {
+  void _onPicturesSelected(List<int> pictureIndices) {
     setState(() {
-      _selectedPictures = pictures;
+      _selectedPictures = pictureIndices.map((index) => _pictures[index]).toList();
       _pictureStepComplete = true;
     });
   }
