@@ -54,6 +54,7 @@ class RouteNames {
   static const String parentSettings = '/parent/settings';
   static const String parentNotifications = '/parent/notifications';
   static const String parentChangePassword = '/parent/change-password';
+  static const String parentDeleteAccount = '/parent/delete-account';
 
   // Common routes
   static const String settings = '/settings';

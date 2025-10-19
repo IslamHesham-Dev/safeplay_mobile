@@ -278,6 +278,55 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
 
                         const SizedBox(height: 24),
 
+                        // Danger Zone
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.red.withOpacity(0.2),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.warning_amber_rounded,
+                                    color: Colors.red,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Danger Zone',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              _buildMenuItem(
+                                icon: Icons.delete_forever_outlined,
+                                title: 'Delete Account',
+                                subtitle:
+                                    'Permanently delete your account and all data',
+                                onTap: () {
+                                  Navigator.of(context).pop();
+                                  context.push(RouteNames.parentDeleteAccount);
+                                },
+                                isDanger: true,
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
                         // Logout button
                         Container(
                           width: double.infinity,
@@ -321,6 +370,7 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
     required String subtitle,
     required VoidCallback onTap,
     bool isDemo = false,
+    bool isDanger = false,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -334,9 +384,11 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isDemo
-                    ? SafePlayColors.warning.withOpacity(0.2)
-                    : SafePlayColors.neutral200,
+                color: isDanger
+                    ? Colors.red.withOpacity(0.3)
+                    : isDemo
+                        ? SafePlayColors.warning.withOpacity(0.2)
+                        : SafePlayColors.neutral200,
               ),
             ),
             child: Row(
@@ -345,16 +397,20 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: isDemo
-                        ? SafePlayColors.warning.withOpacity(0.1)
-                        : SafePlayColors.brandTeal500.withOpacity(0.1),
+                    color: isDanger
+                        ? Colors.red.withOpacity(0.1)
+                        : isDemo
+                            ? SafePlayColors.warning.withOpacity(0.1)
+                            : SafePlayColors.brandTeal500.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     icon,
-                    color: isDemo
-                        ? SafePlayColors.warning
-                        : SafePlayColors.brandTeal500,
+                    color: isDanger
+                        ? Colors.red
+                        : isDemo
+                            ? SafePlayColors.warning
+                            : SafePlayColors.brandTeal500,
                     size: 20,
                   ),
                 ),
@@ -368,9 +424,11 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: isDemo
-                              ? SafePlayColors.warning
-                              : SafePlayColors.neutral900,
+                          color: isDanger
+                              ? Colors.red
+                              : isDemo
+                                  ? SafePlayColors.warning
+                                  : SafePlayColors.neutral900,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -378,9 +436,11 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
                         subtitle,
                         style: TextStyle(
                           fontSize: 14,
-                          color: isDemo
-                              ? SafePlayColors.warning.withOpacity(0.8)
-                              : SafePlayColors.neutral500,
+                          color: isDanger
+                              ? Colors.red.withOpacity(0.8)
+                              : isDemo
+                                  ? SafePlayColors.warning.withOpacity(0.8)
+                                  : SafePlayColors.neutral500,
                         ),
                       ),
                     ],
@@ -389,9 +449,11 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
                 Icon(
                   Icons.arrow_forward_ios,
                   size: 16,
-                  color: isDemo
-                      ? SafePlayColors.warning.withOpacity(0.6)
-                      : SafePlayColors.neutral400,
+                  color: isDanger
+                      ? Colors.red.withOpacity(0.6)
+                      : isDemo
+                          ? SafePlayColors.warning.withOpacity(0.6)
+                          : SafePlayColors.neutral400,
                 ),
               ],
             ),

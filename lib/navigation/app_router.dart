@@ -120,6 +120,10 @@ class AppRouter {
             path: RouteNames.parentChangePassword,
             builder: (context, state) => const ChangePasswordScreen(),
           ),
+          GoRoute(
+            path: RouteNames.parentDeleteAccount,
+            builder: (context, state) => const DeleteAccountScreen(),
+          ),
         ],
         errorBuilder: (context, state) => Scaffold(
           body: Center(
