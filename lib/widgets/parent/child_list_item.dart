@@ -54,7 +54,8 @@ class ChildListItem extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Expanded(
+                        Flexible(
+                          flex: 2,
                           child: Text(
                             child.name,
                             style: Theme.of(context)
@@ -63,9 +64,15 @@ class ChildListItem extends StatelessWidget {
                                 ?.copyWith(
                                   fontWeight: FontWeight.w600,
                                 ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        const SizedBox(width: 8),
                         _buildAgeGroupBadge(),
+                        if (onSetupLogin != null) ...[
+                          const SizedBox(width: 6),
+                          _buildSetupLoginButton(),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -126,18 +133,14 @@ class ChildListItem extends StatelessWidget {
 
               // Action Buttons
               Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Setup Login Button
-                  if (onSetupLogin != null)
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: _buildSetupLoginButton(),
-                    ),
                   // Edit Button
                   IconButton(
                     onPressed: onEdit,
                     icon: const Icon(Icons.edit_outlined),
                     color: SafePlayColors.neutral500,
+                    iconSize: 20,
                   ),
                   // Delete Button
                   if (onDelete != null)
@@ -145,6 +148,7 @@ class ChildListItem extends StatelessWidget {
                       onPressed: () => _showDeleteConfirmation(context),
                       icon: const Icon(Icons.delete_outline),
                       color: Colors.red,
+                      iconSize: 20,
                     ),
                 ],
               ),
@@ -158,7 +162,7 @@ class ChildListItem extends StatelessWidget {
   Widget _buildAgeGroupBadge() {
     final isJunior = child.ageGroup == AgeGroup.junior;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: isJunior
             ? SafePlayColors.brandTeal500.withValues(alpha: 0.1)
@@ -227,7 +231,7 @@ class ChildListItem extends StatelessWidget {
 
     if (hasAuthSetup) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
           color: SafePlayColors.success.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
@@ -257,7 +261,7 @@ class ChildListItem extends StatelessWidget {
       return InkWell(
         onTap: onSetupLogin,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
             color: _getAgeGroupColor().withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
