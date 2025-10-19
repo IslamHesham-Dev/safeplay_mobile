@@ -11,9 +11,9 @@ import '../../models/user_type.dart';
 import '../../providers/activity_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
-import '../../services/notification_service.dart';
 import '../../widgets/parent/activity_timeline_widget.dart';
 import '../../widgets/parent/child_list_item.dart';
+import '../../widgets/parent/parent_settings_menu.dart';
 
 /// Parent dashboard screen
 class ParentDashboardScreen extends StatefulWidget {
@@ -102,74 +102,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               );
             },
           ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) async {
-              if (value == 'logout') {
-                final authProvider = context.read<AuthProvider>();
-                await authProvider.signOut();
-                if (context.mounted) {
-                  context.go(RouteNames.login);
-                }
-              } else if (value == 'incident-demo') {
-                final notificationService = context.read<NotificationService>();
-                final childProvider = context.read<ChildProvider>();
-                final child = childProvider.selectedChild;
-                await notificationService.showIncidentAlert(
-                  incidentId:
-                      'incident-${DateTime.now().millisecondsSinceEpoch}',
-                  childName: child?.name ?? 'Learner',
-                  summary: 'Requested a break after a challenging activity.',
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('$value coming soon')),
-                );
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'settings',
-                child: Row(
-                  children: [
-                    Icon(Icons.settings),
-                    SizedBox(width: 8),
-                    Text('Settings'),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'help',
-                child: Row(
-                  children: [
-                    Icon(Icons.help_outline),
-                    SizedBox(width: 8),
-                    Text('Help'),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'incident-demo',
-                child: Row(
-                  children: [
-                    Icon(Icons.warning_amber_rounded),
-                    SizedBox(width: 8),
-                    Text('Send Incident Alert (Demo)'),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout),
-                    SizedBox(width: 8),
-                    Text('Logout'),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          const ParentSettingsMenu(),
         ],
       ),
       body: SafeArea(

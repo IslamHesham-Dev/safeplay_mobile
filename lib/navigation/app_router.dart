@@ -116,6 +116,10 @@ class AppRouter {
               child: state.extra as ChildProfile,
             ),
           ),
+          GoRoute(
+            path: RouteNames.parentChangePassword,
+            builder: (context, state) => const ChangePasswordScreen(),
+          ),
         ],
         errorBuilder: (context, state) => Scaffold(
           body: Center(
@@ -161,6 +165,18 @@ class AppRouter {
         return destination;
       }
       print('🔄 Router: Public route, no redirect needed');
+      return null;
+    }
+
+    // Special handling for change password route - only allow authenticated parents
+    if (location == RouteNames.changePassword) {
+      if (!hasParent) {
+        print(
+            '🔄 Router: Change password requires parent authentication, redirecting to login');
+        return RouteNames.login;
+      }
+      print(
+          '🔄 Router: Parent authenticated for change password, allowing access');
       return null;
     }
 
@@ -229,7 +245,6 @@ class AppRouter {
     RouteNames.parentSignup,
     RouteNames.forgotPassword,
     RouteNames.emailVerification,
-    RouteNames.changePassword,
     RouteNames.deleteAccount,
     RouteNames.childSelector,
   };
