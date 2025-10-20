@@ -52,27 +52,29 @@ class ChildListItem extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Flexible(
-                          flex: 2,
-                          child: Text(
-                            child.name,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                        Text(
+                          child.name,
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          softWrap: false,
                         ),
-                        const SizedBox(width: 8),
-                        _buildAgeGroupBadge(),
-                        if (onSetupLogin != null) ...[
-                          const SizedBox(width: 6),
-                          _buildSetupLoginButton(),
-                        ],
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 0,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            _buildAgeGroupBadge(),
+                            if (onSetupLogin != null) _buildSetupLoginButton(),
+                          ],
+                        ),
                       ],
                     ),
                     const SizedBox(height: 4),

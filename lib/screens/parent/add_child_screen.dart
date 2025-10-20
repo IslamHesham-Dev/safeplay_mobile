@@ -19,7 +19,7 @@ class AddChildScreen extends StatefulWidget {
 class _AddChildScreenState extends State<AddChildScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _gradeController = TextEditingController();
+  final _ageController = TextEditingController();
 
   DateTime? _selectedDateOfBirth;
   AgeGroup _selectedAgeGroup = AgeGroup.junior;
@@ -28,21 +28,13 @@ class _AddChildScreenState extends State<AddChildScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _gradeController.dispose();
+    _ageController.dispose();
     super.dispose();
   }
 
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedDateOfBirth == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a date of birth'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+    // Date of birth is optional; age is required via form validator
 
     setState(() => _isLoading = true);
 
@@ -64,7 +56,6 @@ class _AddChildScreenState extends State<AddChildScreen> {
         ageGroup: _selectedAgeGroup,
         createdAt: DateTime.now(),
         parentIds: [authProvider.currentUser!.id],
-        grade: int.tryParse(_gradeController.text.trim()),
         dateOfBirth: _selectedDateOfBirth,
         stats: const ChildStats(),
         achievements: const [],
@@ -166,12 +157,50 @@ class _AddChildScreenState extends State<AddChildScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Date of Birth
+                // Age (Required)
+                TextFormField(
+                  controller: _ageController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Age',
+                    prefixIcon: Icon(Icons.child_care_outlined),
+                    border: OutlineInputBorder(),
+                    helperText: 'Enter an age between 6 and 12',
+                  ),
+                  onChanged: (value) {
+                    final age = int.tryParse(value.trim());
+                    if (age != null) {
+                      setState(() {
+                        if (age >= 6 && age <= 8) {
+                          _selectedAgeGroup = AgeGroup.junior;
+                        } else if (age >= 9 && age <= 12) {
+                          _selectedAgeGroup = AgeGroup.bright;
+                        }
+                        // Trigger rebuild to update dimming/disabled state
+                      });
+                    } else {
+                      setState(() {});
+                    }
+                  },
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter your child\'s age';
+                    }
+                    final age = int.tryParse(value.trim());
+                    if (age == null || age < 6 || age > 12) {
+                      return 'Age must be a number between 6 and 12';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+
+                // Date of Birth (Optional)
                 InkWell(
                   onTap: _selectDateOfBirth,
                   child: InputDecorator(
                     decoration: const InputDecoration(
-                      labelText: 'Date of Birth',
+                      labelText: 'Date of Birth (Optional)',
                       prefixIcon: Icon(Icons.cake_outlined),
                       border: OutlineInputBorder(),
                     ),
@@ -189,28 +218,6 @@ class _AddChildScreenState extends State<AddChildScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Grade (Optional)
-                TextFormField(
-                  controller: _gradeController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Grade (Optional)',
-                    prefixIcon: Icon(Icons.school_outlined),
-                    border: OutlineInputBorder(),
-                    helperText: 'e.g., 1, 2, 3, etc.',
-                  ),
-                  validator: (value) {
-                    if (value != null && value.trim().isNotEmpty) {
-                      final grade = int.tryParse(value.trim());
-                      if (grade == null || grade < 1 || grade > 12) {
-                        return 'Please enter a valid grade (1-12)';
-                      }
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
                 // Age Group Selection
                 Text(
                   'Age Group',
@@ -225,7 +232,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
                       child: _buildAgeGroupCard(
                         AgeGroup.junior,
                         'Junior Explorer',
-                        'Ages 4-7',
+                        'Ages 6-8',
                         Icons.child_care,
                         SafePlayColors.brandTeal500,
                       ),
@@ -235,7 +242,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
                       child: _buildAgeGroupCard(
                         AgeGroup.bright,
                         'Bright Minds',
-                        'Ages 8-12',
+                        'Ages 9-12',
                         Icons.school,
                         SafePlayColors.brandOrange500,
                       ),
@@ -289,32 +296,61 @@ class _AddChildScreenState extends State<AddChildScreen> {
     Color color,
   ) {
     final isSelected = _selectedAgeGroup == ageGroup;
+    final typedAge = int.tryParse(_ageController.text.trim());
+    final childAge = _selectedDateOfBirth != null
+        ? _calculateAge(_selectedDateOfBirth!)
+        : typedAge;
+    final isValidForAge =
+        childAge != null ? ageGroup.isValidAge(childAge) : true;
+    final isDisabled = childAge != null && !isValidForAge;
 
     return InkWell(
-      onTap: () => setState(() => _selectedAgeGroup = ageGroup),
+      onTap: () {
+        if (isDisabled) {
+          _showAgeMismatchAlert(ageGroup, childAge);
+          return;
+        }
+        setState(() => _selectedAgeGroup = ageGroup);
+      },
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? color : SafePlayColors.neutral300,
+            color: isSelected
+                ? color
+                : isDisabled
+                    ? SafePlayColors.neutral200
+                    : SafePlayColors.neutral300,
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
-          color: isSelected ? color.withValues(alpha: 0.1) : null,
+          color: isSelected
+              ? color.withValues(alpha: 0.1)
+              : isDisabled
+                  ? SafePlayColors.neutral100
+                  : null,
         ),
         child: Column(
           children: [
             Icon(
               icon,
               size: 32,
-              color: isSelected ? color : SafePlayColors.neutral500,
+              color: isSelected
+                  ? color
+                  : isDisabled
+                      ? SafePlayColors.neutral300
+                      : SafePlayColors.neutral500,
             ),
             const SizedBox(height: 8),
             Text(
               title,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: isSelected ? color : SafePlayColors.neutral700,
+                color: isSelected
+                    ? color
+                    : isDisabled
+                        ? SafePlayColors.neutral400
+                        : SafePlayColors.neutral700,
               ),
             ),
             const SizedBox(height: 4),
@@ -322,9 +358,31 @@ class _AddChildScreenState extends State<AddChildScreen> {
               subtitle,
               style: TextStyle(
                 fontSize: 12,
-                color: isSelected ? color : SafePlayColors.neutral500,
+                color: isSelected
+                    ? color
+                    : isDisabled
+                        ? SafePlayColors.neutral400
+                        : SafePlayColors.neutral500,
               ),
             ),
+            if (isDisabled) ...[
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Age ${childAge}',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Colors.orange,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -334,11 +392,11 @@ class _AddChildScreenState extends State<AddChildScreen> {
   Future<void> _selectDateOfBirth() async {
     final now = DateTime.now();
     final firstDate = DateTime(now.year - 12, 1, 1);
-    final lastDate = DateTime(now.year - 4, 12, 31);
+    final lastDate = DateTime(now.year - 6, 12, 31);
 
     final selectedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime(now.year - 6, 1, 1),
+      initialDate: DateTime(now.year - 7, 1, 1),
       firstDate: firstDate,
       lastDate: lastDate,
       builder: (context, child) {
@@ -358,9 +416,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
         _selectedDateOfBirth = selectedDate;
         // Auto-select age group based on age
         final age = _calculateAge(selectedDate);
-        if (age >= 4 && age <= 7) {
+        if (age >= 6 && age <= 8) {
           _selectedAgeGroup = AgeGroup.junior;
-        } else if (age >= 8 && age <= 12) {
+        } else if (age >= 9 && age <= 12) {
           _selectedAgeGroup = AgeGroup.bright;
         }
       });
@@ -376,5 +434,48 @@ class _AddChildScreenState extends State<AddChildScreen> {
       age -= 1;
     }
     return age;
+  }
+
+  void _showAgeMismatchAlert(AgeGroup selectedGroup, int childAge) {
+    final groupName =
+        selectedGroup == AgeGroup.junior ? 'Junior Explorer' : 'Bright Minds';
+    final ageRange = selectedGroup == AgeGroup.junior ? '6-8' : '9-12';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.orange,
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            const Text('Age Mismatch'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Your child is ${childAge} years old, but $groupName is designed for ages $ageRange.',
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Please select the appropriate age group or adjust the birth date.',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 }

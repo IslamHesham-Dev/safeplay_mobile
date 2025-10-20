@@ -230,7 +230,7 @@ class _EditChildScreenState extends State<EditChildScreen> {
                       child: _buildAgeGroupCard(
                         AgeGroup.junior,
                         'Junior Explorer',
-                        'Ages 4-7',
+                        'Ages 6-8',
                         Icons.child_care,
                         SafePlayColors.brandTeal500,
                       ),
@@ -240,7 +240,7 @@ class _EditChildScreenState extends State<EditChildScreen> {
                       child: _buildAgeGroupCard(
                         AgeGroup.bright,
                         'Bright Minds',
-                        'Ages 8-12',
+                        'Ages 9-12',
                         Icons.school,
                         SafePlayColors.brandOrange500,
                       ),
@@ -294,32 +294,60 @@ class _EditChildScreenState extends State<EditChildScreen> {
     Color color,
   ) {
     final isSelected = _selectedAgeGroup == ageGroup;
+    final childAge = _selectedDateOfBirth != null
+        ? _calculateAge(_selectedDateOfBirth!)
+        : null;
+    final isValidForAge =
+        childAge != null ? ageGroup.isValidAge(childAge) : true;
+    final isDisabled = childAge != null && !isValidForAge;
 
     return InkWell(
-      onTap: () => setState(() => _selectedAgeGroup = ageGroup),
+      onTap: () {
+        if (isDisabled) {
+          _showAgeMismatchAlert(ageGroup, childAge);
+          return;
+        }
+        setState(() => _selectedAgeGroup = ageGroup);
+      },
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? color : SafePlayColors.neutral300,
+            color: isSelected
+                ? color
+                : isDisabled
+                    ? SafePlayColors.neutral200
+                    : SafePlayColors.neutral300,
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
-          color: isSelected ? color.withValues(alpha: 0.1) : null,
+          color: isSelected
+              ? color.withValues(alpha: 0.1)
+              : isDisabled
+                  ? SafePlayColors.neutral100
+                  : null,
         ),
         child: Column(
           children: [
             Icon(
               icon,
               size: 32,
-              color: isSelected ? color : SafePlayColors.neutral500,
+              color: isSelected
+                  ? color
+                  : isDisabled
+                      ? SafePlayColors.neutral300
+                      : SafePlayColors.neutral500,
             ),
             const SizedBox(height: 8),
             Text(
               title,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: isSelected ? color : SafePlayColors.neutral700,
+                color: isSelected
+                    ? color
+                    : isDisabled
+                        ? SafePlayColors.neutral400
+                        : SafePlayColors.neutral700,
               ),
             ),
             const SizedBox(height: 4),
@@ -327,9 +355,31 @@ class _EditChildScreenState extends State<EditChildScreen> {
               subtitle,
               style: TextStyle(
                 fontSize: 12,
-                color: isSelected ? color : SafePlayColors.neutral500,
+                color: isSelected
+                    ? color
+                    : isDisabled
+                        ? SafePlayColors.neutral400
+                        : SafePlayColors.neutral500,
               ),
             ),
+            if (isDisabled) ...[
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Age ${childAge}',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Colors.orange,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -339,11 +389,11 @@ class _EditChildScreenState extends State<EditChildScreen> {
   Future<void> _selectDateOfBirth() async {
     final now = DateTime.now();
     final firstDate = DateTime(now.year - 12, 1, 1);
-    final lastDate = DateTime(now.year - 4, 12, 31);
+    final lastDate = DateTime(now.year - 6, 12, 31);
 
     final selectedDate = await showDatePicker(
       context: context,
-      initialDate: _selectedDateOfBirth ?? DateTime(now.year - 6, 1, 1),
+      initialDate: _selectedDateOfBirth ?? DateTime(now.year - 7, 1, 1),
       firstDate: firstDate,
       lastDate: lastDate,
       builder: (context, child) {
@@ -363,9 +413,9 @@ class _EditChildScreenState extends State<EditChildScreen> {
         _selectedDateOfBirth = selectedDate;
         // Auto-select age group based on age
         final age = _calculateAge(selectedDate);
-        if (age >= 4 && age <= 7) {
+        if (age >= 6 && age <= 8) {
           _selectedAgeGroup = AgeGroup.junior;
-        } else if (age >= 8 && age <= 12) {
+        } else if (age >= 9 && age <= 12) {
           _selectedAgeGroup = AgeGroup.bright;
         }
       });
@@ -381,5 +431,48 @@ class _EditChildScreenState extends State<EditChildScreen> {
       age -= 1;
     }
     return age;
+  }
+
+  void _showAgeMismatchAlert(AgeGroup selectedGroup, int childAge) {
+    final groupName =
+        selectedGroup == AgeGroup.junior ? 'Junior Explorer' : 'Bright Minds';
+    final ageRange = selectedGroup == AgeGroup.junior ? '6-8' : '9-12';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.orange,
+              size: 24,
+            ),
+            const SizedBox(width: 8),
+            const Text('Age Mismatch'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Your child is ${childAge} years old, but $groupName is designed for ages $ageRange.',
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Please select the appropriate age group or adjust the birth date.',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 }
