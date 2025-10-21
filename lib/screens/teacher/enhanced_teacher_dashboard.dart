@@ -21,11 +21,11 @@ class EnhancedTeacherDashboard extends StatefulWidget {
       _EnhancedTeacherDashboardState();
 }
 
-class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard>
-    with TickerProviderStateMixin {
+class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
   late final TeacherService _teacherService;
   late final SimpleTemplateService _simpleTemplateService;
-  late final TabController _tabController;
+
+  int _currentIndex = 0;
 
   teacher.TeacherProfile? _teacherProfile;
   List<QuestionTemplate> _templates = [];
@@ -43,14 +43,7 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard>
     super.initState();
     _teacherService = TeacherService();
     _simpleTemplateService = SimpleTemplateService();
-    _tabController = TabController(length: 4, vsync: this);
     _loadDashboardData();
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadDashboardData() async {
@@ -180,55 +173,227 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard>
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Welcome, ${_teacherProfile?.name ?? 'Teacher'}'),
-        backgroundColor: SafePlayColors.brandTeal500,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadDashboardData,
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => context.read<AuthProvider>().signOut(),
+      backgroundColor: Colors.grey[50],
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Custom Header with Teacher Info
+            _buildCustomHeader(),
+
+            // Stats Overview Cards (only on Dashboard)
+            if (_currentIndex == 0) _buildStatsOverview(),
+
+            // Main Content
+            Expanded(
+              child: _buildCurrentPage(),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: _buildBottomNavigationBar(),
+    );
+  }
+
+  String _getTeacherDisplayName() {
+    final auth = context.read<AuthProvider>();
+    final currentUser = auth.currentUser;
+
+    // Try to get name from teacher profile first
+    if (_teacherProfile?.name != null && _teacherProfile!.name.isNotEmpty) {
+      return _teacherProfile!.name;
+    }
+
+    // Fallback to current user name
+    if (currentUser?.name != null && currentUser!.name.isNotEmpty) {
+      return currentUser.name;
+    }
+
+    // Final fallback
+    return 'Teacher';
+  }
+
+  Widget _buildCurrentPage() {
+    switch (_currentIndex) {
+      case 0:
+        return _buildDashboardTab();
+      case 1:
+        return _buildCreateActivityTab();
+      case 2:
+        return _buildMyActivitiesTab();
+      case 3:
+        return _buildTemplatesTab();
+      default:
+        return _buildDashboardTab();
+    }
+  }
+
+  Widget _buildBottomNavigationBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            spreadRadius: 0,
+            blurRadius: 8,
+            offset: const Offset(0, -2),
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Stats Overview Cards
-          _buildStatsOverview(),
-
-          // Tab Bar
-          Container(
-            color: SafePlayColors.brandTeal500,
-            child: TabBar(
-              controller: _tabController,
-              indicatorColor: Colors.white,
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.white70,
-              tabs: const [
-                Tab(text: 'Dashboard', icon: Icon(Icons.dashboard)),
-                Tab(text: 'Create Activity', icon: Icon(Icons.add_circle)),
-                Tab(text: 'My Activities', icon: Icon(Icons.list)),
-                Tab(text: 'Templates', icon: Icon(Icons.library_books)),
-              ],
-            ),
+      child: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: SafePlayColors.brandTeal500,
+        unselectedItemColor: Colors.grey[600],
+        selectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w400,
+          fontSize: 12,
+        ),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_outlined),
+            activeIcon: Icon(Icons.dashboard),
+            label: 'Dashboard',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.add_circle_outline),
+            activeIcon: Icon(Icons.add_circle),
+            label: 'Create',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.list_outlined),
+            activeIcon: Icon(Icons.list),
+            label: 'Activities',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.library_books_outlined),
+            activeIcon: Icon(Icons.library_books),
+            label: 'Templates',
+          ),
+        ],
+      ),
+    );
+  }
 
-          // Tab Content
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildDashboardTab(),
-                _buildCreateActivityTab(),
-                _buildMyActivitiesTab(),
-                _buildTemplatesTab(),
-              ],
-            ),
+  Widget _buildCustomHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            SafePlayColors.brandTeal500,
+            SafePlayColors.brandTeal500.withOpacity(0.8),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: SafePlayColors.brandTeal500.withOpacity(0.3),
+            spreadRadius: 0,
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Top row with actions
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Teacher info
+              Expanded(
+                child: Row(
+                  children: [
+                    // Teacher Avatar
+                    CircleAvatar(
+                      radius: 24,
+                      backgroundColor: Colors.white.withOpacity(0.2),
+                      backgroundImage: _teacherProfile?.profileImageUrl != null
+                          ? NetworkImage(_teacherProfile!.profileImageUrl!)
+                          : null,
+                      child: _teacherProfile?.profileImageUrl == null
+                          ? Text(
+                              _getTeacherDisplayName()
+                                  .substring(0, 1)
+                                  .toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
+                              ),
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Welcome back,',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _getTeacherDisplayName(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Action buttons
+              Row(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.refresh, color: Colors.white),
+                      onPressed: _loadDashboardData,
+                      tooltip: 'Refresh Data',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.logout, color: Colors.white),
+                      onPressed: () => context.read<AuthProvider>().signOut(),
+                      tooltip: 'Sign Out',
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),
@@ -239,44 +404,82 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard>
     if (_stats == null) return const SizedBox.shrink();
 
     return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       padding: const EdgeInsets.all(16),
-      color: SafePlayColors.brandTeal500.withOpacity(0.1),
-      child: Row(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: SafePlayColors.brandTeal500.withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            spreadRadius: 0,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: _buildStatCard(
-              'Total Activities',
-              _stats!.totalActivities.toString(),
-              Icons.assignment,
-              SafePlayColors.brandTeal500,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: SafePlayColors.brandTeal500.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.analytics_outlined,
+                  color: SafePlayColors.brandTeal500,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Your Teaching Stats',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[800],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildStatCard(
-              'Published',
-              _stats!.publishedActivities.toString(),
-              Icons.publish,
-              Colors.green,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildStatCard(
-              'Drafts',
-              _stats!.draftActivities.toString(),
-              Icons.edit,
-              Colors.orange,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildStatCard(
-              'Publish Rate',
-              '${(_stats!.publishRate * 100).toStringAsFixed(0)}%',
-              Icons.trending_up,
-              Colors.blue,
-            ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  'Total',
+                  _stats!.totalActivities.toString(),
+                  Icons.assignment_outlined,
+                  SafePlayColors.brandTeal500,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildStatCard(
+                  'Published',
+                  _stats!.publishedActivities.toString(),
+                  Icons.publish_outlined,
+                  Colors.green,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildStatCard(
+                  'Drafts',
+                  _stats!.draftActivities.toString(),
+                  Icons.edit_outlined,
+                  Colors.orange,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -285,115 +488,217 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard>
 
   Widget _buildStatCard(
       String title, String value, IconData icon, Color color) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1,
         ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 16),
+              const SizedBox(width: 4),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildDashboardTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Quick Actions
-          const Text(
-            'Quick Actions',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildActionCard(
-                  'Create New Activity',
-                  'Build activities from templates',
-                  Icons.add_circle_outline,
-                  () => _tabController.animateTo(1),
+          // Quick Actions Section
+          Container(
+            margin: const EdgeInsets.only(bottom: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.flash_on,
+                      color: SafePlayColors.brandTeal500,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Quick Actions',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildActionCard(
-                  'Browse Templates',
-                  'Explore question templates',
-                  Icons.library_books,
-                  () => _tabController.animateTo(3),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildActionCard(
+                        'Create New Activity',
+                        'Build activities from templates',
+                        Icons.add_circle_outline,
+                        () => setState(() => _currentIndex = 1),
+                        gradient: LinearGradient(
+                          colors: [
+                            SafePlayColors.brandTeal500,
+                            SafePlayColors.brandTeal500.withOpacity(0.8)
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildActionCard(
+                        'Browse Templates',
+                        'Explore question templates',
+                        Icons.library_books_outlined,
+                        () => setState(() => _currentIndex = 3),
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.purple,
+                            Colors.purple.withOpacity(0.8)
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildActionCard(
-                  'View Analytics',
-                  'Check child progress and performance',
-                  Icons.analytics,
-                  () => _tabController
-                      .animateTo(3), // Navigate to templates tab for now
-                  color: Colors.purple,
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildActionCard(
+                        'View Analytics',
+                        'Check child progress and performance',
+                        Icons.analytics_outlined,
+                        () => setState(() => _currentIndex = 3),
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.orange,
+                            Colors.orange.withOpacity(0.8)
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildActionCard(
+                        'Refresh Data',
+                        'Reload dashboard information',
+                        Icons.refresh_outlined,
+                        _loadDashboardData,
+                        gradient: LinearGradient(
+                          colors: [Colors.blue, Colors.blue.withOpacity(0.8)],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildActionCard(
-                  'Refresh Data',
-                  'Reload dashboard information',
-                  Icons.refresh,
-                  _loadDashboardData,
-                  color: Colors.blue,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
 
-          const SizedBox(height: 24),
-
-          // Recent Activities
-          const Text(
-            'Recent Activities',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          if (_activities.isEmpty)
-            const Card(
-              child: Padding(
-                padding: EdgeInsets.all(32),
-                child: Center(
-                  child: Text('No activities created yet'),
+          // Recent Activities Section
+          Container(
+            margin: const EdgeInsets.only(bottom: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.history,
+                      color: SafePlayColors.brandTeal500,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Recent Activities',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            )
-          else
-            ..._activities
-                .take(3)
-                .map((activity) => _buildActivityCard(activity)),
+                const SizedBox(height: 16),
+                if (_activities.isEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(32),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.assignment_outlined,
+                          size: 48,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No activities created yet',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Start by creating your first activity!',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  ..._activities
+                      .take(3)
+                      .map((activity) => _buildActivityCard(activity)),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -401,30 +706,71 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard>
 
   Widget _buildActionCard(
       String title, String subtitle, IconData icon, VoidCallback onTap,
-      {Color? color}) {
-    return Card(
-      elevation: 2,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Icon(icon, size: 32, color: color ?? SafePlayColors.brandTeal500),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-            ],
+      {Color? color, Gradient? gradient}) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: gradient ??
+            LinearGradient(
+              colors: [
+                color ?? SafePlayColors.brandTeal500,
+                (color ?? SafePlayColors.brandTeal500).withOpacity(0.8)
+              ],
+            ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: (color ?? SafePlayColors.brandTeal500).withOpacity(0.3),
+            spreadRadius: 0,
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 28,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.9),
+                    fontWeight: FontWeight.w400,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -432,24 +778,108 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard>
   }
 
   Widget _buildActivityCard(Activity activity) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: _getSubjectColor(activity.subject),
-          child: Text(
-            activity.subject.displayName[0],
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _getSubjectColor(activity.subject).withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 0,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            // Navigate to activity details
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: _getSubjectColor(activity.subject).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color:
+                          _getSubjectColor(activity.subject).withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Icon(
+                    _getSubjectIcon(activity.subject),
+                    color: _getSubjectColor(activity.subject),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        activity.title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: _getSubjectColor(activity.subject)
+                                  .withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              activity.ageGroup.name.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: _getSubjectColor(activity.subject),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            activity.subject.displayName,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                _buildPublishStateChip(activity.publishState),
+              ],
+            ),
           ),
         ),
-        title: Text(activity.title),
-        subtitle: Text(
-            '${activity.ageGroup.name.toUpperCase()} • ${activity.subject.displayName}'),
-        trailing: _buildPublishStateChip(activity.publishState),
-        onTap: () {
-          // Navigate to activity details
-        },
       ),
     );
   }
@@ -457,41 +887,194 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard>
   Widget _buildPublishStateChip(PublishState state) {
     Color color;
     String text;
+    IconData icon;
 
     switch (state) {
       case PublishState.published:
         color = Colors.green;
         text = 'Published';
+        icon = Icons.check_circle;
         break;
       case PublishState.draft:
         color = Colors.orange;
         text = 'Draft';
+        icon = Icons.edit;
         break;
       case PublishState.pendingReview:
         color = Colors.blue;
         text = 'Review';
+        icon = Icons.schedule;
         break;
       case PublishState.archived:
         color = Colors.grey;
         text = 'Archived';
+        icon = Icons.archive;
         break;
     }
 
-    return Chip(
-      label:
-          Text(text, style: const TextStyle(color: Colors.white, fontSize: 12)),
-      backgroundColor: color,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 12,
+            color: color,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildCreateActivityTab() {
-    return const Center(
-      child: Text('Create Activity Tab - To be implemented'),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: SafePlayColors.brandTeal500.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                Icons.add_circle_outline,
+                size: 64,
+                color: SafePlayColors.brandTeal500,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Create New Activity',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'This feature is coming soon!\nYou\'ll be able to create custom activities from templates.',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () => setState(() => _currentIndex = 3),
+                  icon: const Icon(Icons.library_books),
+                  label: const Text('Browse Templates'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: SafePlayColors.brandTeal500,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                OutlinedButton.icon(
+                  onPressed: () => setState(() => _currentIndex = 2),
+                  icon: const Icon(Icons.list),
+                  label: const Text('View Activities'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: SafePlayColors.brandTeal500,
+                    side: BorderSide(color: SafePlayColors.brandTeal500),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildMyActivitiesTab() {
+    if (_activities.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.assignment_outlined,
+                size: 64,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No activities yet',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Create your first activity to get started!',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[500],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () => setState(() => _currentIndex = 1),
+                icon: const Icon(Icons.add),
+                label: const Text('Create Activity'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: SafePlayColors.brandTeal500,
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: _activities.length,
@@ -1194,6 +1777,27 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard>
         return Colors.indigo;
       case ActivitySubject.coding:
         return Colors.teal;
+    }
+  }
+
+  IconData _getSubjectIcon(ActivitySubject subject) {
+    switch (subject) {
+      case ActivitySubject.math:
+        return Icons.calculate;
+      case ActivitySubject.reading:
+        return Icons.menu_book;
+      case ActivitySubject.writing:
+        return Icons.edit;
+      case ActivitySubject.science:
+        return Icons.science;
+      case ActivitySubject.social:
+        return Icons.people;
+      case ActivitySubject.art:
+        return Icons.palette;
+      case ActivitySubject.music:
+        return Icons.music_note;
+      case ActivitySubject.coding:
+        return Icons.code;
     }
   }
 }
