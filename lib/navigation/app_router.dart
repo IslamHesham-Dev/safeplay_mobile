@@ -19,6 +19,9 @@ import '../screens/parent/add_child_screen.dart';
 import '../screens/parent/edit_child_screen.dart';
 import '../screens/parent/junior_auth_setup_screen.dart';
 import '../screens/parent/bright_auth_setup_screen.dart';
+import '../screens/teacher/teacher_dashboard_screen.dart';
+import '../screens/teacher/teacher_login_screen.dart';
+import '../screens/teacher/teacher_signup_screen.dart';
 import '../models/user_profile.dart';
 import '../screens/splash_screen.dart';
 import 'route_names.dart';
@@ -57,6 +60,14 @@ class AppRouter {
             builder: (context, state) => const ParentSignupScreen(),
           ),
           GoRoute(
+            path: RouteNames.teacherLogin,
+            builder: (context, state) => const TeacherLoginScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.teacherSignup,
+            builder: (context, state) => const TeacherSignupScreen(),
+          ),
+          GoRoute(
             path: RouteNames.forgotPassword,
             builder: (context, state) => const ForgotPasswordScreen(),
           ),
@@ -87,6 +98,10 @@ class AppRouter {
           GoRoute(
             path: RouteNames.parentDashboard,
             builder: (context, state) => const ParentDashboardScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.teacherDashboard,
+            builder: (context, state) => const TeacherDashboardScreen(),
           ),
           GoRoute(
             path: RouteNames.parentIncidentDetail,
@@ -151,9 +166,11 @@ class AppRouter {
     final location = state.uri.path;
     final hasParent = authProvider.hasParentSession;
     final hasChild = authProvider.hasChildSession;
+    final hasTeacher = authProvider.hasTeacherSession;
 
     print('🔄 Router: Handling redirect for $location');
-    print('🔄 Router: hasParent=$hasParent, hasChild=$hasChild');
+    print(
+        '🔄 Router: hasParent=$hasParent, hasChild=$hasChild, hasTeacher=$hasTeacher');
     print('🔄 Router: currentUser=${authProvider.currentUser?.name}');
 
     if (location == RouteNames.splash) {
@@ -163,7 +180,7 @@ class AppRouter {
 
     if (!_requiresAuth(location)) {
       print('🔄 Router: Public route, checking if user is authenticated');
-      if (hasParent || hasChild) {
+      if (hasParent || hasChild || hasTeacher) {
         final destination = _defaultDestination();
         print('🔄 Router: User authenticated, redirecting to $destination');
         return destination;
@@ -184,7 +201,7 @@ class AppRouter {
       return null;
     }
 
-    if (!hasParent && !hasChild) {
+    if (!hasParent && !hasChild && !hasTeacher) {
       print('🔄 Router: No authentication, redirecting to login');
       return RouteNames.login;
     }
@@ -195,11 +212,23 @@ class AppRouter {
       return RouteNames.parentDashboard;
     }
 
-    if (hasChild && _isParentArea(location)) {
+    if (hasChild && (_isParentArea(location) || _isTeacherArea(location))) {
       final destination = _childDashboardRoute();
       print(
-          '🔄 Router: Child trying to access parent area, redirecting to $destination');
+          '🔄 Router: Child trying to access parent/teacher area, redirecting to $destination');
       return destination;
+    }
+
+    if (hasTeacher && (_isParentArea(location) || _isChildArea(location))) {
+      print(
+          '🔄 Router: Teacher trying to access parent/child area, redirecting to teacher dashboard');
+      return RouteNames.teacherDashboard;
+    }
+
+    if (hasParent && _isTeacherArea(location)) {
+      print(
+          '🔄 Router: Parent trying to access teacher area, redirecting to parent dashboard');
+      return RouteNames.parentDashboard;
     }
 
     print('🔄 Router: No redirect needed');
@@ -217,6 +246,10 @@ class AppRouter {
   bool _isParentArea(String path) =>
       path.startsWith(RouteNames.parentDashboard) ||
       path.startsWith('/parent/');
+
+  bool _isTeacherArea(String path) =>
+      path.startsWith(RouteNames.teacherDashboard) ||
+      path.startsWith('/teacher/');
 
   String _childDashboardRoute() {
     final child = authProvider.currentChild;
@@ -240,6 +273,9 @@ class AppRouter {
     if (authProvider.hasChildSession) {
       return _childDashboardRoute();
     }
+    if (authProvider.hasTeacherSession) {
+      return RouteNames.teacherDashboard;
+    }
     return RouteNames.parentDashboard;
   }
 
@@ -247,6 +283,8 @@ class AppRouter {
     RouteNames.login,
     RouteNames.parentLogin,
     RouteNames.parentSignup,
+    RouteNames.teacherLogin,
+    RouteNames.teacherSignup,
     RouteNames.forgotPassword,
     RouteNames.emailVerification,
     RouteNames.deleteAccount,

@@ -82,6 +82,30 @@ enum ActivitySubject {
 
     return ActivitySubject.reading;
   }
+
+  static ActivitySubject? fromString(String? value) {
+    if (value == null) return null;
+    switch (value.toLowerCase()) {
+      case 'math':
+        return ActivitySubject.math;
+      case 'reading':
+        return ActivitySubject.reading;
+      case 'writing':
+        return ActivitySubject.writing;
+      case 'science':
+        return ActivitySubject.science;
+      case 'social':
+        return ActivitySubject.social;
+      case 'art':
+        return ActivitySubject.art;
+      case 'music':
+        return ActivitySubject.music;
+      case 'coding':
+        return ActivitySubject.coding;
+      default:
+        return null;
+    }
+  }
 }
 
 /// Optional curriculum phase (retained for compatibility).
@@ -191,11 +215,14 @@ class ActivityQuestionMedia extends Equatable {
   final String? imageUrl;
   final String? audioUrl;
   final String? videoUrl;
+  // Accessibility text for images or visuals
+  final String? altText;
 
   const ActivityQuestionMedia({
     this.imageUrl,
     this.audioUrl,
     this.videoUrl,
+    this.altText,
   });
 
   factory ActivityQuestionMedia.fromJson(Map<String, dynamic>? json) {
@@ -221,10 +248,12 @@ class ActivityQuestionMedia extends Equatable {
         data['audioUrl'] ?? data['audio'] ?? data['sound'] ?? data['audioSrc'];
     final video =
         data['videoUrl'] ?? data['video'] ?? data['clip'] ?? data['videoSrc'];
+    final altText = data['altText'] ?? data['alt'] ?? data['accessibilityText'];
     return ActivityQuestionMedia(
       imageUrl: _asString(image),
       audioUrl: _asString(audio),
       videoUrl: _asString(video),
+      altText: _asString(altText),
     );
   }
 
@@ -232,6 +261,7 @@ class ActivityQuestionMedia extends Equatable {
         'imageUrl': imageUrl,
         'audioUrl': audioUrl,
         'videoUrl': videoUrl,
+        'altText': altText,
       }..removeWhere((_, value) => value == null);
 
   bool get isEmpty => imageUrl == null && audioUrl == null && videoUrl == null;
@@ -280,7 +310,6 @@ enum QuestionType {
       case QuestionType.trueFalse:
         return 'true-false';
       case QuestionType.multipleChoice:
-      default:
         return 'multiple-choice';
     }
   }
@@ -380,7 +409,10 @@ class Activity extends Equatable {
   final String? thumbnailUrl;
   final List<ActivityQuestion> questions;
   final String createdBy;
-  final bool published;
+  final bool published; // Derived from publishState when present
+  final PublishState publishState;
+  final List<String> skills; // e.g., place value, conjunctions
+  final List<String> tags; // free-form labels for search/visibility
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isOfflineAvailable;
@@ -401,6 +433,9 @@ class Activity extends Equatable {
     required this.questions,
     required this.createdBy,
     required this.published,
+    this.publishState = PublishState.published,
+    this.skills = const [],
+    this.tags = const [],
     required this.createdAt,
     required this.updatedAt,
     this.isOfflineAvailable = false,
@@ -447,6 +482,10 @@ class Activity extends Equatable {
             .toList(growable: false)
         : const <ActivityQuestion>[];
 
+    final publishState = PublishState.fromRaw(_asString(json['publishState']));
+    // Back-compat: if publishState isn't set, infer from boolean published
+    final publishedBool = json['published'] as bool? ?? true;
+
     return Activity(
       id: _asString(json['id'] ?? json['activityId']) ?? '',
       title: _asString(json['title']) ?? '',
@@ -464,7 +503,10 @@ class Activity extends Equatable {
       ),
       questions: questions,
       createdBy: _asString(json['createdBy']) ?? 'unknown',
-      published: json['published'] as bool? ?? true,
+      published: publishState == PublishState.published || publishedBool,
+      publishState: publishState,
+      skills: _stringList(json['skills']),
+      tags: _stringList(json['tags']),
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt'] ?? json['createdAt']),
       isOfflineAvailable: json['isOfflineAvailable'] as bool? ?? false,
@@ -489,6 +531,9 @@ class Activity extends Equatable {
       'questions': questions.map((question) => question.toJson()).toList(),
       'createdBy': createdBy,
       'published': published,
+      'publishState': publishState.name,
+      'skills': skills,
+      'tags': tags,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'isOfflineAvailable': isOfflineAvailable,
@@ -512,10 +557,37 @@ class Activity extends Equatable {
         questions,
         createdBy,
         published,
+        publishState,
+        skills,
+        tags,
         createdAt,
         updatedAt,
         isOfflineAvailable,
       ];
+}
+
+/// Publication state for teacher-authored content.
+enum PublishState {
+  draft,
+  pendingReview,
+  published,
+  archived;
+
+  static PublishState fromRaw(String? value) {
+    final normalized = (value ?? '').trim().toLowerCase();
+    switch (normalized) {
+      case 'draft':
+        return PublishState.draft;
+      case 'pendingreview':
+      case 'pending-review':
+        return PublishState.pendingReview;
+      case 'archived':
+        return PublishState.archived;
+      case 'published':
+      default:
+        return PublishState.published;
+    }
+  }
 }
 
 /// Progress document status helpers.
@@ -549,7 +621,6 @@ enum ActivityProgressStatus {
       case ActivityProgressStatus.completed:
         return 'completed';
       case ActivityProgressStatus.notStarted:
-      default:
         return 'not-started';
     }
   }
@@ -601,13 +672,11 @@ class ActivityProgress extends Equatable {
     final totalPoints = json['totalPoints'] as int? ?? 0;
     final answersRaw = Map<String, dynamic>.from(json['answers'] as Map? ?? {});
     answersRaw.updateAll((key, value) {
-      if (value is Map) {
-        final normalized = Map<String, dynamic>.from(value as Map);
+      if (value is Map<String, dynamic>) {
+        final normalized = Map<String, dynamic>.from(value);
         final answeredAt = _parseDate(
             normalized['clientAnsweredAt'] ?? normalized['answeredAt']);
-        if (answeredAt != null) {
-          normalized['answeredAt'] = answeredAt.toIso8601String();
-        }
+        normalized['answeredAt'] = answeredAt.toIso8601String();
         normalized.remove('clientAnsweredAt');
         return normalized;
       }
@@ -674,10 +743,8 @@ class ActivityProgress extends Equatable {
       if (value is Map<String, dynamic>) {
         final answerMap = Map<String, dynamic>.from(value);
         final answeredAt = _parseDate(answerMap['answeredAt']);
-        answerMap['answeredAt'] =
-            answeredAt != null ? Timestamp.fromDate(answeredAt) : null;
-        answerMap['clientAnsweredAt'] =
-            answeredAt != null ? Timestamp.fromDate(answeredAt) : null;
+        answerMap['answeredAt'] = Timestamp.fromDate(answeredAt);
+        answerMap['clientAnsweredAt'] = Timestamp.fromDate(answeredAt);
         result[questionId] = answerMap..removeWhere((_, v) => v == null);
       } else {
         result[questionId] = value;
@@ -774,4 +841,3 @@ class ActivityProgress extends Equatable {
         isCompleted,
       ];
 }
-

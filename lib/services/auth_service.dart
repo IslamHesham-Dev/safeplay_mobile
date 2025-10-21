@@ -180,56 +180,9 @@ class AuthService {
     }
   }
 
-  Future<UserProfile?> _trySignInWithLocalAccount(
-    String email,
-    String password,
-    Object error,
-  ) async {
-    if (!_shouldAttemptLocalFallback(error)) {
-      return null;
-    }
+  // Removed unused _trySignInWithLocalAccount due to build warnings
 
-    try {
-      final account = await _localAuthStore.authenticate(
-        email: email,
-        password: password,
-      );
-      if (account == null) {
-        return null;
-      }
-
-      print('[AuthService]: Using local credential fallback for $email');
-      final profile = _buildLocalUserProfile(account);
-      await _updateLastLogin(profile.id);
-      return profile;
-    } on LocalAuthException catch (localError) {
-      if (localError.code == 'wrong-password') {
-        throw FirebaseAuthException(
-          code: 'wrong-password',
-          message: 'The password is incorrect.',
-        );
-      }
-      return null;
-    } catch (fallbackError) {
-      print('[AuthService]: Local fallback failed: $fallbackError');
-      return null;
-    }
-  }
-
-  bool _shouldAttemptLocalFallback(Object error) {
-    if (error is FirebaseAuthException) {
-      const blockedCodes = {
-        'invalid-email',
-        'missing-email',
-        'user-disabled',
-        'too-many-requests',
-      };
-      return !blockedCodes.contains(error.code);
-    }
-    return error is FirebaseException ||
-        error is PlatformException ||
-        error is SocketException;
-  }
+  // Removed unused _shouldAttemptLocalFallback to resolve warnings
 
   UserProfile _buildLocalUserProfile(Map<String, dynamic> account) {
     final createdAtString = account['createdAt'] as String?;
@@ -522,6 +475,59 @@ class AuthService {
         );
       }
       rethrow;
+    }
+  }
+
+  /// Sign up a teacher account with email/password
+  Future<UserProfile?> signUpTeacher({
+    required String email,
+    required String password,
+    required String name,
+  }) async {
+    try {
+      final credential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      if (credential.user == null) return null;
+
+      final profileData = {
+        'uid': credential.user!.uid,
+        'id': credential.user!.uid,
+        'name': name,
+        'displayName': name,
+        'email': email,
+        'userType': UserType.teacher.name,
+        'role': UserType.teacher.name,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'lastLoginAt': FieldValue.serverTimestamp(),
+        'lastLogin': FieldValue.serverTimestamp(),
+        'metadata': <String, dynamic>{},
+      };
+
+      await _firestore
+          .collection(usersCollection)
+          .doc(credential.user!.uid)
+          .set(profileData);
+
+      await credential.user!.updateDisplayName(name);
+
+      final profile = UserProfile(
+        id: credential.user!.uid,
+        name: name,
+        email: email,
+        userType: UserType.teacher,
+        createdAt: DateTime.now(),
+        lastLoginAt: DateTime.now(),
+      );
+      return profile;
+    } on FirebaseAuthException catch (authError) {
+      if (_shouldFallbackToLocalOnSignup(authError)) {
+        // Local fallback signs up as parent; skip for teacher to avoid confusion
+      }
+      throw authError;
     }
   }
 

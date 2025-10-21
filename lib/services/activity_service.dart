@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/activity.dart';
 import '../models/user_type.dart';
 import 'offline_storage_service.dart';
+import '../models/question_template.dart';
 
 /// Activity service for managing activities and learner progress.
 class ActivityService {
@@ -16,6 +17,7 @@ class ActivityService {
   // Collections
   static const String activitiesCollection = 'activities';
   static const String progressCollection = 'activityProgress';
+  static const String templatesCollection = 'questionTemplates';
 
   Future<List<Activity>> getActivitiesForAgeGroup(AgeGroup ageGroup) async {
     try {
@@ -54,6 +56,95 @@ class ActivityService {
         }
       }
       return [];
+    }
+  }
+
+  /// Create or update an activity as a teacher with validation.
+  Future<String> upsertActivity({
+    required Activity activity,
+    required UserType actorRole,
+  }) async {
+    if (actorRole != UserType.teacher && actorRole != UserType.admin) {
+      throw Exception('Only teachers/admins can create or update activities');
+    }
+
+    _validateActivity(activity);
+
+    final collection = _firestore.collection(activitiesCollection);
+    final hasId = activity.id.isNotEmpty;
+    final docRef = hasId ? collection.doc(activity.id) : collection.doc();
+
+    final payload = activity.toJson()
+      ..remove('id')
+      ..['updatedAt'] = FieldValue.serverTimestamp()
+      ..putIfAbsent('createdAt', () => FieldValue.serverTimestamp());
+
+    await docRef.set(payload, SetOptions(merge: true));
+    return docRef.id;
+  }
+
+  /// Change publication state with safety rules.
+  Future<void> setPublishState({
+    required String activityId,
+    required PublishState newState,
+    required UserType actorRole,
+  }) async {
+    if (actorRole != UserType.teacher && actorRole != UserType.admin) {
+      throw Exception('Only teachers/admins can change publish state');
+    }
+
+    final doc =
+        await _firestore.collection(activitiesCollection).doc(activityId).get();
+    if (!doc.exists) throw Exception('Activity not found');
+    final activity = Activity.fromJson({'id': doc.id, ...doc.data()!});
+
+    // Enforce basic review checks before publishing
+    if (newState == PublishState.published) {
+      _validateActivity(activity, publishing: true);
+    }
+
+    await _firestore.collection(activitiesCollection).doc(activityId).set({
+      'publishState': newState.name,
+      'published': newState == PublishState.published,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  /// Simple validations for safe child experiences.
+  void _validateActivity(Activity activity, {bool publishing = false}) {
+    // Min/Max questions (example: 3..20)
+    if (activity.questions.length < 3) {
+      throw Exception('Activity must have at least 3 questions');
+    }
+    if (activity.questions.length > 20) {
+      throw Exception('Activity cannot exceed 20 questions');
+    }
+
+    // Media required if specified by type; ensure alt text when image used
+    for (final q in activity.questions) {
+      if ((q.type == QuestionType.dragDrop ||
+              q.type == QuestionType.matching) &&
+          q.media.imageUrl == null &&
+          q.media.audioUrl == null &&
+          q.media.videoUrl == null) {
+        throw Exception('Interactive questions must include supporting media');
+      }
+      if (q.media.imageUrl != null &&
+          (q.media.altText == null || q.media.altText!.trim().isEmpty)) {
+        throw Exception('Images must include accessibility alt text');
+      }
+    }
+
+    // Age-appropriate labels: ageGroup is required by model; ensure difficulty present (already required)
+
+    // Ensure skills/tags for discoverability
+    if (publishing) {
+      if (activity.skills.isEmpty) {
+        throw Exception('Published activity must include at least one skill');
+      }
+      if (activity.tags.isEmpty) {
+        throw Exception('Published activity must include at least one tag');
+      }
     }
   }
 
@@ -266,6 +357,46 @@ class ActivityService {
       debugPrint('Error submitting answer: $error');
       return progress;
     }
+  }
+
+  // Question template CRUD for teachers
+  Future<List<QuestionTemplate>> listTemplates() async {
+    final snapshot =
+        await _firestore.collection(templatesCollection).orderBy('title').get();
+    return snapshot.docs
+        .map((d) => QuestionTemplate.fromJson({'id': d.id, ...d.data()}))
+        .toList(growable: false);
+  }
+
+  Future<String> createTemplate(QuestionTemplate template,
+      {required UserType actorRole}) async {
+    if (actorRole != UserType.teacher && actorRole != UserType.admin) {
+      throw Exception('Only teachers/admins can create templates');
+    }
+    final payload = template.toJson()..remove('id');
+    final ref = await _firestore.collection(templatesCollection).add(payload);
+    return ref.id;
+  }
+
+  Future<void> updateTemplate(QuestionTemplate template,
+      {required UserType actorRole}) async {
+    if (actorRole != UserType.teacher && actorRole != UserType.admin) {
+      throw Exception('Only teachers/admins can update templates');
+    }
+    if (template.id.isEmpty) throw Exception('Template ID required');
+    final payload = template.toJson()..remove('id');
+    await _firestore
+        .collection(templatesCollection)
+        .doc(template.id)
+        .set(payload, SetOptions(merge: true));
+  }
+
+  Future<void> deleteTemplate(String templateId,
+      {required UserType actorRole}) async {
+    if (actorRole != UserType.teacher && actorRole != UserType.admin) {
+      throw Exception('Only teachers/admins can delete templates');
+    }
+    await _firestore.collection(templatesCollection).doc(templateId).delete();
   }
 
   Future<ActivityProgress?> completeActivity(
@@ -602,4 +733,3 @@ class ActivityService {
         .fold<int>(0, (total, question) => total + question.points);
   }
 }
-

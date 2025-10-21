@@ -11,6 +11,8 @@ class RouteNames {
   static const String login = '/login';
   static const String parentLogin = '/parent-login';
   static const String parentSignup = '/parent-signup';
+  static const String teacherLogin = '/teacher-login';
+  static const String teacherSignup = '/teacher-signup';
   static const String forgotPassword = '/forgot-password';
   static const String emailVerification = '/email-verification';
   static const String changePassword = '/change-password';
@@ -55,6 +57,9 @@ class RouteNames {
   static const String parentNotifications = '/parent/notifications';
   static const String parentChangePassword = '/parent/change-password';
   static const String parentDeleteAccount = '/parent/delete-account';
+
+  // Teacher routes
+  static const String teacherDashboard = '/teacher';
 
   // Common routes
   static const String settings = '/settings';

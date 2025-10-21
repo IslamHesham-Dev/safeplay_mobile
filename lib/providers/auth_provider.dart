@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/user_profile.dart';
+import '../models/user_type.dart';
 import '../services/auth_service.dart';
 
 /// Authentication state management
@@ -30,9 +31,11 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  bool get hasParentSession => _currentUser != null;
+  bool get hasParentSession => _currentUser?.userType == UserType.parent;
   bool get hasChildSession => _currentUser == null && _currentChild != null;
-  bool get isAuthenticated => hasParentSession || hasChildSession;
+  bool get hasTeacherSession => _currentUser?.userType == UserType.teacher;
+  bool get isAuthenticated =>
+      hasParentSession || hasChildSession || hasTeacherSession;
   bool get isChildAuthenticated => hasChildSession;
 
   /// Initialize auth state from storage
@@ -194,6 +197,39 @@ class AuthProvider extends ChangeNotifier {
       return false;
     } catch (error) {
       print('🔐 AuthProvider: Signup error: $error');
+      _setError(error.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Sign up as teacher
+  Future<bool> signUpTeacher({
+    required String email,
+    required String password,
+    required String name,
+  }) async {
+    _setLoading(true);
+    _clearError();
+    try {
+      final user = await _authService.signUpTeacher(
+        email: email,
+        password: password,
+        name: name,
+      );
+      _currentUser = user;
+      if (user != null) {
+        _currentChild = null;
+        await _persistCurrentUser(user);
+        await _clearPersistedChild();
+        await _saveUserId(user.id);
+        notifyListeners();
+        return true;
+      }
+      _setError('Failed to sign up teacher');
+      return false;
+    } catch (error) {
       _setError(error.toString());
       return false;
     } finally {

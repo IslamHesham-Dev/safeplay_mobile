@@ -32,5 +32,16 @@ enum AgeGroup {
     if (bright.isValidAge(age)) return bright;
     return null;
   }
-}
 
+  static AgeGroup? fromString(String? value) {
+    if (value == null) return null;
+    switch (value.toLowerCase()) {
+      case 'junior':
+        return AgeGroup.junior;
+      case 'bright':
+        return AgeGroup.bright;
+      default:
+        return null;
+    }
+  }
+}

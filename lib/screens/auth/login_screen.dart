@@ -90,13 +90,55 @@ class LoginScreen extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // Sign up link
-              TextButton(
-                onPressed: () => context.push(RouteNames.parentSignup),
-                child: const Text(
-                  "Don't have an account? Sign Up",
-                  style: TextStyle(color: SafePlayColors.brandTeal500),
+              // Teacher Login Button
+              ElevatedButton(
+                onPressed: () => context.push(RouteNames.teacherLogin),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: SafePlayColors.brandTeal500,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.school, size: 24),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Teacher Login',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Sign up links
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 16,
+                runSpacing: 8,
+                children: [
+                  TextButton(
+                    onPressed: () => context.push(RouteNames.parentSignup),
+                    child: const Text(
+                      'Parent Sign Up',
+                      style: TextStyle(color: SafePlayColors.brandTeal500),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => context.push(RouteNames.teacherSignup),
+                    child: const Text(
+                      'Teacher Sign Up',
+                      style: TextStyle(color: SafePlayColors.brandTeal500),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
