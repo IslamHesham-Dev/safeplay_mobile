@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../design_system/colors.dart';
 import '../../models/user_profile.dart';
 import '../../models/user_type.dart';
+import '../../navigation/route_names.dart';
 import '../../providers/child_provider.dart';
 
 /// Edit Child screen for parents to modify child profiles
@@ -23,10 +24,10 @@ class EditChildScreen extends StatefulWidget {
 class _EditChildScreenState extends State<EditChildScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _gradeController = TextEditingController();
+  final _ageController = TextEditingController();
 
-  DateTime? _selectedDateOfBirth;
   AgeGroup _selectedAgeGroup = AgeGroup.junior;
+  String? _selectedGender; // 'male' or 'female'
   bool _isLoading = false;
 
   @override
@@ -37,24 +38,26 @@ class _EditChildScreenState extends State<EditChildScreen> {
 
   void _initializeForm() {
     _nameController.text = widget.child.name;
-    _gradeController.text = widget.child.grade?.toString() ?? '';
-    _selectedDateOfBirth = widget.child.dateOfBirth;
+    _ageController.text = widget.child.age?.toString() ?? '';
     _selectedAgeGroup = widget.child.ageGroup ?? AgeGroup.junior;
+    _selectedGender = widget.child.gender;
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _gradeController.dispose();
+    _ageController.dispose();
     super.dispose();
   }
 
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedDateOfBirth == null) {
+
+    // Validate gender selection
+    if (_selectedGender == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select a date of birth'),
+          content: Text('Please select your child\'s gender'),
           backgroundColor: Colors.red,
         ),
       );
@@ -66,6 +69,9 @@ class _EditChildScreenState extends State<EditChildScreen> {
     try {
       final childProvider = context.read<ChildProvider>();
 
+      // Get age from input
+      final age = int.tryParse(_ageController.text.trim());
+
       // Create updated child profile
       final updatedChild = widget.child.copyWith(
         name: _nameController.text.trim(),
@@ -73,8 +79,8 @@ class _EditChildScreenState extends State<EditChildScreen> {
         userType: _selectedAgeGroup == AgeGroup.junior
             ? UserType.juniorChild
             : UserType.brightChild,
-        grade: int.tryParse(_gradeController.text.trim()),
-        dateOfBirth: _selectedDateOfBirth,
+        age: age,
+        gender: _selectedGender,
         updatedAt: DateTime.now(),
       );
 
@@ -147,7 +153,7 @@ class _EditChildScreenState extends State<EditChildScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Update your child\'s information',
+                  'Update your child\'s information and authentication',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: SafePlayColors.neutral600,
                       ),
@@ -171,48 +177,64 @@ class _EditChildScreenState extends State<EditChildScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Date of Birth
-                InkWell(
-                  onTap: _selectDateOfBirth,
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Date of Birth',
-                      prefixIcon: Icon(Icons.cake_outlined),
-                      border: OutlineInputBorder(),
-                    ),
-                    child: Text(
-                      _selectedDateOfBirth != null
-                          ? '${_selectedDateOfBirth!.day}/${_selectedDateOfBirth!.month}/${_selectedDateOfBirth!.year}'
-                          : 'Select date of birth',
-                      style: TextStyle(
-                        color: _selectedDateOfBirth != null
-                            ? null
-                            : SafePlayColors.neutral500,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Grade (Optional)
+                // Age (Required)
                 TextFormField(
-                  controller: _gradeController,
+                  controller: _ageController,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
-                    labelText: 'Grade (Optional)',
-                    prefixIcon: Icon(Icons.school_outlined),
+                    labelText: 'Age',
+                    prefixIcon: Icon(Icons.child_care_outlined),
                     border: OutlineInputBorder(),
-                    helperText: 'e.g., 1, 2, 3, etc.',
+                    helperText: 'Enter an age between 6 and 12',
                   ),
+                  onChanged: (value) {
+                    final age = int.tryParse(value.trim());
+                    if (age != null) {
+                      setState(() {
+                        if (age >= 6 && age <= 8) {
+                          _selectedAgeGroup = AgeGroup.junior;
+                        } else if (age >= 9 && age <= 12) {
+                          _selectedAgeGroup = AgeGroup.bright;
+                        }
+                        // Trigger rebuild to update dimming/disabled state
+                      });
+                    } else {
+                      setState(() {});
+                    }
+                  },
                   validator: (value) {
-                    if (value != null && value.trim().isNotEmpty) {
-                      final grade = int.tryParse(value.trim());
-                      if (grade == null || grade < 1 || grade > 12) {
-                        return 'Please enter a valid grade (1-12)';
-                      }
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter your child\'s age';
+                    }
+                    final age = int.tryParse(value.trim());
+                    if (age == null || age < 6 || age > 12) {
+                      return 'Age must be a number between 6 and 12';
                     }
                     return null;
                   },
+                ),
+                const SizedBox(height: 20),
+
+                // Gender Selection
+                Text(
+                  'Gender',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildGenderCard('male', 'Male', Icons.boy,
+                          SafePlayColors.brandTeal500),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildGenderCard('female', 'Female', Icons.girl,
+                          SafePlayColors.brandOrange500),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 20),
 
@@ -247,6 +269,11 @@ class _EditChildScreenState extends State<EditChildScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 24),
+
+                // Authentication Section
+                _buildAuthenticationSection(),
+
                 const SizedBox(height: 24),
 
                 // Submit Button
@@ -286,6 +313,171 @@ class _EditChildScreenState extends State<EditChildScreen> {
     );
   }
 
+  Widget _buildAuthenticationSection() {
+    final hasAuth =
+        widget.child.authData != null && widget.child.authData!.isNotEmpty;
+    final authType = widget.child.authData?['authType'] as String?;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: SafePlayColors.neutral50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: SafePlayColors.neutral300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.security,
+                color: SafePlayColors.brandTeal500,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Authentication',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (hasAuth) ...[
+            Row(
+              children: [
+                Icon(
+                  Icons.check_circle,
+                  color: SafePlayColors.success,
+                  size: 16,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  authType == 'emoji' || authType == 'picture'
+                      ? 'Junior Authentication (4 emojis)'
+                      : 'Bright Authentication (3 pictures + PIN)',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: SafePlayColors.success,
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      // Navigate to appropriate auth setup
+                      if (widget.child.ageGroup == AgeGroup.junior) {
+                        context.push(RouteNames.juniorAuthSetup,
+                            extra: widget.child);
+                      } else {
+                        context.push(RouteNames.brightAuthSetup,
+                            extra: widget.child);
+                      }
+                    },
+                    icon: const Icon(Icons.edit),
+                    label: const Text('Change Authentication'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: SafePlayColors.brandTeal500,
+                      side: BorderSide(color: SafePlayColors.brandTeal500),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            Row(
+              children: [
+                Icon(
+                  Icons.warning_amber,
+                  color: SafePlayColors.warning,
+                  size: 16,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'No authentication set up',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: SafePlayColors.warning,
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      // Navigate to appropriate auth setup
+                      if (widget.child.ageGroup == AgeGroup.junior) {
+                        context.push(RouteNames.juniorAuthSetup,
+                            extra: widget.child);
+                      } else {
+                        context.push(RouteNames.brightAuthSetup,
+                            extra: widget.child);
+                      }
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('Set Up Authentication'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: SafePlayColors.brandTeal500,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGenderCard(
+      String gender, String title, IconData icon, Color color) {
+    final isSelected = _selectedGender == gender;
+
+    return InkWell(
+      onTap: () {
+        setState(() => _selectedGender = gender);
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isSelected ? color : SafePlayColors.neutral300,
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? color.withValues(alpha: 0.1) : null,
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 32,
+              color: isSelected ? color : SafePlayColors.neutral500,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isSelected ? color : SafePlayColors.neutral700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildAgeGroupCard(
     AgeGroup ageGroup,
     String title,
@@ -294,17 +486,15 @@ class _EditChildScreenState extends State<EditChildScreen> {
     Color color,
   ) {
     final isSelected = _selectedAgeGroup == ageGroup;
-    final childAge = _selectedDateOfBirth != null
-        ? _calculateAge(_selectedDateOfBirth!)
-        : null;
+    final typedAge = int.tryParse(_ageController.text.trim());
     final isValidForAge =
-        childAge != null ? ageGroup.isValidAge(childAge) : true;
-    final isDisabled = childAge != null && !isValidForAge;
+        typedAge != null ? ageGroup.isValidAge(typedAge) : true;
+    final isDisabled = typedAge != null && !isValidForAge;
 
     return InkWell(
       onTap: () {
         if (isDisabled) {
-          _showAgeMismatchAlert(ageGroup, childAge);
+          _showAgeMismatchAlert(ageGroup, typedAge);
           return;
         }
         setState(() => _selectedAgeGroup = ageGroup);
@@ -371,7 +561,7 @@ class _EditChildScreenState extends State<EditChildScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'Age ${childAge}',
+                  'Age ${typedAge}',
                   style: const TextStyle(
                     fontSize: 10,
                     color: Colors.orange,
@@ -386,54 +576,9 @@ class _EditChildScreenState extends State<EditChildScreen> {
     );
   }
 
-  Future<void> _selectDateOfBirth() async {
-    final now = DateTime.now();
-    final firstDate = DateTime(now.year - 12, 1, 1);
-    final lastDate = DateTime(now.year - 6, 12, 31);
+  void _showAgeMismatchAlert(AgeGroup selectedGroup, int? childAge) {
+    if (childAge == null) return;
 
-    final selectedDate = await showDatePicker(
-      context: context,
-      initialDate: _selectedDateOfBirth ?? DateTime(now.year - 7, 1, 1),
-      firstDate: firstDate,
-      lastDate: lastDate,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-                  primary: SafePlayColors.brandTeal500,
-                ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (selectedDate != null) {
-      setState(() {
-        _selectedDateOfBirth = selectedDate;
-        // Auto-select age group based on age
-        final age = _calculateAge(selectedDate);
-        if (age >= 6 && age <= 8) {
-          _selectedAgeGroup = AgeGroup.junior;
-        } else if (age >= 9 && age <= 12) {
-          _selectedAgeGroup = AgeGroup.bright;
-        }
-      });
-    }
-  }
-
-  int _calculateAge(DateTime dateOfBirth) {
-    final now = DateTime.now();
-    var age = now.year - dateOfBirth.year;
-    final birthdayPassed = (now.month > dateOfBirth.month) ||
-        (now.month == dateOfBirth.month && now.day >= dateOfBirth.day);
-    if (!birthdayPassed) {
-      age -= 1;
-    }
-    return age;
-  }
-
-  void _showAgeMismatchAlert(AgeGroup selectedGroup, int childAge) {
     final groupName =
         selectedGroup == AgeGroup.junior ? 'Junior Explorer' : 'Bright Minds';
     final ageRange = selectedGroup == AgeGroup.junior ? '6-8' : '9-12';
@@ -461,7 +606,7 @@ class _EditChildScreenState extends State<EditChildScreen> {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Please select the appropriate age group or adjust the birth date.',
+              'Please select the appropriate age group or adjust the age.',
               style: TextStyle(fontWeight: FontWeight.w500),
             ),
           ],

@@ -250,13 +250,14 @@ class ChildProfile extends UserProfile {
   final List<String> teacherIds;
   final List<String> counselorIds;
   final int? grade;
-  final DateTime? dateOfBirth;
+  final int? age;
   final ChildStats stats;
   final List<String> achievements;
   final List<String> favoriteSubjects;
   final List<String> learningModes;
   final DateTime updatedAt;
   final Map<String, dynamic>? authData;
+  final String? gender; // 'male' or 'female'
 
   const ChildProfile({
     required super.id,
@@ -272,13 +273,14 @@ class ChildProfile extends UserProfile {
     this.teacherIds = const [],
     this.counselorIds = const [],
     this.grade,
-    this.dateOfBirth,
+    this.age,
     this.stats = const ChildStats(),
     this.achievements = const [],
     this.favoriteSubjects = const [],
     this.learningModes = const [],
     required this.updatedAt,
     this.authData,
+    this.gender,
   });
 
   String get parentId => parentIds.isNotEmpty ? parentIds.first : '';
@@ -287,17 +289,7 @@ class ChildProfile extends UserProfile {
   int get streakDays => stats.currentStreak;
   int get totalActivitiesCompleted => stats.totalActivitiesCompleted;
   DateTime? get lastActivityAt => stats.lastActivityAt;
-  int? get age {
-    if (dateOfBirth == null) return null;
-    final now = DateTime.now();
-    var years = now.year - dateOfBirth!.year;
-    final birthdayPassed = (now.month > dateOfBirth!.month) ||
-        (now.month == dateOfBirth!.month && now.day >= dateOfBirth!.day);
-    if (!birthdayPassed) {
-      years -= 1;
-    }
-    return years;
-  }
+  // Age is now stored directly in the age field
 
   factory ChildProfile.fromJson(Map<String, dynamic> json) {
     final ageGroupValue = json['ageGroup'] ?? json['age_group'];
@@ -342,7 +334,7 @@ class ChildProfile extends UserProfile {
       teacherIds: _stringList(json['teacherIds']),
       counselorIds: _stringList(json['counselorIds']),
       grade: (json['grade'] as num?)?.toInt(),
-      dateOfBirth: _parseDate(json['dateOfBirth']),
+      age: (json['age'] as num?)?.toInt(),
       stats: ChildStats.fromJson(json['stats'] as Map<String, dynamic>?),
       achievements: _stringList(json['achievements']),
       favoriteSubjects:
@@ -352,6 +344,7 @@ class ChildProfile extends UserProfile {
       authData: json['authData'] is Map<String, dynamic>
           ? json['authData'] as Map<String, dynamic>
           : null,
+      gender: json['gender']?.toString(),
     );
   }
 
@@ -364,7 +357,7 @@ class ChildProfile extends UserProfile {
       'teacherIds': teacherIds,
       'counselorIds': counselorIds,
       'grade': grade,
-      'dateOfBirth': dateOfBirth?.toIso8601String(),
+      'age': age,
       'stats': stats.toJson(),
       'achievements': achievements,
       'preferences': {
@@ -373,6 +366,7 @@ class ChildProfile extends UserProfile {
       },
       'updatedAt': updatedAt.toIso8601String(),
       'authData': authData,
+      'gender': gender,
     });
     return json;
   }
@@ -390,13 +384,14 @@ class ChildProfile extends UserProfile {
     List<String>? teacherIds,
     List<String>? counselorIds,
     int? grade,
-    DateTime? dateOfBirth,
+    int? age,
     ChildStats? stats,
     List<String>? achievements,
     List<String>? favoriteSubjects,
     List<String>? learningModes,
     DateTime? updatedAt,
     Map<String, dynamic>? authData,
+    String? gender,
   }) {
     return ChildProfile(
       id: id,
@@ -412,13 +407,14 @@ class ChildProfile extends UserProfile {
       teacherIds: teacherIds ?? this.teacherIds,
       counselorIds: counselorIds ?? this.counselorIds,
       grade: grade ?? this.grade,
-      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      age: age ?? this.age,
       stats: stats ?? this.stats,
       achievements: achievements ?? this.achievements,
       favoriteSubjects: favoriteSubjects ?? this.favoriteSubjects,
       learningModes: learningModes ?? this.learningModes,
       updatedAt: updatedAt ?? this.updatedAt,
       authData: authData ?? this.authData,
+      gender: gender ?? this.gender,
     );
   }
 
@@ -429,12 +425,13 @@ class ChildProfile extends UserProfile {
         teacherIds,
         counselorIds,
         grade,
-        dateOfBirth,
+        age,
         stats,
         achievements,
         favoriteSubjects,
         learningModes,
         updatedAt,
         authData,
+        gender,
       ];
 }

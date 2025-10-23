@@ -1,0 +1,977 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../constants/authentication_options.dart';
+import '../../design_system/colors.dart';
+import '../../widgets/auth/picture_password_grid.dart';
+import '../../widgets/auth/pin_entry_widget.dart';
+import '../../widgets/auth/add_child_dialog.dart';
+import '../../services/auth_service.dart';
+import '../../services/local_child_storage.dart';
+import '../../models/user_profile.dart';
+import '../../models/user_type.dart';
+import '../../navigation/route_names.dart';
+
+/// Unified child login screen that determines age group based on input method
+class UnifiedChildLoginScreen extends StatefulWidget {
+  const UnifiedChildLoginScreen({super.key});
+
+  @override
+  State<UnifiedChildLoginScreen> createState() =>
+      _UnifiedChildLoginScreenState();
+}
+
+class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
+    with TickerProviderStateMixin {
+  // Real children data from Firebase
+  List<ChildProfile> _availableChildren = [];
+
+  // Login state
+  String? _selectedChildId;
+  ChildProfile? _selectedChild;
+  String _loginMethod = ''; // 'emoji' or 'picture_pin'
+
+  // Animation controllers
+  late AnimationController _fadeController;
+  late AnimationController _slideController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  // Emoji authentication
+  final List<String> _juniorEmojis = juniorEmojiOptions;
+
+  @override
+  void initState() {
+    super.initState();
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOut));
+
+    _fadeController.forward();
+    _slideController.forward();
+
+    // Load children data
+    _loadChildren();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _slideController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadChildren() async {
+    try {
+      // Load children from local storage (parent-specific)
+      final children = await LocalChildStorage.getChildren();
+      setState(() {
+        _availableChildren = children;
+      });
+    } catch (e) {
+      print('Error loading children: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading children: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _selectChild(ChildProfile child) {
+    setState(() {
+      _selectedChildId = child.id;
+      _selectedChild = child;
+      _loginMethod = _determineLoginMethod(child);
+    });
+  }
+
+  String _determineLoginMethod(ChildProfile child) {
+    // Determine login method based on authData.authType
+    if (child.authData != null) {
+      final authType = child.authData!['authType'] as String?;
+      if (authType == 'picture+pin') {
+        return 'picture_pin';
+      } else if (authType == 'emoji' || authType == 'picture') {
+        return 'emoji';
+      }
+    }
+
+    // Fallback to age group if no authData
+    return child.ageGroup == AgeGroup.junior ? 'emoji' : 'picture_pin';
+  }
+
+  void _goBack() {
+    setState(() {
+      _selectedChildId = null;
+      _selectedChild = null;
+      _loginMethod = '';
+    });
+  }
+
+  String _getAddButtonText() {
+    return _availableChildren.isEmpty ? 'Add First Child' : 'Add Another Child';
+  }
+
+  void _showAddChildDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AddChildDialog(
+        onChildAdded: (child) {
+          // Refresh the children list
+          _loadChildren();
+          // Select the newly added child
+          _selectChild(child);
+        },
+      ),
+    );
+  }
+
+  void _editChild(ChildProfile child) {
+    // For now, we'll show a simple edit dialog
+    // In a full implementation, you might want to create a separate edit dialog
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Edit ${child.name}'),
+        content: const Text('Edit functionality will be implemented here.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _removeChild(ChildProfile child) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Remove ${child.name}?'),
+        content: const Text(
+            'This will permanently remove the child from your device. This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await _confirmRemoveChild(child);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmRemoveChild(ChildProfile child) async {
+    try {
+      await LocalChildStorage.removeChild(child.id);
+      await _loadChildren();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${child.name} has been removed'),
+            backgroundColor: SafePlayColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error removing child: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _onEmojiSequenceComplete(List<String> sequence) async {
+    if (_selectedChild == null) return;
+
+    print('[UnifiedChildLogin]: ===== EMOJI AUTHENTICATION DEBUG =====');
+    print('[UnifiedChildLogin]: Child ID: ${_selectedChild!.id}');
+    print('[UnifiedChildLogin]: Child Name: ${_selectedChild!.name}');
+    print('[UnifiedChildLogin]: Child Age Group: ${_selectedChild!.ageGroup}');
+    print('[UnifiedChildLogin]: Auth Data: ${_selectedChild!.authData}');
+    print('[UnifiedChildLogin]: Provided emoji sequence: $sequence');
+    print('[UnifiedChildLogin]: ========================================');
+
+    try {
+      final authService = AuthService();
+      final success = await authService.authenticateChildWithEmojis(
+        _selectedChild!.id,
+        sequence,
+      );
+
+      print('[UnifiedChildLogin]: Authentication result: $success');
+
+      if (success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Welcome back, ${_selectedChild!.name}!'),
+              backgroundColor: SafePlayColors.success,
+            ),
+          );
+          context.go(RouteNames.juniorDashboard);
+        }
+      } else {
+        print('[UnifiedChildLogin]: Emoji authentication failed');
+        _handleFailedAttempt();
+      }
+    } catch (e) {
+      print('[UnifiedChildLogin]: Emoji authentication error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Authentication error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _onPicturePinComplete(List<String> pictures, String pin) async {
+    if (_selectedChild == null) return;
+
+    print('[UnifiedChildLogin]: ===== PICTURE+PIN AUTHENTICATION DEBUG =====');
+    print('[UnifiedChildLogin]: Child ID: ${_selectedChild!.id}');
+    print('[UnifiedChildLogin]: Child Name: ${_selectedChild!.name}');
+    print('[UnifiedChildLogin]: Child Age Group: ${_selectedChild!.ageGroup}');
+    print('[UnifiedChildLogin]: Auth Data: ${_selectedChild!.authData}');
+    print('[UnifiedChildLogin]: Provided pictures: $pictures');
+    print('[UnifiedChildLogin]: Provided PIN: $pin');
+    print('[UnifiedChildLogin]: =============================================');
+
+    try {
+      final authService = AuthService();
+      final success = await authService.authenticateChildWithPicturePin(
+        _selectedChild!.id,
+        pictures,
+        pin,
+      );
+
+      print('[UnifiedChildLogin]: Authentication result: $success');
+
+      if (success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Welcome back, ${_selectedChild!.name}!'),
+              backgroundColor: SafePlayColors.success,
+            ),
+          );
+          context.go(RouteNames.brightDashboard);
+        }
+      } else {
+        print('[UnifiedChildLogin]: Picture+PIN authentication failed');
+        _handleFailedAttempt();
+      }
+    } catch (e) {
+      print('[UnifiedChildLogin]: Picture+PIN authentication error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Authentication error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _handleFailedAttempt() {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Oops! That\'s not right. Try again!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFF8F9FA),
+              Color(0xFFE3F2FD),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: _selectedChildId == null
+              ? _buildChildSelector()
+              : _buildLoginInterface(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChildSelector() {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Back button
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () => context.pop(),
+                    icon: const Icon(Icons.arrow_back),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: SafePlayColors.brandTeal500,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // Welcome message
+              Text(
+                'Who\'s here?',
+                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: SafePlayColors.brandTeal500,
+                    ),
+              ),
+
+              const SizedBox(height: 16),
+
+              Text(
+                'Choose your profile to start learning!',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: SafePlayColors.neutral600,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 40),
+
+              // Children grid or empty state
+              Expanded(
+                child: _availableChildren.isEmpty
+                    ? _buildEmptyState()
+                    : Column(
+                        children: [
+                          Expanded(
+                            child: GridView.builder(
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                                childAspectRatio: 0.8,
+                              ),
+                              itemCount: _availableChildren.length,
+                              itemBuilder: (context, index) {
+                                final child = _availableChildren[index];
+                                return _buildChildCard(child);
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // Add Child button
+                          ElevatedButton.icon(
+                            onPressed: _showAddChildDialog,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Add Another Child'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: SafePlayColors.brandTeal500,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Help button
+              TextButton.icon(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Need Help?'),
+                      content: const Text(
+                        'Ask your parent to help you log in or create a new profile.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.help_outline),
+                label: const Text('Need Help?'),
+                style: TextButton.styleFrom(
+                  foregroundColor: SafePlayColors.brandTeal500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.child_care_outlined,
+            size: 80,
+            color: SafePlayColors.neutral400,
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'No children found',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: SafePlayColors.neutral600,
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Add your child\'s profile and set up their login credentials.',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: SafePlayColors.neutral500,
+                ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: _showAddChildDialog,
+            icon: const Icon(Icons.add),
+            label: Text(_getAddButtonText()),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: SafePlayColors.brandTeal500,
+              foregroundColor: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextButton.icon(
+            onPressed: () => context.pop(),
+            icon: const Icon(Icons.arrow_back),
+            label: const Text('Go Back'),
+            style: TextButton.styleFrom(
+              foregroundColor: SafePlayColors.brandTeal500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChildCard(ChildProfile child) {
+    final isJunior = child.ageGroup == AgeGroup.junior;
+    final ageGroupColor =
+        isJunior ? SafePlayColors.juniorPurple : SafePlayColors.brightIndigo;
+    final ageGroupLabel = isJunior ? 'Junior Explorer' : 'Bright Minds';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Main content
+          Expanded(
+            child: GestureDetector(
+              onTap: () => _selectChild(child),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Avatar
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: ageGroupColor.withValues(alpha: 0.1),
+                      child: Text(
+                        _getChildAvatar(child),
+                        style: const TextStyle(fontSize: 40),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Name
+                    Text(
+                      child.name,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // Age group badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: ageGroupColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: ageGroupColor, width: 1),
+                      ),
+                      child: Text(
+                        ageGroupLabel,
+                        style: TextStyle(
+                          color: ageGroupColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Edit/Remove buttons
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: SafePlayColors.neutral50,
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // Edit button
+                IconButton(
+                  onPressed: () => _editChild(child),
+                  icon: const Icon(Icons.edit, size: 20),
+                  color: SafePlayColors.brandTeal500,
+                  tooltip: 'Edit Child',
+                ),
+
+                // Remove button
+                IconButton(
+                  onPressed: () => _removeChild(child),
+                  icon: const Icon(Icons.delete, size: 20),
+                  color: Colors.red,
+                  tooltip: 'Remove Child',
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getChildAvatar(ChildProfile child) {
+    // Use gender-based avatar if available
+    if (child.gender != null) {
+      return child.gender == 'female' ? '👧' : '👦';
+    }
+
+    // Fallback to age group
+    return child.ageGroup == AgeGroup.junior ? '👧' : '👦';
+  }
+
+  Widget _buildLoginInterface() {
+    if (_selectedChild == null) return const SizedBox();
+
+    final isJunior = _loginMethod == 'emoji';
+    final childName = _selectedChild!.name;
+
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Back button
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: _goBack,
+                    icon: const Icon(Icons.arrow_back),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: SafePlayColors.brandTeal500,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // Avatar
+              CircleAvatar(
+                radius: 50,
+                backgroundColor: isJunior
+                    ? SafePlayColors.juniorPurple.withValues(alpha: 0.1)
+                    : SafePlayColors.brightIndigo.withValues(alpha: 0.1),
+                child: Text(
+                  _getChildAvatar(_selectedChild!),
+                  style: const TextStyle(fontSize: 50),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Welcome message
+              Text(
+                'Hi $childName!',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: isJunior
+                          ? SafePlayColors.juniorPurple
+                          : SafePlayColors.brightIndigo,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 8),
+
+              Text(
+                isJunior
+                    ? 'Select your 4 emoji pictures to log in'
+                    : 'Select your 3 pictures and enter your PIN',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: SafePlayColors.neutral600,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 32),
+
+              // Login interface
+              Expanded(
+                child: _buildAuthInterface(),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Help button
+              TextButton.icon(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Need Help?'),
+                      content: const Text(
+                        'Ask your parent to help you log in or reset your authentication.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.help_outline),
+                label: const Text('Need Help?'),
+                style: TextButton.styleFrom(
+                  foregroundColor: isJunior
+                      ? SafePlayColors.juniorPurple
+                      : SafePlayColors.brightIndigo,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAuthInterface() {
+    if (_selectedChild == null) return const SizedBox();
+
+    // Check if child has authentication set up
+    if (_selectedChild!.authData == null) {
+      return _buildNoAuthSetup();
+    }
+
+    final authType = _selectedChild!.authData!['authType'] as String?;
+
+    if (authType == 'emoji' || authType == 'picture') {
+      return _buildJuniorLogin();
+    } else if (authType == 'picture+pin') {
+      return _buildBrightLogin();
+    } else {
+      return _buildNoAuthSetup();
+    }
+  }
+
+  Widget _buildNoAuthSetup() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.lock_outline,
+            size: 80,
+            color: SafePlayColors.neutral400,
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Login not set up',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: SafePlayColors.neutral600,
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Ask your parent to set up your login first.',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: SafePlayColors.neutral500,
+                ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: _goBack,
+            icon: const Icon(Icons.arrow_back),
+            label: const Text('Go Back'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: SafePlayColors.brandTeal500,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildJuniorLogin() {
+    return PicturePasswordGrid(
+      key: const ValueKey('junior-grid'),
+      pictures: _juniorEmojis,
+      sequenceLength: 4,
+      onSequenceComplete: _onEmojiSequenceComplete,
+      selectionColor: SafePlayColors.juniorPurple,
+    );
+  }
+
+  Widget _buildBrightLogin() {
+    return BrightPicturePinLogin(
+      key: const ValueKey('bright-login'),
+      onPicturePinComplete: _onPicturePinComplete,
+    );
+  }
+}
+
+/// Bright Minds login interface with picture + PIN
+class BrightPicturePinLogin extends StatefulWidget {
+  final Function(List<String>, String) onPicturePinComplete;
+
+  const BrightPicturePinLogin({
+    super.key,
+    required this.onPicturePinComplete,
+  });
+
+  @override
+  State<BrightPicturePinLogin> createState() => _BrightPicturePinLoginState();
+}
+
+class _BrightPicturePinLoginState extends State<BrightPicturePinLogin> {
+  final List<String> _brightPictures = brightPictureOptions;
+
+  bool _pictureStepComplete = false;
+  List<String>? _selectedPictures;
+
+  void _onPicturesSelected(List<String> selectedPictures) {
+    setState(() {
+      _selectedPictures = selectedPictures;
+      _pictureStepComplete = true;
+    });
+  }
+
+  void _onPinComplete(String pin) {
+    if (_selectedPictures != null) {
+      widget.onPicturePinComplete(_selectedPictures!, pin);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Step indicator
+        Row(
+          children: [
+            Expanded(
+              child: _buildStepCard(
+                '1',
+                'Pictures',
+                _pictureStepComplete,
+                SafePlayColors.brightIndigo,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildStepCard(
+                '2',
+                'PIN',
+                false,
+                SafePlayColors.brightIndigo,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 32),
+
+        // Content based on step
+        if (!_pictureStepComplete) ...[
+          Text(
+            'Select your 3 pictures',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: SafePlayColors.brightIndigo,
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 24),
+          PicturePasswordGrid(
+            pictures: _brightPictures,
+            sequenceLength: 3,
+            onSequenceComplete: _onPicturesSelected,
+            useAvatarStyle: true,
+            selectionColor: SafePlayColors.brightIndigo,
+          ),
+        ] else ...[
+          Text(
+            'Enter your 4-digit PIN',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: SafePlayColors.brightIndigo,
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 24),
+          PinEntryWidget(
+            onPinComplete: _onPinComplete,
+          ),
+          const SizedBox(height: 16),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _pictureStepComplete = false;
+                _selectedPictures = null;
+              });
+            },
+            child: const Text('Change Pictures'),
+            style: TextButton.styleFrom(
+              foregroundColor: SafePlayColors.brightIndigo,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildStepCard(
+      String step, String label, bool isComplete, Color color) {
+    return Card(
+      color: isComplete ? color.withValues(alpha: 0.1) : Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: isComplete
+                    ? SafePlayColors.success
+                    : color.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: isComplete
+                    ? const Icon(Icons.check, color: Colors.white)
+                    : Text(
+                        step,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: color,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../constants/authentication_options.dart';
 import '../../design_system/colors.dart';
 import '../../widgets/auth/picture_password_grid.dart';
 import '../../widgets/auth/pin_entry_widget.dart';
@@ -21,20 +22,7 @@ class BrightPicturePinSetup extends StatefulWidget {
 }
 
 class _BrightPicturePinSetupState extends State<BrightPicturePinSetup> {
-  final List<String> _pictures = [
-    '🎨',
-    '📚',
-    '⚽',
-    '🎮',
-    '🎵',
-    '🎬',
-    '🌟',
-    '🚀',
-    '🌈',
-    '⚡',
-    '🔬',
-    '🎯',
-  ];
+  final List<String> _pictures = brightPictureOptions;
 
   int _currentStep = 0; // 0: Picture selection, 1: PIN entry, 2: Confirm PIN
   List<String>? _selectedPictures;
@@ -281,6 +269,8 @@ class _BrightPicturePinSetupState extends State<BrightPicturePinSetup> {
           pictures: _pictures,
           sequenceLength: 3,
           onSequenceComplete: _onPicturesSelected,
+          useAvatarStyle: true,
+          selectionColor: SafePlayColors.brightIndigo,
         ),
       ],
     );

@@ -8,6 +8,7 @@ class AvatarWidget extends StatelessWidget {
   final double size;
   final Color? backgroundColor;
   final Color? textColor;
+  final String? gender; // 'male' or 'female' for gender-specific avatars
 
   const AvatarWidget({
     super.key,
@@ -16,6 +17,7 @@ class AvatarWidget extends StatelessWidget {
     this.size = 60.0,
     this.backgroundColor,
     this.textColor,
+    this.gender,
   });
 
   @override
@@ -48,7 +50,8 @@ class AvatarWidget extends StatelessWidget {
   }
 
   Widget _buildGeneratedAvatar() {
-    final initials = _getInitials(name);
+    // Use gender-specific emoji if available, otherwise use initials
+    final displayText = _getDisplayText();
     final bgColor = backgroundColor ?? _getColorFromName(name);
     final txtColor = textColor ?? Colors.white;
 
@@ -62,15 +65,25 @@ class AvatarWidget extends StatelessWidget {
       ),
       child: Center(
         child: Text(
-          initials,
+          displayText,
           style: TextStyle(
             color: txtColor,
-            fontSize: size * 0.4,
+            fontSize: gender != null ? size * 0.5 : size * 0.4,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
     );
+  }
+
+  String _getDisplayText() {
+    // Use gender-specific emoji if gender is provided
+    if (gender != null) {
+      return gender == 'female' ? '👧' : '👦';
+    }
+
+    // Fallback to initials
+    return _getInitials(name);
   }
 
   String _getInitials(String name) {
@@ -164,4 +177,3 @@ class AvatarGridWidget extends StatelessWidget {
     );
   }
 }
-

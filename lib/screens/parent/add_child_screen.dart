@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../design_system/colors.dart';
 import '../../models/user_profile.dart';
 import '../../models/user_type.dart';
+import '../../navigation/route_names.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
 
@@ -21,8 +22,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
   final _nameController = TextEditingController();
   final _ageController = TextEditingController();
 
-  DateTime? _selectedDateOfBirth;
   AgeGroup _selectedAgeGroup = AgeGroup.junior;
+  String? _selectedGender; // 'male' or 'female'
   bool _isLoading = false;
 
   @override
@@ -34,6 +35,18 @@ class _AddChildScreenState extends State<AddChildScreen> {
 
   Future<void> _handleSubmit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Validate gender selection
+    if (_selectedGender == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select your child\'s gender'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     // Date of birth is optional; age is required via form validator
 
     setState(() => _isLoading = true);
@@ -46,6 +59,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
         throw Exception('No parent logged in');
       }
 
+      // Get age from input
+      final age = int.tryParse(_ageController.text.trim());
+
       // Create child profile
       final childProfile = ChildProfile(
         id: '', // Will be set by Firestore
@@ -56,12 +72,13 @@ class _AddChildScreenState extends State<AddChildScreen> {
         ageGroup: _selectedAgeGroup,
         createdAt: DateTime.now(),
         parentIds: [authProvider.currentUser!.id],
-        dateOfBirth: _selectedDateOfBirth,
+        age: age,
         stats: const ChildStats(),
         achievements: const [],
         favoriteSubjects: const [],
         learningModes: const [],
         updatedAt: DateTime.now(),
+        gender: _selectedGender,
       );
 
       // Add child to Firestore
@@ -75,7 +92,13 @@ class _AddChildScreenState extends State<AddChildScreen> {
               backgroundColor: SafePlayColors.success,
             ),
           );
-          context.pop();
+
+          // Navigate to authentication setup based on age group
+          if (newChild.ageGroup == AgeGroup.junior) {
+            context.push(RouteNames.juniorAuthSetup, extra: newChild);
+          } else {
+            context.push(RouteNames.brightAuthSetup, extra: newChild);
+          }
         }
       } else {
         throw Exception(
@@ -195,26 +218,26 @@ class _AddChildScreenState extends State<AddChildScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Date of Birth (Optional)
-                InkWell(
-                  onTap: _selectDateOfBirth,
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Date of Birth (Optional)',
-                      prefixIcon: Icon(Icons.cake_outlined),
-                      border: OutlineInputBorder(),
-                    ),
-                    child: Text(
-                      _selectedDateOfBirth != null
-                          ? '${_selectedDateOfBirth!.day}/${_selectedDateOfBirth!.month}/${_selectedDateOfBirth!.year}'
-                          : 'Select date of birth',
-                      style: TextStyle(
-                        color: _selectedDateOfBirth != null
-                            ? null
-                            : SafePlayColors.neutral500,
+                // Gender Selection
+                Text(
+                  'Gender',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildGenderCard('male', 'Male', Icons.boy,
+                          SafePlayColors.brandTeal500),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildGenderCard('female', 'Female', Icons.girl,
+                          SafePlayColors.brandOrange500),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 20),
 
@@ -297,17 +320,14 @@ class _AddChildScreenState extends State<AddChildScreen> {
   ) {
     final isSelected = _selectedAgeGroup == ageGroup;
     final typedAge = int.tryParse(_ageController.text.trim());
-    final childAge = _selectedDateOfBirth != null
-        ? _calculateAge(_selectedDateOfBirth!)
-        : typedAge;
     final isValidForAge =
-        childAge != null ? ageGroup.isValidAge(childAge) : true;
-    final isDisabled = childAge != null && !isValidForAge;
+        typedAge != null ? ageGroup.isValidAge(typedAge) : true;
+    final isDisabled = typedAge != null && !isValidForAge;
 
     return InkWell(
       onTap: () {
         if (isDisabled) {
-          _showAgeMismatchAlert(ageGroup, childAge);
+          _showAgeMismatchAlert(ageGroup, typedAge);
           return;
         }
         setState(() => _selectedAgeGroup = ageGroup);
@@ -374,7 +394,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'Age ${childAge}',
+                  'Age ${typedAge}',
                   style: const TextStyle(
                     fontSize: 10,
                     color: Colors.orange,
@@ -389,51 +409,43 @@ class _AddChildScreenState extends State<AddChildScreen> {
     );
   }
 
-  Future<void> _selectDateOfBirth() async {
-    final now = DateTime.now();
-    final firstDate = DateTime(now.year - 12, 1, 1);
-    final lastDate = DateTime(now.year - 6, 12, 31);
+  Widget _buildGenderCard(
+      String gender, String title, IconData icon, Color color) {
+    final isSelected = _selectedGender == gender;
 
-    final selectedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime(now.year - 7, 1, 1),
-      firstDate: firstDate,
-      lastDate: lastDate,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-                  primary: SafePlayColors.brandTeal500,
-                ),
-          ),
-          child: child!,
-        );
+    return InkWell(
+      onTap: () {
+        setState(() => _selectedGender = gender);
       },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isSelected ? color : SafePlayColors.neutral300,
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? color.withValues(alpha: 0.1) : null,
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 32,
+              color: isSelected ? color : SafePlayColors.neutral500,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: isSelected ? color : SafePlayColors.neutral700,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
-
-    if (selectedDate != null) {
-      setState(() {
-        _selectedDateOfBirth = selectedDate;
-        // Auto-select age group based on age
-        final age = _calculateAge(selectedDate);
-        if (age >= 6 && age <= 8) {
-          _selectedAgeGroup = AgeGroup.junior;
-        } else if (age >= 9 && age <= 12) {
-          _selectedAgeGroup = AgeGroup.bright;
-        }
-      });
-    }
-  }
-
-  int _calculateAge(DateTime dateOfBirth) {
-    final now = DateTime.now();
-    var age = now.year - dateOfBirth.year;
-    final birthdayPassed = (now.month > dateOfBirth.month) ||
-        (now.month == dateOfBirth.month && now.day >= dateOfBirth.day);
-    if (!birthdayPassed) {
-      age -= 1;
-    }
-    return age;
   }
 
   void _showAgeMismatchAlert(AgeGroup selectedGroup, int childAge) {

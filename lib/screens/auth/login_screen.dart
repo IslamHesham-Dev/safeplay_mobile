@@ -64,7 +64,7 @@ class LoginScreen extends StatelessWidget {
 
               // Child Login Button
               ElevatedButton(
-                onPressed: () => context.push(RouteNames.childSelector),
+                onPressed: () => context.push(RouteNames.unifiedChildLogin),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: SafePlayColors.brandOrange500,
                   padding: const EdgeInsets.symmetric(vertical: 16),

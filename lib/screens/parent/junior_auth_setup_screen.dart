@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../constants/authentication_options.dart';
 import '../../design_system/colors.dart';
 import '../../models/user_profile.dart';
+import '../../navigation/route_names.dart';
 import '../../providers/child_provider.dart';
 
 /// Junior Explorer authentication setup screen
@@ -21,72 +23,7 @@ class JuniorAuthSetupScreen extends StatefulWidget {
 
 class _JuniorAuthSetupScreenState extends State<JuniorAuthSetupScreen> {
   final List<String> _selectedEmojis = [];
-  final List<String> _availableEmojis = [
-    '😀',
-    '😃',
-    '😄',
-    '😁',
-    '😆',
-    '😅',
-    '🤣',
-    '😂',
-    '🙂',
-    '🙃',
-    '😉',
-    '😊',
-    '😇',
-    '🥰',
-    '😍',
-    '🤩',
-    '😘',
-    '😗',
-    '😚',
-    '😙',
-    '😋',
-    '😛',
-    '😜',
-    '🤪',
-    '😝',
-    '🤑',
-    '🤗',
-    '🤭',
-    '🤫',
-    '🤔',
-    '🤐',
-    '🤨',
-    '😐',
-    '😑',
-    '😶',
-    '😏',
-    '😒',
-    '🙄',
-    '😬',
-    '🤥',
-    '😔',
-    '😕',
-    '🙁',
-    '☹️',
-    '😣',
-    '😖',
-    '😫',
-    '😩',
-    '🥺',
-    '😢',
-    '😭',
-    '😤',
-    '😠',
-    '😡',
-    '🤬',
-    '🤯',
-    '😳',
-    '🥵',
-    '🥶',
-    '😱',
-    '😨',
-    '😰',
-    '😥',
-    '😓',
-  ];
+  final List<String> _availableEmojis = juniorEmojiOptions;
 
   bool _isLoading = false;
   int _currentStep = 0; // 0: Instructions, 1: Selection, 2: Confirmation
@@ -483,7 +420,8 @@ class _JuniorAuthSetupScreenState extends State<JuniorAuthSetupScreen> {
             backgroundColor: SafePlayColors.success,
           ),
         );
-        context.pop();
+        // Navigate to parent dashboard instead of going back
+        context.go(RouteNames.parentDashboard);
       }
     } catch (e) {
       if (mounted) {

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../models/user_type.dart';
 import '../providers/auth_provider.dart';
 import '../screens/auth/child_selector_screen.dart';
+import '../screens/auth/unified_child_login_screen.dart';
 import '../screens/auth/forgot_password_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/parent_login_screen.dart';
@@ -86,6 +87,10 @@ class AppRouter {
           GoRoute(
             path: RouteNames.childSelector,
             builder: (context, state) => const ChildSelectorScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.unifiedChildLogin,
+            builder: (context, state) => const UnifiedChildLoginScreen(),
           ),
           GoRoute(
             path: RouteNames.juniorDashboard,
@@ -289,5 +294,6 @@ class AppRouter {
     RouteNames.emailVerification,
     RouteNames.deleteAccount,
     RouteNames.childSelector,
+    RouteNames.unifiedChildLogin,
   };
 }

@@ -560,7 +560,8 @@ class AuthService {
       final providedHash = _hashPictureSequence(pictureSequence);
 
       if (providedHash != storedHash) {
-        await _trackFailedLoginAttempt(childId);
+        print(
+            '[AuthService]: Picture password mismatch for child $childId (provided: $providedHash, stored: $storedHash)');
         return null;
       }
 
@@ -602,7 +603,8 @@ class AuthService {
 
       if (providedPictureHash != storedPictureHash ||
           providedPinHash != storedPinHash) {
-        await _trackFailedLoginAttempt(childId);
+        print(
+            '[AuthService]: Picture+PIN mismatch for child $childId (pictures: $providedPictureHash vs $storedPictureHash, pin: $providedPinHash vs $storedPinHash)');
         return null;
       }
 
@@ -865,42 +867,58 @@ class AuthService {
     }
   }
 
-  /// Create child profile
+  /// Get all children (no parent session required)
+  Future<List<ChildProfile>> getAllChildren() async {
+    try {
+      print('[AuthService]: Getting all children');
+
+      final querySnapshot =
+          await _firestore.collection(childrenCollection).get();
+      final children = <ChildProfile>[];
+
+      for (final doc in querySnapshot.docs) {
+        try {
+          final child = ChildProfile.fromJson({
+            'id': doc.id,
+            ...doc.data(),
+          });
+          children.add(child);
+        } catch (e) {
+          print('[AuthService]: Error parsing child ${doc.id}: $e');
+        }
+      }
+
+      print('[AuthService]: Found ${children.length} children');
+      return children;
+    } catch (e) {
+      print('[AuthService]: Error getting all children: $e');
+      return [];
+    }
+  }
+
+  /// Create child profile (no parent session required)
   Future<ChildProfile> createChildProfile(ChildProfile profile) async {
     try {
       print('[AuthService]: Creating child profile for ${profile.name}');
 
-      // Ensure we have a parent user logged in
-      final currentUser = _auth.currentUser;
-      if (currentUser == null) {
-        throw Exception('No parent user logged in');
+      // Create child profile without requiring parent login
+      final childData = profile.toJson();
+      childData['createdAt'] = FieldValue.serverTimestamp();
+      childData['updatedAt'] = FieldValue.serverTimestamp();
+
+      // Remove parentIds requirement for standalone child creation
+      if (childData['parentIds'] == null ||
+          (childData['parentIds'] as List).isEmpty) {
+        childData['parentIds'] =
+            []; // Empty parent list for standalone children
       }
-
-      // Ensure the profile has the current parent's ID
-      final updatedProfile = profile.copyWith(
-        parentIds: [
-          currentUser.uid,
-          ...profile.parentIds.where((id) => id != currentUser.uid)
-        ],
-      );
-
-      final data = _childProfileToFirestore(updatedProfile, forUpdate: false);
-
-      // Ensure parentId is also set for legacy compatibility
-      data['parentId'] = currentUser.uid;
-      data['parentIds'] = [currentUser.uid];
+      final data = _childProfileToFirestore(profile, forUpdate: false);
 
       print('[AuthService]: Child profile data: $data');
 
       // Add the document to Firestore
       final docRef = await _firestore.collection(childrenCollection).add(data);
       print('[AuthService]: Child profile created with ID: ${docRef.id}');
-
-      // Update parent's children list
-      await _firestore.collection(usersCollection).doc(currentUser.uid).update({
-        'children': FieldValue.arrayUnion([docRef.id]),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
 
       // Get the created document
       final stored = await docRef.get();
@@ -976,10 +994,8 @@ class AuthService {
 
       final authData = {
         'pictureSequenceHash': hash,
-        'authType': 'picture',
+        'authType': 'emoji',
         'updatedAt': FieldValue.serverTimestamp(),
-        'loginAttempts': 0,
-        'lockedUntil': null,
       };
 
       print('[AuthService]: Auth data to save: $authData');
@@ -1018,8 +1034,6 @@ class AuthService {
         'pinHash': pinHash,
         'authType': 'picture+pin',
         'updatedAt': FieldValue.serverTimestamp(),
-        'loginAttempts': 0,
-        'lockedUntil': null,
       };
 
       print('[AuthService]: Auth data to save: $authData');
@@ -1076,107 +1090,104 @@ class AuthService {
       'lastLoginAt': FieldValue.serverTimestamp(),
       'lastLogin': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
-      'loginAttempts': 0,
-      'lockedUntil': null,
     });
   }
 
-  /// Track failed login attempt and handle lockout
-  Future<void> _trackFailedLoginAttempt(String childId) async {
-    final doc =
-        await _firestore.collection(childrenCollection).doc(childId).get();
+  /// Authenticate child with emoji sequence
+  Future<bool> authenticateChildWithEmojis(
+    String childId,
+    List<String> emojiSequence,
+  ) async {
+    try {
+      print('[AuthService]: Authenticating child with emojis: $childId');
+      print('[AuthService]: Provided emoji sequence: $emojiSequence');
 
-    final data = doc.data() ?? <String, dynamic>{};
-    final currentAttempts = (data['loginAttempts'] as int?) ?? 0;
-    final newAttempts = currentAttempts + 1;
-    const maxAttempts = 3;
-    final updateData = <String, dynamic>{
-      'loginAttempts': newAttempts,
-      'updatedAt': FieldValue.serverTimestamp(),
-    };
-
-    if (newAttempts >= maxAttempts) {
-      final lockoutEnd = DateTime.now().add(const Duration(minutes: 15));
-      updateData['lockedUntil'] = Timestamp.fromDate(lockoutEnd);
-    }
-
-    await _firestore
-        .collection(childrenCollection)
-        .doc(childId)
-        .update(updateData);
-  }
-
-  /// Reset failed login attempts
-  Future<void> _resetFailedLoginAttempts(String childId) async {
-    await _firestore.collection(childrenCollection).doc(childId).update({
-      'loginAttempts': 0,
-      'lockedUntil': null,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
-  }
-
-  /// Check if child is locked out
-  Future<bool> isChildLockedOut(String childId) async {
-    final doc =
-        await _firestore.collection(childrenCollection).doc(childId).get();
-
-    final data = doc.data();
-    if (data == null) return false;
-
-    final lockoutValue = data['lockedUntil'];
-    final loginAttempts = (data['loginAttempts'] as int?) ?? 0;
-
-    DateTime? lockoutEnd;
-    if (lockoutValue is Timestamp) {
-      lockoutEnd = lockoutValue.toDate();
-    } else if (lockoutValue is DateTime) {
-      lockoutEnd = lockoutValue;
-    }
-
-    if (lockoutEnd != null) {
-      if (DateTime.now().isBefore(lockoutEnd)) {
-        return true;
-      } else {
-        await _resetFailedLoginAttempts(childId);
+      final childDoc =
+          await _firestore.collection(childrenCollection).doc(childId).get();
+      if (!childDoc.exists) {
+        print('[AuthService]: Child not found: $childId');
         return false;
       }
-    }
 
-    if (loginAttempts >= 3) {
-      await _resetFailedLoginAttempts(childId);
-    }
+      final childData = childDoc.data()!;
+      final authData = childData['authData'] as Map<String, dynamic>?;
 
-    return false;
+      if (authData == null) {
+        print('[AuthService]: No authData map found, checking legacy fields.');
+      }
+
+      final providedHash = _hashPictureSequence(emojiSequence);
+      final storedHash = (authData?['pictureSequenceHash'] as String?) ??
+          (childData['picturePasswordHash'] as String?);
+
+      print('[AuthService]: Provided hash: $providedHash');
+      print('[AuthService]: Stored hash: $storedHash');
+
+      if (providedHash == storedHash) {
+        // Removed _updateChildLastLogin to avoid permission issues
+        print('[AuthService]: Child authentication successful: $childId');
+        return true;
+      } else {
+        print(
+            '[AuthService]: Child authentication failed: $childId (hash mismatch)');
+        return false;
+      }
+    } catch (e) {
+      print('[AuthService]: Error authenticating child with emojis: $e');
+      return false;
+    }
   }
 
-  /// Get remaining lockout time
-  Future<Duration?> getRemainingLockoutTime(String childId) async {
-    final doc =
-        await _firestore.collection(childrenCollection).doc(childId).get();
+  /// Authenticate child with picture + PIN
+  Future<bool> authenticateChildWithPicturePin(
+    String childId,
+    List<String> pictureSequence,
+    String pin,
+  ) async {
+    try {
+      print('[AuthService]: Authenticating child with picture + PIN: $childId');
+      print('[AuthService]: Provided picture sequence: $pictureSequence');
 
-    final data = doc.data();
-    if (data == null) return null;
+      final childDoc =
+          await _firestore.collection(childrenCollection).doc(childId).get();
+      if (!childDoc.exists) {
+        print('[AuthService]: Child not found: $childId');
+        return false;
+      }
 
-    final lockoutValue = data['lockedUntil'];
-    DateTime? lockoutEnd;
+      final childData = childDoc.data()!;
+      final authData = childData['authData'] as Map<String, dynamic>?;
 
-    if (lockoutValue is Timestamp) {
-      lockoutEnd = lockoutValue.toDate();
-    } else if (lockoutValue is DateTime) {
-      lockoutEnd = lockoutValue;
+      if (authData == null) {
+        print('[AuthService]: No authData map found, checking legacy fields.');
+      }
+
+      final providedPictureHash = _hashPictureSequence(pictureSequence);
+      final providedPinHash = _hashPin(pin);
+      final storedPictureHash = (authData?['pictureSequenceHash'] as String?) ??
+          (childData['pictureSelectionHash'] as String?);
+      final storedPinHash = (authData?['pinHash'] as String?) ??
+          (childData['pinHash'] as String?);
+
+      print('[AuthService]: Provided picture hash: $providedPictureHash');
+      print('[AuthService]: Stored picture hash: $storedPictureHash');
+      print('[AuthService]: Provided PIN hash: $providedPinHash');
+      print('[AuthService]: Stored PIN hash: $storedPinHash');
+
+      if (providedPictureHash == storedPictureHash &&
+          providedPinHash == storedPinHash) {
+        // Removed _updateChildLastLogin to avoid permission issues
+        print('[AuthService]: Child authentication successful: $childId');
+        return true;
+      } else {
+        print(
+            '[AuthService]: Child authentication failed: $childId (hash mismatch)');
+        return false;
+      }
+    } catch (e) {
+      print('[AuthService]: Error authenticating child with picture + PIN: $e');
+      return false;
     }
-
-    if (lockoutEnd == null) {
-      return null;
-    }
-
-    final now = DateTime.now();
-    if (now.isAfter(lockoutEnd)) {
-      await _resetFailedLoginAttempts(childId);
-      return null;
-    }
-
-    return lockoutEnd.difference(now);
   }
 
   /// Convert child profile to Firestore data format

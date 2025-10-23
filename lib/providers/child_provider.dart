@@ -177,7 +177,7 @@ class ChildProvider extends ChangeNotifier {
 
       // Send email with credentials
       final child = _children.firstWhere((c) => c.id == childId);
-      await _sendCredentialsEmail(child, 'picture',
+      await _sendCredentialsEmail(child, 'emoji',
           pictureSequence: pictureSequence);
     } catch (error) {
       print('[ChildProvider]: Error setting picture password: $error');

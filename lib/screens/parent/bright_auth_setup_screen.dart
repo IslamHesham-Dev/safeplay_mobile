@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../constants/authentication_options.dart';
 import '../../design_system/colors.dart';
 import '../../models/user_profile.dart';
+import '../../navigation/route_names.dart';
 import '../../providers/child_provider.dart';
 import '../../widgets/avatar_widget.dart';
 
@@ -22,18 +24,7 @@ class BrightAuthSetupScreen extends StatefulWidget {
 
 class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
   final List<String> _selectedPictures = [];
-  final List<String> _availablePictures = [
-    'Aria',
-    'Diego',
-    'Emma',
-    'Liam',
-    'Sofia',
-    'James',
-    'Maya',
-    'Jennifer',
-    'Michael',
-    'Sarah',
-  ];
+  final List<String> _availablePictures = brightPictureOptions;
 
   final TextEditingController _pinController = TextEditingController();
   final TextEditingController _confirmPinController = TextEditingController();
@@ -605,7 +596,8 @@ class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
             backgroundColor: SafePlayColors.success,
           ),
         );
-        context.pop();
+        // Navigate to parent dashboard instead of going back
+        context.go(RouteNames.parentDashboard);
       }
     } catch (e) {
       if (mounted) {

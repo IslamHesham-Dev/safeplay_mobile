@@ -44,6 +44,7 @@ class ChildListItem extends StatelessWidget {
                 size: 60,
                 backgroundColor: _getAgeGroupColor().withValues(alpha: 0.1),
                 textColor: _getAgeGroupColor(),
+                gender: child.gender,
               ),
               const SizedBox(width: 16),
 

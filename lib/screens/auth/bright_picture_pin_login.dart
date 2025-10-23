@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../constants/authentication_options.dart';
 import '../../design_system/colors.dart';
 import '../../widgets/auth/picture_password_grid.dart';
 import '../../widgets/auth/pin_entry_widget.dart';
 import '../../providers/auth_provider.dart';
-import '../../services/auth_service.dart';
 import '../../navigation/route_names.dart';
 
 /// Picture + PIN login screen for Bright Minds
@@ -24,71 +24,11 @@ class BrightPicturePinLogin extends StatefulWidget {
 }
 
 class _BrightPicturePinLoginState extends State<BrightPicturePinLogin> {
-  final List<String> _pictures = [
-    '🎨',
-    '📚',
-    '⚽',
-    '🎮',
-    '🎵',
-    '🎬',
-    '🌟',
-    '🚀',
-    '🌈',
-    '⚡',
-    '🔬',
-    '🎯',
-  ];
+  final List<String> _pictures = brightPictureOptions;
 
   bool _pictureStepComplete = false;
   List<String>? _selectedPictures;
   bool _isLoading = false;
-  int _attemptCount = 0;
-  bool _isLockedOut = false;
-  Duration? _lockoutRemaining;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkLockoutStatus();
-  }
-
-  Future<void> _checkLockoutStatus() async {
-    final authService = AuthService();
-    final isLocked = await authService.isChildLockedOut(widget.childId);
-
-    if (isLocked) {
-      final remaining =
-          await authService.getRemainingLockoutTime(widget.childId);
-      setState(() {
-        _isLockedOut = true;
-        _lockoutRemaining = remaining;
-      });
-
-      if (remaining != null) {
-        _startLockoutTimer(remaining);
-      }
-    }
-  }
-
-  void _startLockoutTimer(Duration duration) {
-    Future.delayed(const Duration(seconds: 1), () {
-      if (!mounted) return;
-
-      final remaining = duration - const Duration(seconds: 1);
-      if (remaining.inSeconds > 0) {
-        setState(() {
-          _lockoutRemaining = remaining;
-        });
-        _startLockoutTimer(remaining);
-      } else {
-        setState(() {
-          _isLockedOut = false;
-          _lockoutRemaining = null;
-          _attemptCount = 0;
-        });
-      }
-    });
-  }
 
   void _onPicturesSelected(List<String> selectedPictures) {
     setState(() {
@@ -98,7 +38,7 @@ class _BrightPicturePinLoginState extends State<BrightPicturePinLogin> {
   }
 
   Future<void> _onPinComplete(String pin) async {
-    if (_isLockedOut || _selectedPictures == null) return;
+    if (_selectedPictures == null) return;
 
     setState(() {
       _isLoading = true;
@@ -106,6 +46,8 @@ class _BrightPicturePinLoginState extends State<BrightPicturePinLogin> {
 
     try {
       final authProvider = context.read<AuthProvider>();
+      print(
+          '[BrightPicturePinLogin]: Authenticating ${widget.childId} with pictures $_selectedPictures');
       final success = await authProvider.signInChildWithPicturePin(
         widget.childId,
         _selectedPictures!,
@@ -122,34 +64,27 @@ class _BrightPicturePinLoginState extends State<BrightPicturePinLogin> {
           ),
         );
 
-        // Navigate to Bright dashboard
         context.go(RouteNames.brightDashboard);
       } else {
         setState(() {
-          _attemptCount++;
           _pictureStepComplete = false;
           _selectedPictures = null;
         });
 
-        if (_attemptCount >= 5) {
-          await _checkLockoutStatus();
-        }
-
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Incorrect credentials. ${5 - _attemptCount} attempts left',
-            ),
+          const SnackBar(
+            content: Text('That combination didn\'t match. Try again!'),
             backgroundColor: Colors.red,
           ),
         );
       }
     } catch (e) {
+      print('[BrightPicturePinLogin]: Authentication error: $e');
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error logging in: $e'),
+          content: Text('Authentication error: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -171,15 +106,13 @@ class _BrightPicturePinLoginState extends State<BrightPicturePinLogin> {
         foregroundColor: Colors.white,
       ),
       body: SafeArea(
-        child: _isLockedOut
-            ? _buildLockedOutView()
-            : _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                         // Avatar
                         Center(
                           child: CircleAvatar(
@@ -241,11 +174,13 @@ class _BrightPicturePinLoginState extends State<BrightPicturePinLogin> {
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                           const SizedBox(height: 24),
-                          PicturePasswordGrid(
-                            pictures: _pictures,
-                            sequenceLength: 3,
-                            onSequenceComplete: _onPicturesSelected,
-                          ),
+                        PicturePasswordGrid(
+                          pictures: _pictures,
+                          sequenceLength: 3,
+                          onSequenceComplete: _onPicturesSelected,
+                          useAvatarStyle: true,
+                          selectionColor: SafePlayColors.brightIndigo,
+                        ),
                         ] else ...[
                           Text(
                             'Enter your 4-digit PIN',
@@ -342,47 +277,5 @@ class _BrightPicturePinLoginState extends State<BrightPicturePinLogin> {
     );
   }
 
-  Widget _buildLockedOutView() {
-    final minutes = _lockoutRemaining?.inMinutes ?? 0;
-    final seconds = (_lockoutRemaining?.inSeconds ?? 0) % 60;
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.lock_clock,
-              size: 100,
-              color: SafePlayColors.error,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Account Locked',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: SafePlayColors.error,
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Too many failed attempts. Please wait $minutes:${seconds.toString().padLeft(2, '0')} before trying again.',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: () => context.pop(),
-              icon: const Icon(Icons.arrow_back),
-              label: const Text('Go Back'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: SafePlayColors.brandTeal500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

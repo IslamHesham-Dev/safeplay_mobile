@@ -20,6 +20,7 @@ class RouteNames {
 
   // Child authentication
   static const String childSelector = '/child-selector';
+  static const String unifiedChildLogin = '/child-login';
   static const String juniorLogin = '/junior-login';
   static const String brightLogin = '/bright-login';
 
