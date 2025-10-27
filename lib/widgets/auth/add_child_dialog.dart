@@ -7,14 +7,17 @@ import '../../design_system/colors.dart';
 import '../../models/user_profile.dart';
 import '../../models/user_type.dart';
 import '../../services/local_child_storage.dart';
+import '../avatar_widget.dart';
 
 /// Dialog for adding a new child with authentication setup
 class AddChildDialog extends StatefulWidget {
   final Function(ChildProfile) onChildAdded;
+  final String? parentEmail; // Pre-verified parent email
 
   const AddChildDialog({
     super.key,
     required this.onChildAdded,
+    this.parentEmail,
   });
 
   @override
@@ -25,6 +28,7 @@ class _AddChildDialogState extends State<AddChildDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _ageController = TextEditingController();
+  final _parentEmailController = TextEditingController();
   String? _selectedGender;
   bool _isLoading = false;
 
@@ -32,7 +36,28 @@ class _AddChildDialogState extends State<AddChildDialog> {
   void dispose() {
     _nameController.dispose();
     _ageController.dispose();
+    _parentEmailController.dispose();
     super.dispose();
+  }
+
+  Future<bool> _validateParentEmail(String email) async {
+    return LocalChildStorage.validateParentEmail(email.trim());
+  }
+
+  void _failValidation(String message) {
+    if (!mounted) {
+      _isLoading = false;
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -115,6 +140,57 @@ class _AddChildDialogState extends State<AddChildDialog> {
                 },
               ),
               const SizedBox(height: 16),
+
+              // Parent email field (only show if not pre-verified)
+              if (widget.parentEmail == null) ...[
+                TextFormField(
+                  controller: _parentEmailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'Your Email (Parent)',
+                    hintText: 'Enter your email address',
+                    prefixIcon: Icon(Icons.email),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter your email';
+                    }
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                        .hasMatch(value.trim())) {
+                      return 'Please enter a valid email address';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+              ] else ...[
+                // Show verified parent email
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: SafePlayColors.success.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: SafePlayColors.success),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.verified, color: SafePlayColors.success),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Verified Parent: ${widget.parentEmail}',
+                          style: TextStyle(
+                            color: SafePlayColors.success,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
 
               // Gender selection
               Text(
@@ -213,35 +289,91 @@ class _AddChildDialogState extends State<AddChildDialog> {
     });
 
     try {
-      final age = int.parse(_ageController.text.trim());
-      final ageGroup = age >= 6 && age <= 8 ? AgeGroup.junior : AgeGroup.bright;
+      final ageText = _ageController.text.trim();
+      final age = int.tryParse(ageText);
+      if (age == null || age < 6 || age > 12) {
+        _failValidation(
+          'Child age must be between 6 and 12 years old.',
+        );
+        return;
+      }
 
-      // Create child profile
-      final childProfile = ChildProfile(
-        id: '', // Will be set by Firestore
-        name: _nameController.text.trim(),
-        age: age,
-        gender: _selectedGender,
-        ageGroup: ageGroup,
-        userType: ageGroup == AgeGroup.junior
-            ? UserType.juniorChild
-            : UserType.brightChild,
-        parentIds: [], // Will be set by the service
-        createdAt: DateTime.now(),
+      final parentEmail =
+          (widget.parentEmail ?? _parentEmailController.text).trim();
+      if (!await _validateParentEmail(parentEmail)) {
+        _failValidation(
+          'Parent email $parentEmail does not exist. Please check your email or contact support.',
+        );
+        return;
+      }
+
+      final childName = _nameController.text.trim();
+      final normalizedGender = (_selectedGender ?? '').toLowerCase();
+
+      // Validate that this child belongs to the verified parent and fetch canonical profile
+      final childProfileFromFirestore =
+          await LocalChildStorage.fetchChildForParent(
+        parentEmail: parentEmail,
+        childName: childName,
+        childAge: age,
+        childGender: normalizedGender,
+      );
+
+      if (childProfileFromFirestore == null) {
+        _failValidation(
+          'Child "$childName" (age $age, ${normalizedGender.isEmpty ? 'unspecified gender' : normalizedGender}) does not belong to parent $parentEmail. Please verify the child information or contact support.',
+        );
+        return;
+      }
+
+      // Normalize and merge remote profile
+      final normalizedEmail = parentEmail.toLowerCase();
+      final resolvedAgeGroup = childProfileFromFirestore.ageGroup ??
+          (age >= 6 && age <= 8 ? AgeGroup.junior : AgeGroup.bright);
+      final resolvedGender = (childProfileFromFirestore.gender ?? '')
+              .trim()
+              .toLowerCase()
+              .isNotEmpty
+          ? childProfileFromFirestore.gender
+          : (normalizedGender.isEmpty ? null : normalizedGender);
+
+      var localChild = childProfileFromFirestore.copyWith(
+        age: childProfileFromFirestore.age ?? age,
+        gender: resolvedGender,
+        ageGroup: resolvedAgeGroup,
+        parentEmail: normalizedEmail,
         updatedAt: DateTime.now(),
       );
 
-      // Add child to local storage (parent-specific)
-      final newChild = childProfile;
-      await LocalChildStorage.addChild(newChild);
+      final existingChild = await LocalChildStorage.getChildById(localChild.id);
+      if (existingChild != null) {
+        localChild = existingChild.copyWith(
+          name: childProfileFromFirestore.name,
+          age: localChild.age,
+          gender: localChild.gender,
+          ageGroup: localChild.ageGroup,
+          parentEmail: normalizedEmail,
+          parentIds: childProfileFromFirestore.parentIds,
+          updatedAt: DateTime.now(),
+        );
+        await LocalChildStorage.updateChild(localChild);
+      } else {
+        await LocalChildStorage.addChild(localChild);
+      }
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
 
       // Navigate to authentication setup
       Navigator.of(context).pop();
 
-      if (newChild.ageGroup == AgeGroup.junior) {
-        _showJuniorAuthSetup(newChild);
+      if (localChild.ageGroup == AgeGroup.junior) {
+        _showJuniorAuthSetup(localChild);
       } else {
-        _showBrightAuthSetup(newChild);
+        _showBrightAuthSetup(localChild);
       }
     } catch (e) {
       setState(() {
@@ -438,6 +570,18 @@ class _JuniorAuthSetupDialogState extends State<JuniorAuthSetupDialog> {
 
   Future<void> _saveAuthentication() async {
     try {
+      // Validate credentials first
+      if (_selectedEmojis.length != 4) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text('Please select exactly 4 emojis for your child\'s login.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
       // Create auth data for local storage
       final authData = {
         'authType': 'emoji',
@@ -452,6 +596,16 @@ class _JuniorAuthSetupDialogState extends State<JuniorAuthSetupDialog> {
 
       // Save to local storage
       await LocalChildStorage.updateChild(updatedChild);
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Login setup completed for ${widget.child.name}!'),
+            backgroundColor: SafePlayColors.success,
+          ),
+        );
+      }
 
       Navigator.of(context).pop();
       widget.onComplete(updatedChild);
@@ -491,7 +645,7 @@ class BrightAuthSetupDialog extends StatefulWidget {
 }
 
 class _BrightAuthSetupDialogState extends State<BrightAuthSetupDialog> {
-  final List<String> _selectedPictures = [];
+  List<String> _selectedPictures = [];
   final _pinController = TextEditingController();
   final List<String> _brightPictures = brightPictureOptions;
 
@@ -587,15 +741,15 @@ class _BrightAuthSetupDialogState extends State<BrightAuthSetupDialog> {
                         ),
                       ),
                       child: Center(
-                        child: Text(
-                          picture,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected
-                                ? Colors.white
-                                : SafePlayColors.neutral700,
-                          ),
+                        child: AvatarWidget(
+                          name: picture,
+                          size: 32,
+                          backgroundColor: isSelected
+                              ? Colors.white
+                              : SafePlayColors.brightIndigo,
+                          textColor: isSelected
+                              ? SafePlayColors.brightIndigo
+                              : Colors.white,
                         ),
                       ),
                     ),
@@ -633,18 +787,6 @@ class _BrightAuthSetupDialogState extends State<BrightAuthSetupDialog> {
 
             const SizedBox(height: 16),
 
-            // Selected pictures display
-            if (_selectedPictures.isNotEmpty) ...[
-              Text(
-                'Selected: ${_selectedPictures.join(', ')}',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: SafePlayColors.brightIndigo,
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 16),
-            ],
-
             // Buttons
             Row(
               children: [
@@ -676,11 +818,34 @@ class _BrightAuthSetupDialogState extends State<BrightAuthSetupDialog> {
 
   Future<void> _saveAuthentication() async {
     try {
+      // Validate credentials first
+      if (_selectedPictures.length != 3) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Please select exactly 3 letters for your child\'s login.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      final pinValue = _pinController.text.trim();
+      if (!RegExp(r'^\d{4}$').hasMatch(pinValue)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a 4-digit PIN to continue.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
       // Create auth data for local storage
       final authData = {
         'authType': 'picture+pin',
         'pictureSequenceHash': _hashPictureSequence(_selectedPictures),
-        'pinHash': _hashPin(_pinController.text),
+        'pinHash': _hashPin(pinValue),
         'updatedAt': DateTime.now().toIso8601String(),
       };
 
@@ -691,6 +856,16 @@ class _BrightAuthSetupDialogState extends State<BrightAuthSetupDialog> {
 
       // Save to local storage
       await LocalChildStorage.updateChild(updatedChild);
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Login setup completed for ${widget.child.name}!'),
+            backgroundColor: SafePlayColors.success,
+          ),
+        );
+      }
 
       Navigator.of(context).pop();
       widget.onComplete(updatedChild);

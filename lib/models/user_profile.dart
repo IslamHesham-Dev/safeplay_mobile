@@ -258,6 +258,7 @@ class ChildProfile extends UserProfile {
   final DateTime updatedAt;
   final Map<String, dynamic>? authData;
   final String? gender; // 'male' or 'female'
+  final String? parentEmail; // Email of the parent who created this child
 
   const ChildProfile({
     required super.id,
@@ -281,6 +282,7 @@ class ChildProfile extends UserProfile {
     required this.updatedAt,
     this.authData,
     this.gender,
+    this.parentEmail,
   });
 
   String get parentId => parentIds.isNotEmpty ? parentIds.first : '';
@@ -345,6 +347,7 @@ class ChildProfile extends UserProfile {
           ? json['authData'] as Map<String, dynamic>
           : null,
       gender: json['gender']?.toString(),
+      parentEmail: json['parentEmail']?.toString(),
     );
   }
 
@@ -367,6 +370,7 @@ class ChildProfile extends UserProfile {
       'updatedAt': updatedAt.toIso8601String(),
       'authData': authData,
       'gender': gender,
+      'parentEmail': parentEmail,
     });
     return json;
   }
@@ -392,6 +396,7 @@ class ChildProfile extends UserProfile {
     DateTime? updatedAt,
     Map<String, dynamic>? authData,
     String? gender,
+    String? parentEmail,
   }) {
     return ChildProfile(
       id: id,
@@ -415,6 +420,7 @@ class ChildProfile extends UserProfile {
       updatedAt: updatedAt ?? this.updatedAt,
       authData: authData ?? this.authData,
       gender: gender ?? this.gender,
+      parentEmail: parentEmail ?? this.parentEmail,
     );
   }
 
@@ -433,5 +439,6 @@ class ChildProfile extends UserProfile {
         updatedAt,
         authData,
         gender,
+        parentEmail,
       ];
 }

@@ -10,15 +10,28 @@ import 'dart:convert';
 import 'dart:io';
 import '../models/user_profile.dart';
 import 'local_auth_store.dart';
+import 'local_child_storage.dart';
 import '../models/user_type.dart';
 
 /// Authentication service handling all authentication methods
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
-  final LocalAuthentication _localAuth = LocalAuthentication();
-  final LocalAuthStore _localAuthStore = LocalAuthStore();
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
+  final FlutterSecureStorage _secureStorage;
+  final LocalAuthentication _localAuth;
+  final LocalAuthStore _localAuthStore;
+
+  AuthService({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+    FlutterSecureStorage? secureStorage,
+    LocalAuthentication? localAuth,
+    LocalAuthStore? localAuthStore,
+  })  : _auth = auth ?? FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance,
+        _secureStorage = secureStorage ?? const FlutterSecureStorage(),
+        _localAuth = localAuth ?? LocalAuthentication(),
+        _localAuthStore = localAuthStore ?? LocalAuthStore();
 
   // Collections
   static const String usersCollection = 'users';
@@ -914,6 +927,14 @@ class AuthService {
       }
       final data = _childProfileToFirestore(profile, forUpdate: false);
 
+      final resolvedParentEmail =
+          (profile.parentEmail ?? _auth.currentUser?.email)
+              ?.trim()
+              .toLowerCase();
+      if (resolvedParentEmail != null && resolvedParentEmail.isNotEmpty) {
+        data['parentEmail'] = resolvedParentEmail;
+      }
+
       print('[AuthService]: Child profile data: $data');
 
       // Add the document to Firestore
@@ -1102,10 +1123,37 @@ class AuthService {
       print('[AuthService]: Authenticating child with emojis: $childId');
       print('[AuthService]: Provided emoji sequence: $emojiSequence');
 
+      final providedHash = _hashPictureSequence(emojiSequence);
+      print('[AuthService]: Provided hash: $providedHash');
+
+      final localChild = await LocalChildStorage.getChildById(childId);
+      if (localChild != null) {
+        final localAuthData = localChild.authData;
+        final localHash = localAuthData?['pictureSequenceHash'] as String?;
+        print('[AuthService]: Local stored emoji hash: $localHash');
+
+        if (localHash != null) {
+          if (providedHash == localHash) {
+            print(
+                '[AuthService]: Child authentication successful (local cache): $childId');
+            return true;
+          } else {
+            print(
+                '[AuthService]: Local emoji hash mismatch, attempting Firestore fallback.');
+          }
+        } else {
+          print(
+              '[AuthService]: No local emoji hash available, falling back to Firestore.');
+        }
+      } else {
+        print(
+            '[AuthService]: Child $childId not found in local storage. Falling back to Firestore.');
+      }
+
       final childDoc =
           await _firestore.collection(childrenCollection).doc(childId).get();
       if (!childDoc.exists) {
-        print('[AuthService]: Child not found: $childId');
+        print('[AuthService]: Child not found in Firestore: $childId');
         return false;
       }
 
@@ -1116,16 +1164,20 @@ class AuthService {
         print('[AuthService]: No authData map found, checking legacy fields.');
       }
 
-      final providedHash = _hashPictureSequence(emojiSequence);
       final storedHash = (authData?['pictureSequenceHash'] as String?) ??
           (childData['picturePasswordHash'] as String?);
+      print('[AuthService]: Firestore stored hash: $storedHash');
 
-      print('[AuthService]: Provided hash: $providedHash');
-      print('[AuthService]: Stored hash: $storedHash');
+      if (storedHash == null) {
+        print(
+            '[AuthService]: No emoji hash stored for child $childId. Authentication cannot proceed.');
+        return false;
+      }
 
       if (providedHash == storedHash) {
         // Removed _updateChildLastLogin to avoid permission issues
-        print('[AuthService]: Child authentication successful: $childId');
+        print(
+            '[AuthService]: Child authentication successful (Firestore): $childId');
         return true;
       } else {
         print(
@@ -1147,6 +1199,38 @@ class AuthService {
     try {
       print('[AuthService]: Authenticating child with picture + PIN: $childId');
       print('[AuthService]: Provided picture sequence: $pictureSequence');
+      final providedPictureHash = _hashPictureSequence(pictureSequence);
+      final providedPinHash = _hashPin(pin);
+      print('[AuthService]: Provided picture hash: $providedPictureHash');
+      print('[AuthService]: Provided PIN hash: $providedPinHash');
+
+      final localChild = await LocalChildStorage.getChildById(childId);
+      if (localChild != null) {
+        final localAuthData = localChild.authData;
+        final localPictureHash =
+            localAuthData?['pictureSequenceHash'] as String?;
+        final localPinHash = localAuthData?['pinHash'] as String?;
+        print(
+            '[AuthService]: Local stored picture hash: $localPictureHash, PIN hash: $localPinHash');
+
+        if (localPictureHash != null && localPinHash != null) {
+          final pictureMatches = providedPictureHash == localPictureHash;
+          final pinMatches = providedPinHash == localPinHash;
+          if (pictureMatches && pinMatches) {
+            print(
+                '[AuthService]: Child authentication successful (local cache): $childId');
+            return true;
+          }
+          print(
+              '[AuthService]: Local picture/PIN hash mismatch, attempting Firestore fallback.');
+        } else {
+          print(
+              '[AuthService]: Incomplete local picture+PIN data, falling back to Firestore.');
+        }
+      } else {
+        print(
+            '[AuthService]: Child $childId not found in local storage. Falling back to Firestore.');
+      }
 
       final childDoc =
           await _firestore.collection(childrenCollection).doc(childId).get();
@@ -1162,22 +1246,24 @@ class AuthService {
         print('[AuthService]: No authData map found, checking legacy fields.');
       }
 
-      final providedPictureHash = _hashPictureSequence(pictureSequence);
-      final providedPinHash = _hashPin(pin);
       final storedPictureHash = (authData?['pictureSequenceHash'] as String?) ??
           (childData['pictureSelectionHash'] as String?);
       final storedPinHash = (authData?['pinHash'] as String?) ??
           (childData['pinHash'] as String?);
 
-      print('[AuthService]: Provided picture hash: $providedPictureHash');
-      print('[AuthService]: Stored picture hash: $storedPictureHash');
-      print('[AuthService]: Provided PIN hash: $providedPinHash');
-      print('[AuthService]: Stored PIN hash: $storedPinHash');
+      print('[AuthService]: Firestore picture hash: $storedPictureHash');
+      print('[AuthService]: Firestore PIN hash: $storedPinHash');
+      if (storedPictureHash == null || storedPinHash == null) {
+        print(
+            '[AuthService]: Missing picture or PIN hash for child $childId. Authentication cannot proceed.');
+        return false;
+      }
 
       if (providedPictureHash == storedPictureHash &&
           providedPinHash == storedPinHash) {
         // Removed _updateChildLastLogin to avoid permission issues
-        print('[AuthService]: Child authentication successful: $childId');
+        print(
+            '[AuthService]: Child authentication successful (Firestore): $childId');
         return true;
       } else {
         print(

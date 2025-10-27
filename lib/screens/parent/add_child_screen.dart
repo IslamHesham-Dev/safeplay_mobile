@@ -61,6 +61,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
 
       // Get age from input
       final age = int.tryParse(_ageController.text.trim());
+      final parentEmail = authProvider.currentUser!.email?.trim().toLowerCase();
 
       // Create child profile
       final childProfile = ChildProfile(
@@ -79,6 +80,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
         learningModes: const [],
         updatedAt: DateTime.now(),
         gender: _selectedGender,
+        parentEmail: parentEmail,
       );
 
       // Add child to Firestore

@@ -24,6 +24,7 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
     with TickerProviderStateMixin {
   // Real children data from Firebase
   List<ChildProfile> _availableChildren = [];
+  String? _verifiedParentEmail;
 
   // Login state
   String? _selectedChildId;
@@ -63,7 +64,7 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
     _fadeController.forward();
     _slideController.forward();
 
-    // Load children data
+    // Load children data (all children from local storage)
     _loadChildren();
   }
 
@@ -74,10 +75,24 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
     super.dispose();
   }
 
-  Future<void> _loadChildren() async {
+  Future<void> _loadChildren({String? parentEmail}) async {
     try {
-      // Load children from local storage (parent-specific)
-      final children = await LocalChildStorage.getChildren();
+      final filterEmail = parentEmail ?? _verifiedParentEmail;
+      print('[UnifiedChildLogin]: Loading children for email: $filterEmail');
+
+      // If no specific parent email is provided, load ALL children from local storage
+      // This ensures children persist across app restarts on each device
+      final children = filterEmail == null
+          ? await LocalChildStorage.getChildren()
+          : await LocalChildStorage.getChildrenForParent(filterEmail);
+
+      print('[UnifiedChildLogin]: Found ${children.length} children');
+      for (final child in children) {
+        print(
+            '[UnifiedChildLogin]: Child: ${child.name} (${child.id}) - Gender: ${child.gender} - AgeGroup: ${child.ageGroup}');
+      }
+
+      if (!mounted) return;
       setState(() {
         _availableChildren = children;
       });
@@ -130,85 +145,52 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
   }
 
   void _showAddChildDialog() {
+    // First, show parent verification dialog
+    _showParentVerificationDialog();
+  }
+
+  void _showParentVerificationDialog() {
     showDialog(
       context: context,
-      builder: (context) => AddChildDialog(
-        onChildAdded: (child) {
-          // Refresh the children list
-          _loadChildren();
-          // Select the newly added child
-          _selectChild(child);
+      builder: (dialogContext) => _ParentVerificationDialog(
+        onVerified: (email) {
+          Navigator.of(dialogContext).pop();
+          _showAddChildDialogWithParent(email);
         },
       ),
     );
   }
 
-  void _editChild(ChildProfile child) {
-    // For now, we'll show a simple edit dialog
-    // In a full implementation, you might want to create a separate edit dialog
+  void _showAddChildDialogWithParent(String parentEmail) {
+    final normalizedEmail = parentEmail.trim().toLowerCase();
+    setState(() {
+      _verifiedParentEmail = normalizedEmail;
+    });
+    _loadChildren(parentEmail: normalizedEmail);
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Edit ${child.name}'),
-        content: const Text('Edit functionality will be implemented here.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
+      builder: (context) => AddChildDialog(
+        parentEmail: parentEmail, // Display original parent email
+        onChildAdded: (child) async {
+          print(
+              '[UnifiedChildLogin]: Child added callback called for: ${child.name}');
+          print('[UnifiedChildLogin]: Child data: ${child.toJson()}');
+
+          await _loadChildren(parentEmail: normalizedEmail);
+          if (!mounted) return;
+
+          print(
+              '[UnifiedChildLogin]: Loaded ${_availableChildren.length} children after adding');
+          for (final c in _availableChildren) {
+            print('[UnifiedChildLogin]: Available child: ${c.name} (${c.id})');
+          }
+
+          // Child is now added to the "who is here" page
+          // Parent stays on the child selector screen
+        },
       ),
     );
-  }
-
-  void _removeChild(ChildProfile child) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Remove ${child.name}?'),
-        content: const Text(
-            'This will permanently remove the child from your device. This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
-              await _confirmRemoveChild(child);
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Remove'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _confirmRemoveChild(ChildProfile child) async {
-    try {
-      await LocalChildStorage.removeChild(child.id);
-      await _loadChildren();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${child.name} has been removed'),
-            backgroundColor: SafePlayColors.success,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error removing child: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 
   Future<void> _onEmojiSequenceComplete(List<String> sequence) async {
@@ -401,7 +383,7 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
                                 crossAxisCount: 2,
                                 crossAxisSpacing: 16,
                                 mainAxisSpacing: 16,
-                                childAspectRatio: 0.8,
+                                childAspectRatio: 0.85,
                               ),
                               itemCount: _availableChildren.length,
                               itemBuilder: (context, index) {
@@ -527,96 +509,59 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
           ),
         ],
       ),
-      child: Column(
-        children: [
-          // Main content
-          Expanded(
-            child: GestureDetector(
-              onTap: () => _selectChild(child),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Avatar
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundColor: ageGroupColor.withValues(alpha: 0.1),
-                      child: Text(
-                        _getChildAvatar(child),
-                        style: const TextStyle(fontSize: 40),
-                      ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Name
-                    Text(
-                      child.name,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                      textAlign: TextAlign.center,
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    // Age group badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: ageGroupColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: ageGroupColor, width: 1),
-                      ),
-                      child: Text(
-                        ageGroupLabel,
-                        style: TextStyle(
-                          color: ageGroupColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
+      child: GestureDetector(
+        onTap: () => _selectChild(child),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Avatar
+              CircleAvatar(
+                radius: 40,
+                backgroundColor: ageGroupColor.withValues(alpha: 0.1),
+                child: Text(
+                  _getChildAvatar(child),
+                  style: const TextStyle(fontSize: 40),
                 ),
               ),
-            ),
-          ),
 
-          // Edit/Remove buttons
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: SafePlayColors.neutral50,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
+              const SizedBox(height: 12),
+
+              // Name
+              Text(
+                child.name,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                // Edit button
-                IconButton(
-                  onPressed: () => _editChild(child),
-                  icon: const Icon(Icons.edit, size: 20),
-                  color: SafePlayColors.brandTeal500,
-                  tooltip: 'Edit Child',
-                ),
 
-                // Remove button
-                IconButton(
-                  onPressed: () => _removeChild(child),
-                  icon: const Icon(Icons.delete, size: 20),
-                  color: Colors.red,
-                  tooltip: 'Remove Child',
+              const SizedBox(height: 8),
+
+              // Age group badge
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: ageGroupColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: ageGroupColor, width: 1),
                 ),
-              ],
-            ),
+                child: Text(
+                  ageGroupLabel,
+                  style: TextStyle(
+                    color: ageGroupColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -972,6 +917,123 @@ class _BrightPicturePinLoginState extends State<BrightPicturePinLogin> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ParentVerificationDialog extends StatefulWidget {
+  final Function(String) onVerified;
+
+  const _ParentVerificationDialog({
+    required this.onVerified,
+  });
+
+  @override
+  State<_ParentVerificationDialog> createState() =>
+      _ParentVerificationDialogState();
+}
+
+class _ParentVerificationDialogState extends State<_ParentVerificationDialog> {
+  final _parentEmailController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  bool _isVerifying = false;
+
+  @override
+  void dispose() {
+    _parentEmailController.dispose();
+    super.dispose();
+  }
+
+  Future<bool> _validateParentEmail(String email) async {
+    return LocalChildStorage.validateParentEmail(email.trim());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Verify Parent Identity'),
+      content: Form(
+        key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+                'Please enter your email address to verify you are the parent:'),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _parentEmailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Your Email',
+                hintText: 'Enter your email address',
+                prefixIcon: Icon(Icons.email),
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Please enter your email';
+                }
+                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                    .hasMatch(value.trim())) {
+                  return 'Please enter a valid email address';
+                }
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isVerifying
+              ? null
+              : () {
+                  Navigator.of(context).pop();
+                },
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _isVerifying
+              ? null
+              : () async {
+                  if (!(_formKey.currentState?.validate() ?? false)) {
+                    return;
+                  }
+
+                  final email = _parentEmailController.text.trim();
+                  setState(() {
+                    _isVerifying = true;
+                  });
+
+                  final exists = await _validateParentEmail(email);
+
+                  if (!mounted) return;
+
+                  if (!exists) {
+                    setState(() {
+                      _isVerifying = false;
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                            'Parent email $email does not exist. Please check your email or contact support.'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  widget.onVerified(email);
+                },
+          child: _isVerifying
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Continue'),
+        ),
+      ],
     );
   }
 }
