@@ -578,7 +578,9 @@ class AuthService {
         return null;
       }
 
-      await _updateChildLastLogin(childId);
+      // Removed _updateChildLastLogin to avoid permission issues
+      print(
+          '[AuthService]: Child authentication successful (Firestore): $childId');
 
       return ChildProfile.fromJson({
         'id': doc.id,
@@ -621,7 +623,9 @@ class AuthService {
         return null;
       }
 
-      await _updateChildLastLogin(childId);
+      // Removed _updateChildLastLogin to avoid permission issues
+      print(
+          '[AuthService]: Child authentication successful (Firestore): $childId');
 
       return ChildProfile.fromJson({
         'id': doc.id,

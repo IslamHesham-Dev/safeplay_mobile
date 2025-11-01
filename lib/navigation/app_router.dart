@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../models/user_type.dart';
 import '../providers/auth_provider.dart';
 import '../screens/auth/child_selector_screen.dart';
 import '../screens/auth/unified_child_login_screen.dart';
@@ -14,6 +13,7 @@ import '../screens/auth/change_password_screen.dart';
 import '../screens/auth/delete_account_screen.dart';
 import '../screens/bright/bright_dashboard_screen.dart';
 import '../screens/junior/junior_dashboard_screen.dart';
+import '../screens/child/unified_child_dashboard_screen.dart';
 import '../screens/parent/parent_dashboard_screen.dart';
 import '../screens/parent/incident_detail_screen.dart';
 import '../screens/parent/add_child_screen.dart';
@@ -91,6 +91,10 @@ class AppRouter {
           GoRoute(
             path: RouteNames.unifiedChildLogin,
             builder: (context, state) => const UnifiedChildLoginScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.childDashboard,
+            builder: (context, state) => const UnifiedChildDashboardScreen(),
           ),
           GoRoute(
             path: RouteNames.juniorDashboard,
@@ -243,6 +247,7 @@ class AppRouter {
   bool _requiresAuth(String path) => !_publicRoutes.contains(path);
 
   bool _isChildArea(String path) =>
+      path.startsWith(RouteNames.childDashboard) ||
       path.startsWith(RouteNames.juniorDashboard) ||
       path.startsWith(RouteNames.brightDashboard) ||
       path.startsWith('/bright/') ||
@@ -262,16 +267,8 @@ class AppRouter {
       return RouteNames.login;
     }
 
-    switch (child.userType) {
-      case UserType.juniorChild:
-        return RouteNames.juniorDashboard;
-      case UserType.brightChild:
-        return RouteNames.brightDashboard;
-      default:
-        return child.ageGroup == AgeGroup.bright
-            ? RouteNames.brightDashboard
-            : RouteNames.juniorDashboard;
-    }
+    // Use the unified child dashboard for all children
+    return RouteNames.childDashboard;
   }
 
   String _defaultDestination() {

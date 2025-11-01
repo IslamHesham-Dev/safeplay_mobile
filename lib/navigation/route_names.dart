@@ -23,6 +23,7 @@ class RouteNames {
   static const String unifiedChildLogin = '/child-login';
   static const String juniorLogin = '/junior-login';
   static const String brightLogin = '/bright-login';
+  static const String childDashboard = '/child-dashboard';
 
   // Junior Explorer routes
   static const String juniorDashboard = '/junior';

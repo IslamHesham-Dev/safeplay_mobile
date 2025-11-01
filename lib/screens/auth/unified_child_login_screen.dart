@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../constants/authentication_options.dart';
 import '../../design_system/colors.dart';
 import '../../widgets/auth/picture_password_grid.dart';
 import '../../widgets/auth/pin_entry_widget.dart';
 import '../../widgets/auth/add_child_dialog.dart';
-import '../../services/auth_service.dart';
 import '../../services/local_child_storage.dart';
 import '../../models/user_profile.dart';
 import '../../models/user_type.dart';
 import '../../navigation/route_names.dart';
+import '../../providers/auth_provider.dart';
 
 /// Unified child login screen that determines age group based on input method
 class UnifiedChildLoginScreen extends StatefulWidget {
@@ -205,8 +206,8 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
     print('[UnifiedChildLogin]: ========================================');
 
     try {
-      final authService = AuthService();
-      final success = await authService.authenticateChildWithEmojis(
+      final authProvider = context.read<AuthProvider>();
+      final success = await authProvider.signInChildWithPicturePassword(
         _selectedChild!.id,
         sequence,
       );
@@ -221,7 +222,7 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
               backgroundColor: SafePlayColors.success,
             ),
           );
-          context.go(RouteNames.juniorDashboard);
+          context.go(RouteNames.childDashboard);
         }
       } else {
         print('[UnifiedChildLogin]: Emoji authentication failed');
@@ -253,8 +254,8 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
     print('[UnifiedChildLogin]: =============================================');
 
     try {
-      final authService = AuthService();
-      final success = await authService.authenticateChildWithPicturePin(
+      final authProvider = context.read<AuthProvider>();
+      final success = await authProvider.signInChildWithPicturePin(
         _selectedChild!.id,
         pictures,
         pin,
@@ -270,7 +271,7 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
               backgroundColor: SafePlayColors.success,
             ),
           );
-          context.go(RouteNames.brightDashboard);
+          context.go(RouteNames.childDashboard);
         }
       } else {
         print('[UnifiedChildLogin]: Picture+PIN authentication failed');
@@ -405,34 +406,6 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
                           ),
                         ],
                       ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Help button
-              TextButton.icon(
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Need Help?'),
-                      content: const Text(
-                        'Ask your parent to help you log in or create a new profile.',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('OK'),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.help_outline),
-                label: const Text('Need Help?'),
-                style: TextButton.styleFrom(
-                  foregroundColor: SafePlayColors.brandTeal500,
-                ),
               ),
             ],
           ),
@@ -650,36 +623,6 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
               // Login interface
               Expanded(
                 child: _buildAuthInterface(),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Help button
-              TextButton.icon(
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Need Help?'),
-                      content: const Text(
-                        'Ask your parent to help you log in or reset your authentication.',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('OK'),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.help_outline),
-                label: const Text('Need Help?'),
-                style: TextButton.styleFrom(
-                  foregroundColor: isJunior
-                      ? SafePlayColors.juniorPurple
-                      : SafePlayColors.brightIndigo,
-                ),
               ),
             ],
           ),
