@@ -13,7 +13,10 @@ class TeacherService {
   // Collections
   static const String teachersCollection = 'teachers';
   static const String activitiesCollection = 'activities';
-  static const String templatesCollection = 'questionTemplates';
+  static const String templatesCollection =
+      'curriculumQuestionTemplates'; // New collection for structured curriculum questions
+  static const String oldTemplatesCollection =
+      'questionTemplates'; // Old collection for backwards compatibility
   static const String publishingQueueCollection = 'publishingQueue';
 
   /// Get teacher profile by ID
@@ -59,35 +62,111 @@ class TeacherService {
       debugPrint('Subjects filter: $subjects');
       debugPrint('Age groups filter: $ageGroups');
 
-      Query<Map<String, dynamic>> query = _firestore
-          .collection(templatesCollection)
-          .where('isActive', isEqualTo: true);
+      // Build query - try with isActive first, fallback to all if field doesn't exist
+      Query<Map<String, dynamic>> query =
+          _firestore.collection(templatesCollection);
+
+      // Only filter by isActive if we know templates have this field
+      // For now, try to get all active templates, but if that fails, get all
+      try {
+        query = query.where('isActive', isEqualTo: true);
+      } catch (e) {
+        debugPrint('⚠️ isActive filter not available, getting all templates');
+        // Continue without isActive filter
+      }
 
       // Filter by subjects if provided
       if (subjects != null && subjects.isNotEmpty) {
-        debugPrint(
-            'Filtering by subjects: ${subjects.map((s) => s.name).toList()}');
-        query = query.where('subjects',
-            arrayContainsAny: subjects.map((s) => s.name).toList());
+        final subjectNames = subjects.map((s) => s.name).toList();
+        debugPrint('🔍 Filtering by subjects: $subjectNames');
+        try {
+          query = query.where('subjects', arrayContainsAny: subjectNames);
+        } catch (e) {
+          debugPrint('⚠️ Subject filter error: $e');
+          // Continue without subject filter
+        }
       }
 
       // Filter by age groups if provided
       if (ageGroups != null && ageGroups.isNotEmpty) {
-        debugPrint(
-            'Filtering by age groups: ${ageGroups.map((g) => g.name).toList()}');
-        query = query.where('ageGroups',
-            arrayContainsAny: ageGroups.map((g) => g.name).toList());
+        final ageGroupNames = ageGroups.map((g) => g.name).toList();
+        debugPrint('🔍 Filtering by age groups: $ageGroupNames');
+        try {
+          query = query.where('ageGroups', arrayContainsAny: ageGroupNames);
+        } catch (e) {
+          debugPrint('⚠️ Age group filter error: $e');
+          // Continue without age group filter
+        }
       }
 
-      final snapshot = await query.orderBy('title').get();
+      // Try to order by title, but if that fails, just get documents
+      QuerySnapshot<Map<String, dynamic>> snapshot;
+      try {
+        snapshot = await query.orderBy('title').get();
+      } catch (e) {
+        debugPrint('⚠️ Cannot order by title, getting without order: $e');
+        snapshot = await query.get();
+      }
+
       debugPrint('📊 Found ${snapshot.docs.length} templates in database');
 
-      final templates = snapshot.docs
-          .map((doc) => QuestionTemplate.fromJson({
-                'id': doc.id,
-                ...doc.data(),
-              }))
-          .toList();
+      // Parse templates and apply additional client-side filtering if needed
+      final templates = <QuestionTemplate>[];
+      for (final doc in snapshot.docs) {
+        try {
+          final data = doc.data();
+
+          // Client-side filtering for isActive if field exists
+          if (data.containsKey('isActive') && data['isActive'] != true) {
+            continue;
+          }
+
+          // Client-side filtering for subjects if provided
+          if (subjects != null && subjects.isNotEmpty) {
+            final subjectsList = data['subjects'] as List?;
+            final templateSubjects = subjectsList != null
+                ? subjectsList
+                    .map((s) => s?.toString().toLowerCase())
+                    .whereType<String>()
+                    .toList()
+                : <String>[];
+            final filterSubjects =
+                subjects.map((s) => s.name.toLowerCase()).toList();
+
+            if (!templateSubjects.any((s) => filterSubjects.contains(s))) {
+              debugPrint('⏭️ Skipping template ${doc.id} - subject mismatch');
+              continue;
+            }
+          }
+
+          // Client-side filtering for age groups if provided
+          if (ageGroups != null && ageGroups.isNotEmpty) {
+            final ageGroupsList = data['ageGroups'] as List?;
+            final templateAgeGroups = ageGroupsList != null
+                ? ageGroupsList
+                    .map((g) => g?.toString().toLowerCase())
+                    .whereType<String>()
+                    .toList()
+                : <String>[];
+            final filterAgeGroups =
+                ageGroups.map((g) => g.name.toLowerCase()).toList();
+
+            if (!templateAgeGroups.any((g) => filterAgeGroups.contains(g))) {
+              debugPrint('⏭️ Skipping template ${doc.id} - age group mismatch');
+              continue;
+            }
+          }
+
+          final template = QuestionTemplate.fromJson({
+            'id': doc.id,
+            ...data,
+          });
+          templates.add(template);
+        } catch (e) {
+          debugPrint('❌ Error parsing template ${doc.id}: $e');
+          continue;
+        }
+      }
 
       debugPrint('✅ Successfully loaded ${templates.length} templates');
       return templates;

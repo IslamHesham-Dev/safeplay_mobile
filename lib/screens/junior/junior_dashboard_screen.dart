@@ -13,6 +13,9 @@ import '../../widgets/junior/junior_progress_bar.dart';
 import '../../widgets/junior/junior_bottom_navigation.dart';
 import '../../widgets/junior/junior_confetti.dart';
 import '../../widgets/question_template_exporter.dart';
+import '../../services/junior_games_service.dart';
+import '../../services/junior_game_launcher.dart';
+import '../../navigation/route_names.dart';
 import 'games/number_hunt_games.dart';
 import 'games/koala_jumps_games.dart';
 import 'games/pattern_wizard_games.dart';
@@ -34,6 +37,8 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   // Services removed for mock data demonstration
   late final AnimationController _animationController;
   late final Animation<double> _fadeAnimation;
+  final JuniorGamesService _gamesService = JuniorGamesService();
+  final JuniorGameLauncher _gameLauncher = JuniorGameLauncher();
 
   List<Lesson> _todaysTasks = [];
   List<Lesson> _completedTasks = [];
@@ -99,7 +104,9 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
       }
 
       _currentChild = child;
-      _createMockData(); // keep your demo tasks etc.
+
+      // Load games from Firebase question templates
+      await _loadGamesFromTemplates();
 
       setState(() {
         _loading = false;
@@ -110,119 +117,64 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     }
   }
 
-  void _createMockData() {
-    // Create mock lessons for today's tasks
-    _todaysTasks = [
-      Lesson(
-        id: 'lesson_1',
-        title: 'Count to 10',
-        description: 'Learn to count from 1 to 10',
-        ageGroupTarget: ['6-8'],
-        exerciseType: ExerciseType.multipleChoice,
-        mappedGameType: MappedGameType.quizGame,
-        rewardPoints: 25,
-        subject: 'math',
-        difficulty: 'easy',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        learningObjectives: ['Count numbers 1-10', 'Recognize number symbols'],
-        skills: ['counting', 'number recognition'],
-        isActive: true,
-        createdBy: 'teacher_123',
-        metadata: {'color': 'blue'},
-      ),
-      Lesson(
-        id: 'lesson_2',
-        title: 'ABC Song',
-        description: 'Sing along with the alphabet',
-        ageGroupTarget: ['6-8'],
-        exerciseType: ExerciseType.flashcard,
-        mappedGameType: MappedGameType.tapGame,
-        rewardPoints: 30,
-        subject: 'reading',
-        difficulty: 'easy',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        learningObjectives: ['Learn alphabet order', 'Letter recognition'],
-        skills: ['alphabet', 'singing', 'memory'],
-        isActive: true,
-        createdBy: 'teacher_123',
-        metadata: {'color': 'green'},
-      ),
-      Lesson(
-        id: 'lesson_3',
-        title: 'Shapes Puzzle',
-        description: 'Match shapes with their names',
-        ageGroupTarget: ['6-8'],
-        exerciseType: ExerciseType.puzzle,
-        mappedGameType: MappedGameType.dragDrop,
-        rewardPoints: 35,
-        subject: 'math',
-        difficulty: 'medium',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        learningObjectives: ['Identify basic shapes', 'Shape matching'],
-        skills: ['shapes', 'matching', 'problem solving'],
-        isActive: true,
-        createdBy: 'teacher_123',
-        metadata: {'color': 'purple'},
-      ),
-      Lesson(
-        id: 'lesson_4',
-        title: 'Animal Sounds',
-        description: 'Learn what sounds animals make',
-        ageGroupTarget: ['6-8'],
-        exerciseType: ExerciseType.multipleChoice,
-        mappedGameType: MappedGameType.quizGame,
-        rewardPoints: 20,
-        subject: 'science',
-        difficulty: 'easy',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        learningObjectives: ['Animal identification', 'Sound recognition'],
-        skills: ['animals', 'listening', 'memory'],
-        isActive: true,
-        createdBy: 'teacher_123',
-        metadata: {'color': 'orange'},
-      ),
-      Lesson(
-        id: 'lesson_5',
-        title: 'Color Mixing',
-        description: 'Discover how colors mix together',
-        ageGroupTarget: ['6-8'],
-        exerciseType: ExerciseType.flashcard,
-        mappedGameType: MappedGameType.tapGame,
-        rewardPoints: 40,
-        subject: 'art',
-        difficulty: 'medium',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        learningObjectives: ['Primary colors', 'Color mixing basics'],
-        skills: ['colors', 'creativity', 'observation'],
-        isActive: true,
-        createdBy: 'teacher_123',
-        metadata: {'color': 'pink'},
-      ),
-    ];
+  /// Load games from Firebase question templates
+  Future<void> _loadGamesFromTemplates() async {
+    try {
+      debugPrint('🎮 Loading junior games from Firebase templates...');
 
-    // Create mock progress
-    _childProgress = ChildrenProgress(
-      id: 'progress_123',
-      childId: _currentChild!.id,
-      completedLessons: ['lesson_1', 'lesson_2'], // 2 completed
-      earnedPoints: 150,
-      lastActiveDate: DateTime.now().subtract(const Duration(hours: 2)),
-    );
+      // Load games from question templates
+      final games = await _gamesService.loadJuniorGames();
 
-    // Categorize tasks
-    final completedLessonIds = _childProgress!.completedLessons;
+      if (games.isEmpty) {
+        debugPrint('⚠️ No games found, using empty list');
+        setState(() {
+          _todaysTasks = [];
+          _availableTasks = [];
+          _completedTasks = [];
+        });
+        return;
+      }
 
-    _completedTasks = _todaysTasks
-        .where((task) => completedLessonIds.contains(task.id))
-        .toList();
-    _availableTasks = _todaysTasks
-        .where((task) => !completedLessonIds.contains(task.id))
-        .toList();
+      debugPrint('✅ Loaded ${games.length} games from templates');
+
+      // Load child progress to determine completed tasks
+      // For now, create a mock progress if not available
+      _childProgress = ChildrenProgress(
+        id: 'progress_${_currentChild!.id}',
+        childId: _currentChild!.id,
+        completedLessons: [], // Start with no completed lessons
+        earnedPoints: 0,
+        lastActiveDate: DateTime.now(),
+      );
+
+      // Categorize tasks
+      final completedLessonIds = _childProgress!.completedLessons;
+
+      final availableTasks =
+          games.where((task) => !completedLessonIds.contains(task.id)).toList();
+      final completedTasks =
+          games.where((task) => completedLessonIds.contains(task.id)).toList();
+
+      debugPrint(
+          '📊 Dashboard: Setting state - Total games: ${games.length}, Available: ${availableTasks.length}, Completed: ${completedTasks.length}');
+
+      setState(() {
+        _todaysTasks = games;
+        _completedTasks = completedTasks;
+        _availableTasks = availableTasks;
+      });
+
+      debugPrint(
+          '✅ Dashboard: State updated - _todaysTasks: ${_todaysTasks.length}, _availableTasks: ${_availableTasks.length}, _completedTasks: ${_completedTasks.length}');
+    } catch (e) {
+      debugPrint('❌ Error loading games from templates: $e');
+      setState(() {
+        _error = 'Error loading games: $e';
+        _todaysTasks = [];
+        _availableTasks = [];
+        _completedTasks = [];
+      });
+    }
   }
 
   @override
@@ -255,6 +207,16 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
                           JuniorTheme.backgroundLight
                         ],
                       ),
+                    ),
+                  ),
+                ),
+                // Logout button in top-right corner (accessible placement)
+                SafeArea(
+                  child: Align(
+                    alignment: Alignment.topRight,
+                    child: Padding(
+                      padding: const EdgeInsets.all(JuniorTheme.spacingMedium),
+                      child: _buildLogoutButton(),
                     ),
                   ),
                 ),
@@ -415,14 +377,23 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
           ),
         ),
         const SizedBox(height: 5),
-        Text(
-          'Ready for a new adventure today? 🌈✨',
-          textAlign: TextAlign.left,
-          style: JuniorTheme.bodyLarge.copyWith(
-            color: JuniorTheme.primaryOrange,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                'Ready for a new adventure today?',
+                textAlign: TextAlign.left,
+                style: JuniorTheme.bodyLarge.copyWith(
+                  color: JuniorTheme.primaryOrange,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -487,6 +458,9 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   }
 
   Widget _buildTodaysTasksSection() {
+    debugPrint(
+        '📋 _buildTodaysTasksSection: _availableTasks=${_availableTasks.length}, _completedTasks=${_completedTasks.length}');
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -537,29 +511,43 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   }
 
   Widget _buildTasksList() {
+    debugPrint(
+        '📋 _buildTasksList: Building ${_availableTasks.length} available + ${_completedTasks.length} completed tasks');
+
+    if (_availableTasks.isEmpty && _completedTasks.isEmpty) {
+      debugPrint('⚠️ _buildTasksList: Both lists are empty!');
+      return const SizedBox.shrink();
+    }
+
     return Column(
       children: [
         // Available tasks
-        ..._availableTasks.map((task) => Padding(
-              padding: const EdgeInsets.only(bottom: JuniorTheme.spacingSmall),
-              child: JuniorTaskCard(
-                lesson: task,
-                onPlay: () => _playTask(task),
-                isCompleted: false,
-                isLocked: false,
-              ),
-            )),
+        ..._availableTasks.map((task) {
+          debugPrint('📋 Rendering task: ${task.title}');
+          return Padding(
+            padding: const EdgeInsets.only(bottom: JuniorTheme.spacingSmall),
+            child: JuniorTaskCard(
+              lesson: task,
+              onPlay: () => _playTask(task),
+              isCompleted: false,
+              isLocked: false,
+            ),
+          );
+        }),
 
         // Completed tasks
-        ..._completedTasks.map((task) => Padding(
-              padding: const EdgeInsets.only(bottom: JuniorTheme.spacingSmall),
-              child: JuniorTaskCard(
-                lesson: task,
-                onPlay: () => _playTask(task),
-                isCompleted: true,
-                isLocked: false,
-              ),
-            )),
+        ..._completedTasks.map((task) {
+          debugPrint('📋 Rendering completed task: ${task.title}');
+          return Padding(
+            padding: const EdgeInsets.only(bottom: JuniorTheme.spacingSmall),
+            child: JuniorTaskCard(
+              lesson: task,
+              onPlay: () => _playTask(task),
+              isCompleted: true,
+              isLocked: false,
+            ),
+          );
+        }),
       ],
     );
   }
@@ -1064,14 +1052,11 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   }
 
   void _playTask(Lesson task) {
-    // Show celebration if task is completed
-    if (_completedTasks.contains(task)) {
-      _showTaskCompletionCelebration(task);
-    } else {
-      // Navigate to task/lesson screen
-      // This would typically navigate to the actual lesson/game screen
-      _showTaskStartMessage(task);
-    }
+    // Launch the game
+    _gameLauncher.launchGame(
+      context: context,
+      lesson: task,
+    );
   }
 
   void _showTaskCompletionCelebration(Lesson task) {
@@ -1177,6 +1162,136 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
         duration: const Duration(seconds: 2),
       ),
     );
+  }
+
+  /// Build logout button with accessibility standards for junior children
+  /// WCAG 2.1 compliant: minimum 44x44 point touch target (7-10mm)
+  Widget _buildLogoutButton() {
+    return Semantics(
+      label: 'Log out and return to login screen',
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _handleLogout,
+          borderRadius: BorderRadius.circular(JuniorTheme.radiusMedium),
+          // Minimum touch target size: 44x44 points (WCAG 2.1)
+          // Adding padding to ensure adequate touch area
+          child: Container(
+            width: 56, // Large enough for children (44+ padding)
+            height: 56, // Large enough for children (44+ padding)
+            padding: const EdgeInsets.all(JuniorTheme.spacingSmall),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(JuniorTheme.radiusMedium),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+                width: 1.5,
+              ),
+            ),
+            child: Icon(
+              Icons.logout,
+              color: Colors.white,
+              size: 28, // Clear visual size for children
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Handle logout process with confirmation for junior children
+  Future<void> _handleLogout() async {
+    // Show confirmation dialog to prevent accidental logout
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false, // Require explicit choice
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(JuniorTheme.radiusLarge),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.logout,
+              color: JuniorTheme.primaryOrange,
+              size: 28,
+            ),
+            const SizedBox(width: JuniorTheme.spacingSmall),
+            Text(
+              'Log Out?',
+              style: JuniorTheme.headingSmall,
+            ),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to log out?',
+          style: JuniorTheme.bodyMedium,
+        ),
+        actions: [
+          // Cancel button (large touch target)
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            style: TextButton.styleFrom(
+              minimumSize: const Size(80, 48), // Large touch target
+              padding: const EdgeInsets.symmetric(
+                horizontal: JuniorTheme.spacingMedium,
+                vertical: JuniorTheme.spacingSmall,
+              ),
+            ),
+            child: Text(
+              'No, Stay',
+              style: JuniorTheme.buttonText.copyWith(
+                color: JuniorTheme.primaryPink,
+              ),
+            ),
+          ),
+          // Confirm button (large touch target)
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: JuniorTheme.primaryOrange,
+              minimumSize: const Size(100, 48), // Large touch target
+              padding: const EdgeInsets.symmetric(
+                horizontal: JuniorTheme.spacingMedium,
+                vertical: JuniorTheme.spacingSmall,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(JuniorTheme.radiusMedium),
+              ),
+            ),
+            child: Text(
+              'Yes, Log Out',
+              style: JuniorTheme.buttonText.copyWith(
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        final authProvider = context.read<AuthProvider>();
+        await authProvider.signOut();
+
+        if (mounted) {
+          // Navigate to login screen
+          context.go(RouteNames.login);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error logging out: $e'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    }
   }
 }
 

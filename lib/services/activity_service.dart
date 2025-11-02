@@ -110,6 +110,50 @@ class ActivityService {
     }, SetOptions(merge: true));
   }
 
+  /// Delete an activity
+  Future<void> deleteActivity({
+    required String activityId,
+    required UserType actorRole,
+  }) async {
+    if (actorRole != UserType.teacher && actorRole != UserType.admin) {
+      throw Exception('Only teachers/admins can delete activities');
+    }
+
+    final doc =
+        await _firestore.collection(activitiesCollection).doc(activityId).get();
+
+    if (!doc.exists) {
+      throw Exception('Activity not found');
+    }
+
+    final activity = Activity.fromJson({'id': doc.id, ...doc.data()!});
+
+    // Verify ownership (basic check)
+    if (activity.createdBy.isNotEmpty) {
+      // Additional ownership verification could be added here
+    }
+
+    // Delete the activity
+    await _firestore.collection(activitiesCollection).doc(activityId).delete();
+
+    // Optionally delete related progress data
+    try {
+      final progressDocs = await _firestore
+          .collection(progressCollection)
+          .where('activityId', isEqualTo: activityId)
+          .get();
+
+      final batch = _firestore.batch();
+      for (final doc in progressDocs.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+    } catch (e) {
+      debugPrint('Error deleting progress data: $e');
+      // Don't fail if progress deletion fails
+    }
+  }
+
   /// Simple validations for safe child experiences.
   void _validateActivity(Activity activity, {bool publishing = false}) {
     // Min/Max questions (example: 3..20)

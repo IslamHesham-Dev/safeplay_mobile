@@ -48,9 +48,49 @@ class PublishingService {
             'Only the creator can publish this activity');
       }
 
+      // CRITICAL: Check if activity is already published
+      // If it's already published and validation fails, we need to unpublish it
+      final isCurrentlyPublished = activity.published == true ||
+          activity.publishState == PublishState.published;
+
+      // CRITICAL: Perform validation BEFORE updating publish state
+      // This prevents invalid activities from being published
+
       // Perform comprehensive safety review
       final reviewResult = await _performSafetyReview(activity);
       if (!reviewResult.isValid) {
+        // Validation failed - DO NOT publish or UNPUBLISH if already published
+        // Ensure activity is set to draft and unpublished
+        try {
+          await _firestore
+              .collection(activitiesCollection)
+              .doc(activityId)
+              .update({
+            'publishState': PublishState.draft.name,
+            'published': false, // CRITICAL: Explicitly set to false
+            'updatedAt': FieldValue.serverTimestamp(),
+            'validationErrors': reviewResult.reasons,
+            if (isCurrentlyPublished)
+              'unpublishedAt': FieldValue.serverTimestamp(),
+          });
+
+          debugPrint(
+              '✅ Validation failed - Activity ${activityId} set to draft and unpublished');
+        } catch (e) {
+          debugPrint(
+              '❌ Error updating activity to draft after validation failure: $e');
+          // If update fails, try to delete the activity
+          try {
+            await _firestore
+                .collection(activitiesCollection)
+                .doc(activityId)
+                .delete();
+            debugPrint('⚠️ Deleted invalid activity ${activityId}');
+          } catch (deleteError) {
+            debugPrint('❌ Failed to delete invalid activity: $deleteError');
+          }
+        }
+
         return PublishingResult.failure(
             'Activity failed safety review: ${reviewResult.reasons.join(', ')}');
       }
@@ -58,11 +98,43 @@ class PublishingService {
       // Apply visibility rules
       final visibilityResult = await _applyVisibilityRules(activity);
       if (!visibilityResult.isValid) {
+        // Validation failed - DO NOT publish or UNPUBLISH if already published
+        // Ensure activity is set to draft and unpublished
+        try {
+          await _firestore
+              .collection(activitiesCollection)
+              .doc(activityId)
+              .update({
+            'publishState': PublishState.draft.name,
+            'published': false, // CRITICAL: Explicitly set to false
+            'updatedAt': FieldValue.serverTimestamp(),
+            'validationErrors': visibilityResult.reasons,
+            if (isCurrentlyPublished)
+              'unpublishedAt': FieldValue.serverTimestamp(),
+          });
+
+          debugPrint(
+              '✅ Visibility rules failed - Activity ${activityId} set to draft and unpublished');
+        } catch (e) {
+          debugPrint(
+              '❌ Error updating activity to draft after visibility failure: $e');
+          // If update fails, try to delete the activity
+          try {
+            await _firestore
+                .collection(activitiesCollection)
+                .doc(activityId)
+                .delete();
+            debugPrint('⚠️ Deleted invalid activity ${activityId}');
+          } catch (deleteError) {
+            debugPrint('❌ Failed to delete invalid activity: $deleteError');
+          }
+        }
+
         return PublishingResult.failure(
             'Activity failed visibility rules: ${visibilityResult.reasons.join(', ')}');
       }
 
-      // Update publish state
+      // ALL VALIDATIONS PASSED - Now update to published state
       await _firestore.collection(activitiesCollection).doc(activityId).update({
         'publishState': PublishState.published.name,
         'published': true,
@@ -180,8 +252,12 @@ class PublishingService {
     }
 
     // Duration appropriateness
+    // Note: Duration should exclude game/question play time (only includes instruction/setup time)
+    // The actual duration includes time for reading questions, understanding, etc.
+    // Game play time is separate and not counted in this duration
     if (activity.durationMinutes < 1 || activity.durationMinutes > 30) {
-      reasons.add('Activity duration should be between 1-30 minutes');
+      reasons.add(
+          'Activity duration must be between 1-30 minutes (excluding game play time)');
     }
 
     return SafetyReviewResult(
@@ -229,11 +305,11 @@ class PublishingService {
             difficultyRules[activity.difficulty.name] as Map<String, dynamic>;
         appliedRules.add('difficulty_${activity.difficulty.name}');
 
-        // Check duration limits
+        // Check duration limits (excludes game play time)
         final maxDuration = difficultyRule['maxDuration'] as int?;
         if (maxDuration != null && activity.durationMinutes > maxDuration) {
           reasons.add(
-              '${activity.difficulty.name} activities cannot exceed $maxDuration minutes');
+              '${activity.difficulty.name} activities cannot exceed $maxDuration minutes (excluding game play time)');
         }
       }
 

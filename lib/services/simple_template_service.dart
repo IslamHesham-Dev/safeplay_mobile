@@ -12,7 +12,7 @@ class SimpleTemplateService {
     debugPrint('SimpleTemplateService: Loading all templates...');
 
     final baseQuery = _firestore
-        .collection('questionTemplates')
+        .collection('curriculumQuestionTemplates') // Use new collection only
         .where('isActive', isEqualTo: true);
 
     QuerySnapshot<Map<String, dynamic>> snapshot;
@@ -24,7 +24,8 @@ class SimpleTemplateService {
             'SimpleTemplateService: Missing index for title/isActive, retrying without order...');
         snapshot = await baseQuery.get();
       } else if (error.code == 'permission-denied') {
-        debugPrint('SimpleTemplateService: Permission denied loading templates');
+        debugPrint(
+            'SimpleTemplateService: Permission denied loading templates');
         rethrow;
       } else {
         debugPrint(
@@ -65,7 +66,7 @@ class SimpleTemplateService {
           '🔍 SimpleTemplateService: Loading templates for age group: $ageGroup');
 
       final snapshot = await _firestore
-          .collection('questionTemplates')
+          .collection('curriculumQuestionTemplates') // Use new collection only
           .where('isActive', isEqualTo: true)
           .where('ageGroups', arrayContains: ageGroup)
           .orderBy('title')
@@ -95,7 +96,7 @@ class SimpleTemplateService {
           '🔍 SimpleTemplateService: Loading templates for subject: $subject');
 
       final snapshot = await _firestore
-          .collection('questionTemplates')
+          .collection('curriculumQuestionTemplates') // Use new collection only
           .where('isActive', isEqualTo: true)
           .where('subjects', arrayContains: subject)
           .orderBy('title')
@@ -115,6 +116,35 @@ class SimpleTemplateService {
       debugPrint(
           '❌ SimpleTemplateService: Error loading templates for $subject: $e');
       return [];
+    }
+  }
+
+  /// Load a single template by ID
+  Future<QuestionTemplate?> getTemplateById(String templateId) async {
+    try {
+      debugPrint('🔍 SimpleTemplateService: Loading template: $templateId');
+
+      final doc = await _firestore
+          .collection('curriculumQuestionTemplates') // Use new collection only
+          .doc(templateId)
+          .get();
+
+      if (!doc.exists) {
+        debugPrint('⚠️ SimpleTemplateService: Template $templateId not found');
+        return null;
+      }
+
+      final template = QuestionTemplate.fromJson({
+        'id': doc.id,
+        ...doc.data()!,
+      });
+
+      debugPrint('✅ SimpleTemplateService: Loaded template $templateId');
+      return template;
+    } catch (e) {
+      debugPrint(
+          '❌ SimpleTemplateService: Error loading template $templateId: $e');
+      return null;
     }
   }
 }

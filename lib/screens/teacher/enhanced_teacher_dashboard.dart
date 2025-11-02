@@ -7,11 +7,15 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/teacher_service.dart';
 import '../../services/simple_template_service.dart';
+import '../../services/break_activities_service.dart';
 import '../../models/teacher_profile.dart' as teacher;
 import '../../models/activity.dart';
 import '../../models/question_template.dart';
 import '../../models/user_type.dart';
 import '../../design_system/colors.dart';
+import 'activity_builder_screen.dart';
+import 'activity_creation_wizard_screen.dart';
+import 'teacher_activities_management_screen.dart';
 
 class EnhancedTeacherDashboard extends StatefulWidget {
   const EnhancedTeacherDashboard({super.key});
@@ -24,6 +28,7 @@ class EnhancedTeacherDashboard extends StatefulWidget {
 class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
   late final TeacherService _teacherService;
   late final SimpleTemplateService _simpleTemplateService;
+  late final BreakActivitiesService _breakActivitiesService;
 
   int _currentIndex = 0;
 
@@ -43,6 +48,7 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
     super.initState();
     _teacherService = TeacherService();
     _simpleTemplateService = SimpleTemplateService();
+    _breakActivitiesService = BreakActivitiesService();
     _loadDashboardData();
   }
 
@@ -70,16 +76,37 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
 
       debugPrint('Loading dashboard data for teacher: $teacherId');
 
-      // Load all templates first (this is the most important part)
+      // Load all templates (curriculum questions + break activities)
       debugPrint('Loading all templates...');
       try {
-        final templates = await _simpleTemplateService
+        final allTemplates = <QuestionTemplate>[];
+
+        // Load curriculum questions
+        final curriculumTemplates = await _simpleTemplateService
             .getAllTemplates()
             .timeout(const Duration(seconds: 10));
-        _templates = templates;
+        allTemplates.addAll(curriculumTemplates);
+
+        // Load break activities for both age groups
+        final juniorBreakActivities =
+            await _breakActivitiesService.getBreakActivities(
+          ageGroup: AgeGroup.junior,
+          activeOnly: true,
+        );
+        allTemplates.addAll(juniorBreakActivities);
+
+        final brightBreakActivities =
+            await _breakActivitiesService.getBreakActivities(
+          ageGroup: AgeGroup.bright,
+          activeOnly: true,
+        );
+        allTemplates.addAll(brightBreakActivities);
+
+        _templates = allTemplates;
         _filteredTemplates = List.from(_templates); // Initialize filtered list
         _templateError = null;
-        debugPrint('Loaded ${_templates.length} templates');
+        debugPrint(
+            'Loaded ${_templates.length} templates (${curriculumTemplates.length} curriculum + ${juniorBreakActivities.length + brightBreakActivities.length} break activities)');
       } on TimeoutException catch (error) {
         debugPrint('Template load timed out: $error');
         _templates = [];
@@ -108,12 +135,14 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
         // Continue without profile
       }
 
-      // Load teacher's activities (optional - don't block on this)
+      // Load teacher's published activities (optional - don't block on this)
       try {
-        debugPrint('📝 Loading teacher activities...');
+        debugPrint('📝 Loading teacher published activities...');
         _activities =
             await _teacherService.getTeacherActivities(teacherId: teacherId);
-        debugPrint('📝 Loaded ${_activities.length} activities');
+        // Filter to only published activities
+        _activities = _activities.where((a) => a.published == true).toList();
+        debugPrint('📝 Loaded ${_activities.length} published activities');
       } catch (e) {
         debugPrint('⚠️ Could not load teacher activities: $e');
         _activities = []; // Set empty list if failed
@@ -570,7 +599,18 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
                         'Create New Activity',
                         'Build activities from templates',
                         Icons.add_circle_outline,
-                        () => setState(() => _currentIndex = 1),
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const ActivityCreationWizardScreen(),
+                            ),
+                          ).then((_) {
+                            // Refresh data when returning
+                            _loadDashboardData();
+                          });
+                        },
                         gradient: LinearGradient(
                           colors: [
                             SafePlayColors.brandTeal500,
@@ -597,35 +637,14 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildActionCard(
-                        'View Analytics',
-                        'Check child progress and performance',
-                        Icons.analytics_outlined,
-                        () => setState(() => _currentIndex = 3),
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.orange,
-                            Colors.orange.withOpacity(0.8)
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildActionCard(
-                        'Refresh Data',
-                        'Reload dashboard information',
-                        Icons.refresh_outlined,
-                        _loadDashboardData,
-                        gradient: LinearGradient(
-                          colors: [Colors.blue, Colors.blue.withOpacity(0.8)],
-                        ),
-                      ),
-                    ),
-                  ],
+                _buildActionCard(
+                  'Refresh Data',
+                  'Reload dashboard information',
+                  Icons.refresh_outlined,
+                  _loadDashboardData,
+                  gradient: LinearGradient(
+                    colors: [Colors.blue, Colors.blue.withOpacity(0.8)],
+                  ),
                 ),
               ],
             ),
@@ -974,7 +993,7 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
             ),
             const SizedBox(height: 8),
             Text(
-              'This feature is coming soon!\nYou\'ll be able to create custom activities from templates.',
+              'Build engaging activities from templates!\nSelect questions, choose game type, and publish for children.',
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey[600],
@@ -983,39 +1002,33 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () => setState(() => _currentIndex = 3),
-                  icon: const Icon(Icons.library_books),
-                  label: const Text('Browse Templates'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: SafePlayColors.brandTeal500,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ActivityCreationWizardScreen(),
                   ),
+                ).then((_) {
+                  // Refresh data when returning
+                  _loadDashboardData();
+                });
+              },
+              icon: const Icon(Icons.add_circle, size: 24),
+              label: const Text(
+                'Start Activity Creation',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: SafePlayColors.brandTeal500,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(width: 16),
-                OutlinedButton.icon(
-                  onPressed: () => setState(() => _currentIndex = 2),
-                  icon: const Icon(Icons.list),
-                  label: const Text('View Activities'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: SafePlayColors.brandTeal500,
-                    side: BorderSide(color: SafePlayColors.brandTeal500),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ],
+                elevation: 4,
+              ),
             ),
           ],
         ),
@@ -1024,64 +1037,160 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
   }
 
   Widget _buildMyActivitiesTab() {
+    // Show activities directly or empty state
     if (_activities.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.assignment_outlined,
-                size: 64,
-                color: Colors.grey[400],
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'No activities yet',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[600],
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Create your first activity to get started!',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[500],
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: () => setState(() => _currentIndex = 1),
-                icon: const Icon(Icons.add),
-                label: const Text('Create Activity'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: SafePlayColors.brandTeal500,
-                  foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
+      return _buildEmptyActivitiesState();
     }
 
+    // Show all published activities directly (no "View All" button needed)
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: _activities.length,
       itemBuilder: (context, index) {
-        final activity = _activities[index];
-        return _buildActivityCard(activity);
+        return _buildActivityListItem(_activities[index]);
       },
+    );
+  }
+
+  Widget _buildEmptyActivitiesState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.assignment_outlined,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No published activities yet',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Create and publish your first activity to see it here!',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => setState(() => _currentIndex = 1),
+              icon: const Icon(Icons.add),
+              label: const Text('Create Activity'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: SafePlayColors.brandTeal500,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        const TeacherActivitiesManagementScreen(),
+                  ),
+                ).then((_) => _loadDashboardData());
+              },
+              icon: const Icon(Icons.list_alt),
+              label: const Text('View All Activities'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivityListItem(Activity activity) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        title: Text(
+          activity.title,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Text(
+              activity.description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: activity.published
+                        ? SafePlayColors.success.withOpacity(0.1)
+                        : Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    activity.published ? 'Published' : 'Draft',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: activity.published
+                          ? SafePlayColors.success
+                          : Colors.orange,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(Icons.quiz, size: 14, color: Colors.grey[600]),
+                const SizedBox(width: 4),
+                Text(
+                  '${activity.questions.length}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+                const SizedBox(width: 12),
+                Icon(Icons.stars, size: 14, color: Colors.grey[600]),
+                const SizedBox(width: 4),
+                Text(
+                  '${activity.points}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ],
+        ),
+        trailing: IconButton(
+          icon: const Icon(Icons.chevron_right),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TeacherActivitiesManagementScreen(),
+              ),
+            ).then((_) => _loadDashboardData());
+          },
+        ),
+      ),
     );
   }
 
@@ -1183,6 +1292,17 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
         case 'English':
           return template.subjects.contains(ActivitySubject.reading) ||
               template.subjects.contains(ActivitySubject.writing);
+        case 'Science':
+          return template.subjects.contains(ActivitySubject.science);
+        case 'Break Activities':
+          // Check if template is a break activity
+          final json = template.toJson();
+          return json['isBreakActivity'] == true ||
+              template.subjects.isEmpty ||
+              (template.subjects.length == 1 &&
+                  template.subjects.first.displayName
+                      .toLowerCase()
+                      .contains('wellbeing'));
         case 'Mindful':
           return template.skills.any((skill) =>
               skill.toLowerCase().contains('mindful') ||
@@ -1254,7 +1374,10 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
                 const SizedBox(width: 8),
                 _buildFilterChip('English', _currentFilter == 'English'),
                 const SizedBox(width: 8),
-                _buildFilterChip('Mindful', _currentFilter == 'Mindful'),
+                _buildFilterChip('Science', _currentFilter == 'Science'),
+                const SizedBox(width: 8),
+                _buildFilterChip(
+                    'Break Activities', _currentFilter == 'Break Activities'),
                 const SizedBox(width: 8),
                 _buildFilterChip(
                     'Junior (6-8)', _currentFilter == 'Junior (6-8)'),
@@ -1330,179 +1453,254 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
   }
 
   Widget _buildTemplateCard(QuestionTemplate template) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () => _showTemplateDetails(template),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header with type and points
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: _getQuestionTypeColor(template.type)
-                            .withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _getQuestionTypeIcon(template.type),
-                            size: 16,
-                            color: _getQuestionTypeColor(template.type),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            _getQuestionTypeDisplayName(template.type),
-                            style: TextStyle(
-                              color: _getQuestionTypeColor(template.type),
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
+    // Get background color based on subject (similar to junior cards)
+    final backgroundColor = _getTemplateBackgroundColor(template);
+    final textColor = _getTemplateTextColor(template);
+
+    return GestureDetector(
+      onTap: () => _showTemplateDetails(template),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        height: 180, // Fixed height like junior cards
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius:
+              BorderRadius.circular(24), // Large border radius like junior
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            // Content positioned like junior cards
+            Positioned(
+              left: 20,
+              top: 20,
+              right: 120, // Space for icon
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title (large, bold)
+                  Text(
+                    template.title,
+                    style: TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                      height: 1.2,
                     ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '${template.defaultPoints} pts',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w500,
-                          fontSize: 11,
-                        ),
-                      ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  // Description/prompt (smaller, muted)
+                  Text(
+                    template.prompt,
+                    style: TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 14,
+                      fontWeight: FontWeight.normal,
+                      color: textColor.withOpacity(0.7),
+                      height: 1.3,
                     ),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                // Title
-                Text(
-                  template.title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-
-                const SizedBox(height: 8),
-
-                // Description
-                Text(
-                  template.prompt,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                    height: 1.4,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-
-                const SizedBox(height: 16),
-
-                // Skills tags
-                if (template.skills.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  // Tags row (subject, age group - compact for card)
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
-                    children: template.skills
-                        .take(3)
-                        .map((skill) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: SafePlayColors.brandTeal500
-                                    .withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
+                    children: [
+                      // Subject tags (compact for card)
+                      ...template.subjects.take(1).map((subject) {
+                        final color = _getSubjectColor(subject);
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _getSubjectIcon(subject),
+                                size: 12,
+                                color: color,
                               ),
-                              child: Text(
-                                skill,
+                              const SizedBox(width: 4),
+                              Text(
+                                subject == ActivitySubject.reading
+                                    ? 'English'
+                                    : subject.displayName,
                                 style: TextStyle(
-                                  color: SafePlayColors.brandTeal500,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
+                                  color: color,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            ))
-                        .toList(),
+                            ],
+                          ),
+                        );
+                      }),
+
+                      // Age group (compact)
+                      if (template.ageGroups.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: (template.ageGroups.first == AgeGroup.junior
+                                    ? Colors.orange
+                                    : Colors.purple)
+                                .withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            template.ageGroups.first == AgeGroup.junior
+                                ? 'Junior'
+                                : 'Bright',
+                            style: TextStyle(
+                              color: template.ageGroups.first == AgeGroup.junior
+                                  ? Colors.orange
+                                  : Colors.purple,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                  if (template.skills.length > 3) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      '+${template.skills.length - 3} more',
-                      style: TextStyle(
-                        color: Colors.grey[500],
-                        fontSize: 11,
-                        fontStyle: FontStyle.italic,
-                      ),
+
+                  // Points indicator
+                  if (template.defaultPoints > 0) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.monetization_on,
+                          size: 16,
+                          color: textColor.withOpacity(0.6),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${template.defaultPoints} points',
+                          style: TextStyle(
+                            fontFamily: 'Nunito',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: textColor.withOpacity(0.6),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ],
-
-                const SizedBox(height: 16),
-
-                // Footer with action button
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _addTemplateToActivity(template),
-                        icon: const Icon(Icons.add, size: 16),
-                        label: const Text('Add to Activity'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: SafePlayColors.brandTeal500,
-                          side: BorderSide(color: SafePlayColors.brandTeal500),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            // Icon/Illustration in bottom-right (like junior cards)
+            Positioned(
+              right: -10,
+              bottom: -10,
+              child: _buildTemplateIcon(template, backgroundColor, textColor),
+            ),
+            // Add to Activity button (top-right corner)
+            Positioned(
+              top: 12,
+              right: 12,
+              child: Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                elevation: 2,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () => _addTemplateToActivity(template),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.add_circle,
+                          size: 18,
+                          color: SafePlayColors.brandTeal500,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Add',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: SafePlayColors.brandTeal500,
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    IconButton(
-                      onPressed: () => _showTemplateDetails(template),
-                      icon: Icon(Icons.info_outline, color: Colors.grey[600]),
-                      tooltip: 'View Details',
-                    ),
-                  ],
+                  ),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
+      ),
+    );
+  }
+
+  /// Get background color for template card (pastel based on subject)
+  Color _getTemplateBackgroundColor(QuestionTemplate template) {
+    if (template.subjects.isEmpty) {
+      return Colors.blue.withOpacity(0.15);
+    }
+
+    final subject = template.subjects.first;
+    switch (subject) {
+      case ActivitySubject.math:
+        return Colors.blue.withOpacity(0.15);
+      case ActivitySubject.science:
+        return Colors.orange.withOpacity(0.15);
+      case ActivitySubject.reading:
+      case ActivitySubject.writing:
+        return Colors.green.withOpacity(0.15);
+      default:
+        return Colors.purple.withOpacity(0.15);
+    }
+  }
+
+  /// Get text color for template card (dark for readability)
+  Color _getTemplateTextColor(QuestionTemplate template) {
+    return Colors.black87; // Dark text for good contrast
+  }
+
+  /// Build template icon (similar to junior cards)
+  Widget _buildTemplateIcon(
+      QuestionTemplate template, Color bgColor, Color textColor) {
+    final icon = _getSubjectIcon(template.subjects.isNotEmpty
+        ? template.subjects.first
+        : ActivitySubject.math);
+    final iconColor = _getSubjectColor(template.subjects.isNotEmpty
+        ? template.subjects.first
+        : ActivitySubject.math);
+
+    return Container(
+      width: 100,
+      height: 100,
+      decoration: BoxDecoration(
+        color: iconColor.withOpacity(0.2),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        icon,
+        size: 50,
+        color: iconColor,
       ),
     );
   }
@@ -1699,13 +1897,18 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
   }
 
   void _addTemplateToActivity(QuestionTemplate template) {
-    // TODO: Implement adding template to activity creation
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Added "${template.title}" to activity'),
-        backgroundColor: SafePlayColors.brandTeal500,
+    // Navigate to Activity Builder with template pre-selected
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ActivityBuilderScreen(
+          preSelectedTemplates: [template],
+        ),
       ),
-    );
+    ).then((_) {
+      // Refresh data when returning
+      _loadDashboardData();
+    });
   }
 
   String _getQuestionTypeDisplayName(QuestionType type) {

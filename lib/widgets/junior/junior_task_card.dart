@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../design_system/junior_theme.dart';
 import '../../models/lesson.dart';
+import '../../models/game_activity.dart';
 
-/// Junior task card component with illustrations and simple text
+/// Junior task card component with tile-style design
+/// Matches the soft pastel tile aesthetic with rounded corners and subtle shadows
 class JuniorTaskCard extends StatefulWidget {
   final Lesson lesson;
   final VoidCallback? onPlay;
@@ -26,9 +28,7 @@ class JuniorTaskCard extends StatefulWidget {
 class _JuniorTaskCardState extends State<JuniorTaskCard>
     with TickerProviderStateMixin {
   late final AnimationController _bounceController;
-  late final AnimationController _pulseController;
   late final Animation<double> _bounceAnimation;
-  late final Animation<double> _pulseAnimation;
 
   @override
   void initState() {
@@ -38,40 +38,22 @@ class _JuniorTaskCardState extends State<JuniorTaskCard>
 
   void _setupAnimations() {
     _bounceController = AnimationController(
-      duration: JuniorTheme.animationMedium,
-      vsync: this,
-    );
-    _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
 
     _bounceAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
+      begin: 1.0,
+      end: 0.96,
     ).animate(CurvedAnimation(
       parent: _bounceController,
-      curve: JuniorTheme.bounceCurve,
-    ));
-
-    _pulseAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.05,
-    ).animate(CurvedAnimation(
-      parent: _pulseController,
       curve: Curves.easeInOut,
     ));
-
-    // Start pulse animation for incomplete tasks
-    if (!widget.isCompleted && !widget.isLocked) {
-      _pulseController.repeat(reverse: true);
-    }
   }
 
   @override
   void dispose() {
     _bounceController.dispose();
-    _pulseController.dispose();
     super.dispose();
   }
 
@@ -80,21 +62,122 @@ class _JuniorTaskCardState extends State<JuniorTaskCard>
     return GestureDetector(
       onTap: widget.isLocked ? null : _handleTap,
       child: AnimatedBuilder(
-        animation: Listenable.merge([_bounceAnimation, _pulseAnimation]),
+        animation: _bounceAnimation,
         builder: (context, child) {
           return Transform.scale(
-            scale: widget.isLocked
-                ? 1.0
-                : _bounceAnimation.value * _pulseAnimation.value,
+            scale: widget.isLocked ? 1.0 : _bounceAnimation.value,
             child: Container(
-              width: JuniorTheme.cardWidth,
-              height: JuniorTheme.cardMinHeight,
-              margin: const EdgeInsets.symmetric(
-                horizontal: JuniorTheme.spacingSmall,
-                vertical: JuniorTheme.spacingXSmall,
+              width: double.infinity,
+              height: 160.0, // Fixed height for consistent tiles
+              margin: const EdgeInsets.only(bottom: JuniorTheme.spacingMedium),
+              decoration: BoxDecoration(
+                color: _getTileBackgroundColor(),
+                borderRadius:
+                    BorderRadius.circular(24.0), // Significant border-radius
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08), // Subtle shadow
+                    blurRadius: 12.0,
+                    offset: const Offset(0, 4),
+                    spreadRadius: 0,
+                  ),
+                ],
               ),
-              decoration: _getCardDecoration(),
-              child: _buildCardContent(),
+              child: Stack(
+                children: [
+                  // Content: Title and description in top-left
+                  Positioned(
+                    left: 20.0,
+                    top: 20.0,
+                    right: 120.0, // Leave space for icon
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title (large, bold, dark text)
+                        Text(
+                          widget.lesson.title,
+                          style: const TextStyle(
+                            fontFamily: 'Nunito',
+                            fontSize: 22.0,
+                            fontWeight: FontWeight.bold,
+                            color: JuniorTheme.textPrimary,
+                            height: 1.2,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 8.0),
+                        // Description/Game count (smaller, muted text)
+                        Row(
+                          children: [
+                            if (widget.lesson.content['templateCount'] != null)
+                              Text(
+                                '${widget.lesson.content['templateCount']} Games',
+                                style: TextStyle(
+                                  fontFamily: 'Nunito',
+                                  fontSize: 14.0,
+                                  fontWeight: FontWeight.normal,
+                                  color: _getTileTextColor().withOpacity(0.7),
+                                  height: 1.3,
+                                ),
+                              )
+                            else
+                              Text(
+                                widget.lesson.description ??
+                                    'Fun learning games',
+                                style: TextStyle(
+                                  fontFamily: 'Nunito',
+                                  fontSize: 14.0,
+                                  fontWeight: FontWeight.normal,
+                                  color: _getTileTextColor().withOpacity(0.7),
+                                  height: 1.3,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                          ],
+                        ),
+                        if (widget.lesson.rewardPoints > 0) ...[
+                          const SizedBox(height: 8.0),
+                          // Reward points indicator
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.monetization_on,
+                                size: 16.0,
+                                color: _getTileTextColor().withOpacity(0.6),
+                              ),
+                              const SizedBox(width: 4.0),
+                              Text(
+                                '${widget.lesson.rewardPoints} points',
+                                style: TextStyle(
+                                  fontFamily: 'Nunito',
+                                  fontSize: 13.0,
+                                  fontWeight: FontWeight.w500,
+                                  color: _getTileTextColor().withOpacity(0.6),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  // Icon/Illustration in bottom-right (possibly overlapping)
+                  Positioned(
+                    right: -10.0, // Slightly overlapping for playful effect
+                    bottom: -10.0,
+                    child: _buildTileIcon(),
+                  ),
+                  // Status indicator (top-right corner)
+                  if (widget.isCompleted || widget.isLocked)
+                    Positioned(
+                      top: 12.0,
+                      right: 12.0,
+                      child: _buildStatusIndicator(),
+                    ),
+                ],
+              ),
             ),
           );
         },
@@ -102,165 +185,196 @@ class _JuniorTaskCardState extends State<JuniorTaskCard>
     );
   }
 
-  BoxDecoration _getCardDecoration() {
+  /// Get pastel background color based on game type or exercise type
+  Color _getTileBackgroundColor() {
     if (widget.isLocked) {
-      return BoxDecoration(
-        color: JuniorTheme.textLight.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(JuniorTheme.radiusLarge),
-        boxShadow: JuniorTheme.shadowLight,
-        border: Border.all(
-          color: JuniorTheme.textLight,
-          width: 2.0,
-        ),
-      );
+      return JuniorTheme.textLight.withOpacity(0.2);
     }
 
     if (widget.isCompleted) {
-      return BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [JuniorTheme.success, JuniorTheme.primaryGreen],
-        ),
-        borderRadius: BorderRadius.circular(JuniorTheme.radiusLarge),
-        boxShadow: JuniorTheme.shadowMedium,
-      );
+      return JuniorTheme.success.withOpacity(0.6);
     }
 
-    return JuniorTheme.getCardDecoration();
+    // Try to get game type from lesson
+    final gameTypeName = widget.lesson.content['gameType'] as String? ??
+        widget.lesson.metadata['gameType'] as String?;
+
+    if (gameTypeName != null) {
+      try {
+        final gameType = GameType.values.firstWhere(
+          (e) => e.name == gameTypeName,
+        );
+        return _getColorForGameType(gameType);
+      } catch (e) {
+        // Fall back to exercise type
+      }
+    }
+
+    // Fall back to exercise type
+    return _getColorForExerciseType(widget.lesson.exerciseType);
   }
 
-  Widget _buildCardContent() {
-    return Padding(
-      padding: const EdgeInsets.all(JuniorTheme.spacingMedium),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Top row: Illustration and status
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildIllustration(),
-              _buildStatusIndicator(),
-            ],
-          ),
-
-          // Middle row: Task title (max 3-4 words)
-          _buildTaskTitle(),
-
-          // Bottom row: Reward coins and play button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildRewardCoins(),
-              _buildPlayButton(),
-            ],
-          ),
-        ],
-      ),
-    );
+  /// Get color for specific game type
+  Color _getColorForGameType(GameType gameType) {
+    switch (gameType) {
+      case GameType.numberGridRace:
+      case GameType.koalaCounterAdventure:
+        return const Color(0xFFFFF8DC); // Soft pastel yellow
+      case GameType.ordinalDragOrder:
+      case GameType.patternBuilder:
+        return const Color(0xFFFFE4E1); // Light pink/orange
+      case GameType.memoryMatch:
+      case GameType.wordBuilder:
+      case GameType.storySequencer:
+        return const Color(0xFFE0F2F1); // Light green/teal
+      default:
+        return const Color(0xFFF0F8FF); // Light blue
+    }
   }
 
-  Widget _buildIllustration() {
-    return Container(
-      width: 60.0,
-      height: 60.0,
-      decoration: BoxDecoration(
-        color: _getIllustrationBackgroundColor(),
-        borderRadius: BorderRadius.circular(JuniorTheme.radiusMedium),
-        boxShadow: JuniorTheme.shadowLight,
-      ),
-      child: _getIllustrationIcon(),
-    );
-  }
-
-  Color _getIllustrationBackgroundColor() {
-    if (widget.isLocked) return JuniorTheme.textLight;
-    if (widget.isCompleted) return Colors.white;
-
-    switch (widget.lesson.exerciseType) {
+  /// Get color for exercise type
+  Color _getColorForExerciseType(ExerciseType exerciseType) {
+    switch (exerciseType) {
       case ExerciseType.multipleChoice:
-        return JuniorTheme.primaryBlue;
+        return const Color(0xFFFFF8DC); // Soft pastel yellow
       case ExerciseType.flashcard:
-        return JuniorTheme.primaryYellow;
+        return const Color(0xFFFFE4E1); // Light pink/orange
       case ExerciseType.puzzle:
-        return JuniorTheme.primaryPurple;
+        return const Color(0xFFE0F2F1); // Light green/teal
     }
   }
 
-  Widget _getIllustrationIcon() {
+  /// Get text color that contrasts with background
+  Color _getTileTextColor() {
     if (widget.isLocked) {
-      return const Icon(
-        Icons.lock,
-        color: Colors.white,
-        size: 24.0,
-      );
+      return JuniorTheme.textLight;
+    }
+    return JuniorTheme.textPrimary;
+  }
+
+  /// Build icon/illustration for the tile
+  Widget _buildTileIcon() {
+    // Get game type for specific icon
+    final gameTypeName = widget.lesson.content['gameType'] as String? ??
+        widget.lesson.metadata['gameType'] as String?;
+
+    if (gameTypeName != null) {
+      try {
+        final gameType = GameType.values.firstWhere(
+          (e) => e.name == gameTypeName,
+        );
+        return _getIconForGameType(gameType);
+      } catch (e) {
+        // Fall back to exercise type icon
+      }
     }
 
-    if (widget.isCompleted) {
-      return const Icon(
-        Icons.check_circle,
-        color: JuniorTheme.primaryGreen,
-        size: 32.0,
-      );
-    }
+    // Fall back to exercise type icon
+    return _getIconForExerciseType(widget.lesson.exerciseType);
+  }
 
-    switch (widget.lesson.exerciseType) {
-      case ExerciseType.multipleChoice:
-        return const Icon(
-          Icons.quiz,
-          color: Colors.white,
-          size: 28.0,
+  /// Get icon for specific game type
+  Widget _getIconForGameType(GameType gameType) {
+    final iconColor = _getTileTextColor().withOpacity(0.4);
+
+    switch (gameType) {
+      case GameType.numberGridRace:
+        // Magnifying glass with numbers icon
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Icon(Icons.search, size: 60.0, color: iconColor),
+            Positioned(
+              top: 8,
+              child: Text(
+                '123',
+                style: TextStyle(
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.bold,
+                  color: iconColor,
+                ),
+              ),
+            ),
+          ],
         );
-      case ExerciseType.flashcard:
-        return const Icon(
-          Icons.style,
-          color: Colors.white,
-          size: 28.0,
+      case GameType.koalaCounterAdventure:
+        // Koala character
+        return Icon(Icons.pets, size: 64.0, color: iconColor);
+      case GameType.ordinalDragOrder:
+      case GameType.patternBuilder:
+        // Geometric shapes
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Icon(Icons.circle, size: 40.0, color: iconColor),
+            Positioned(
+              right: 20,
+              child: Icon(Icons.square, size: 30.0, color: iconColor),
+            ),
+            Positioned(
+              left: 20,
+              top: 10,
+              child: Icon(Icons.change_history,
+                  size: 25.0, color: iconColor), // Triangle icon
+            ),
+          ],
         );
-      case ExerciseType.puzzle:
-        return const Icon(
-          Icons.extension,
-          color: Colors.white,
-          size: 28.0,
-        );
+      case GameType.memoryMatch:
+        // Cards/memory icon
+        return Icon(Icons.style, size: 64.0, color: iconColor);
+      case GameType.wordBuilder:
+        // Letters/word icon
+        return Icon(Icons.text_fields, size: 64.0, color: iconColor);
+      case GameType.storySequencer:
+        // Book/story icon
+        return Icon(Icons.menu_book, size: 64.0, color: iconColor);
+      default:
+        return Icon(Icons.games, size: 64.0, color: iconColor);
     }
   }
 
+  /// Get icon for exercise type
+  Widget _getIconForExerciseType(ExerciseType exerciseType) {
+    final iconColor = _getTileTextColor().withOpacity(0.4);
+
+    switch (exerciseType) {
+      case ExerciseType.multipleChoice:
+        return Icon(Icons.quiz, size: 64.0, color: iconColor);
+      case ExerciseType.flashcard:
+        return Icon(Icons.style, size: 64.0, color: iconColor);
+      case ExerciseType.puzzle:
+        return Icon(Icons.extension, size: 64.0, color: iconColor);
+    }
+  }
+
+  /// Build status indicator (completed or locked)
   Widget _buildStatusIndicator() {
     if (widget.isLocked) {
-      return const Icon(
-        Icons.lock_outline,
-        color: JuniorTheme.textLight,
-        size: 20.0,
+      return Container(
+        padding: const EdgeInsets.all(6.0),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.8),
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(
+          Icons.lock,
+          size: 18.0,
+          color: JuniorTheme.textLight,
+        ),
       );
     }
 
     if (widget.isCompleted) {
-      return const Icon(
-        Icons.star,
-        color: JuniorTheme.accentGold,
-        size: 24.0,
-      );
-    }
-
-    if (widget.progress != null && widget.progress! > 0) {
       return Container(
-        width: 20.0,
-        height: 20.0,
-        decoration: BoxDecoration(
-          color: JuniorTheme.primaryOrange,
-          borderRadius: BorderRadius.circular(JuniorTheme.radiusCircular),
+        padding: const EdgeInsets.all(6.0),
+        decoration: const BoxDecoration(
+          color: JuniorTheme.success,
+          shape: BoxShape.circle,
         ),
-        child: Center(
-          child: Text(
-            '${(widget.progress! * 100).toInt()}%',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 8.0,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+        child: const Icon(
+          Icons.check,
+          size: 18.0,
+          color: Colors.white,
         ),
       );
     }
@@ -268,149 +382,20 @@ class _JuniorTaskCardState extends State<JuniorTaskCard>
     return const SizedBox.shrink();
   }
 
-  Widget _buildTaskTitle() {
-    // Limit title to 3-4 words for Junior users
-    final words = widget.lesson.title.split(' ');
-    final shortTitle = words.length > 4
-        ? '${words.take(4).join(' ')}...'
-        : widget.lesson.title;
-
-    return Text(
-      shortTitle,
-      style: JuniorTheme.taskTitle.copyWith(
-        color:
-            widget.isLocked ? JuniorTheme.textLight : JuniorTheme.textPrimary,
-      ),
-      textAlign: TextAlign.center,
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-    );
-  }
-
-  Widget _buildRewardCoins() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Icon(
-          Icons.monetization_on,
-          color: JuniorTheme.accentGold,
-          size: 20.0,
-        ),
-        const SizedBox(width: 4.0),
-        Text(
-          '${widget.lesson.rewardPoints}',
-          style: JuniorTheme.coinText.copyWith(
-            fontSize: 18.0,
-            color: widget.isLocked
-                ? JuniorTheme.textLight
-                : JuniorTheme.accentGold,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPlayButton() {
-    if (widget.isLocked) {
-      return Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: JuniorTheme.spacingSmall,
-          vertical: JuniorTheme.spacingXSmall,
-        ),
-        decoration: BoxDecoration(
-          color: JuniorTheme.textLight,
-          borderRadius: BorderRadius.circular(JuniorTheme.radiusMedium),
-        ),
-        child: const Text(
-          'Locked',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 12.0,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      );
-    }
-
-    if (widget.isCompleted) {
-      return Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: JuniorTheme.spacingSmall,
-          vertical: JuniorTheme.spacingXSmall,
-        ),
-        decoration: BoxDecoration(
-          color: JuniorTheme.primaryGreen,
-          borderRadius: BorderRadius.circular(JuniorTheme.radiusMedium),
-        ),
-        child: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.replay,
-              color: Colors.white,
-              size: 16.0,
-            ),
-            SizedBox(width: 4.0),
-            Text(
-              'Replay',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12.0,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return GestureDetector(
-      onTap: widget.onPlay,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: JuniorTheme.spacingMedium,
-          vertical: JuniorTheme.spacingSmall,
-        ),
-        decoration: BoxDecoration(
-          gradient: JuniorTheme.primaryGradient,
-          borderRadius: BorderRadius.circular(JuniorTheme.radiusMedium),
-          boxShadow: JuniorTheme.shadowLight,
-        ),
-        child: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.play_arrow,
-              color: Colors.white,
-              size: 20.0,
-            ),
-            SizedBox(width: 4.0),
-            Text(
-              'Play',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14.0,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _handleTap() {
     if (widget.isLocked) return;
 
-    // Trigger bounce animation
+    // Bounce animation on tap
     _bounceController.forward().then((_) {
-      _bounceController.reset();
+      _bounceController.reverse();
     });
 
-    // Call onPlay callback
-    if (widget.onPlay != null) {
-      widget.onPlay!();
-    }
+    // Call onPlay callback after short delay
+    Future.delayed(const Duration(milliseconds: 150), () {
+      if (widget.onPlay != null) {
+        widget.onPlay!();
+      }
+    });
   }
 }
 
@@ -442,37 +427,25 @@ class JuniorTaskCardWithProgress extends StatelessWidget {
           isLocked: isLocked,
           progress: progress,
         ),
-
         // Progress bar
         if (!isCompleted && !isLocked && progress > 0)
-          Container(
-            width: JuniorTheme.cardWidth,
-            margin: const EdgeInsets.symmetric(
-                horizontal: JuniorTheme.spacingSmall),
-            child: Column(
-              children: [
-                const SizedBox(height: JuniorTheme.spacingXSmall),
-                _buildProgressBar(),
-              ],
+          Padding(
+            padding: const EdgeInsets.only(
+              left: 20.0,
+              right: 20.0,
+              top: 8.0,
+            ),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: Colors.white.withOpacity(0.3),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                JuniorTheme.primaryGreen,
+              ),
+              minHeight: 4.0,
+              borderRadius: BorderRadius.circular(2.0),
             ),
           ),
       ],
     );
   }
-
-  Widget _buildProgressBar() {
-    return Container(
-      height: JuniorTheme.progressBarHeight,
-      decoration: JuniorTheme.getProgressBarDecoration(),
-      child: FractionallySizedBox(
-        alignment: Alignment.centerLeft,
-        widthFactor: progress,
-        child: Container(
-          decoration: JuniorTheme.getProgressFillDecoration(),
-        ),
-      ),
-    );
-  }
 }
-
-
