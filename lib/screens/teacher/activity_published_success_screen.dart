@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../design_system/colors.dart';
 import '../../models/activity.dart';
 import '../../models/game_activity.dart';
 import '../../models/user_type.dart';
 import '../../services/activity_service.dart';
+import '../../navigation/route_names.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import 'teacher_activities_management_screen.dart';
@@ -440,12 +442,11 @@ class _ActivityPublishedSuccessScreenState
                       child: ElevatedButton.icon(
                         onPressed: () {
                           // Navigate to activities management screen
-                          Navigator.of(context).pushAndRemoveUntil(
+                          Navigator.of(context).pushReplacement(
                             MaterialPageRoute(
                               builder: (context) =>
                                   const TeacherActivitiesManagementScreen(),
                             ),
-                            (route) => false, // Remove all previous routes
                           );
                         },
                         icon: const Icon(Icons.list_alt),
@@ -497,7 +498,7 @@ class _ActivityPublishedSuccessScreenState
                 child: TextButton(
                   onPressed: () {
                     // Navigate back to teacher dashboard
-                    Navigator.of(context).popUntil((route) => route.isFirst);
+                    context.go(RouteNames.teacherDashboard);
                   },
                   child: const Text('Done'),
                 ),

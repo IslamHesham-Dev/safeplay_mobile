@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import '../../design_system/junior_theme.dart';
+import 'junior_coin_animation.dart';
 
 /// Junior confetti animation component for celebrations
 class JuniorConfetti extends StatefulWidget {
@@ -388,20 +389,31 @@ class _JuniorCelebrationOverlayState extends State<JuniorCelebrationOverlay>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Celebration icon
-                        Container(
-                          width: 80.0,
-                          height: 80.0,
-                          decoration: BoxDecoration(
-                            gradient: JuniorTheme.primaryGradient,
-                            borderRadius: BorderRadius.circular(
-                                JuniorTheme.radiusCircular),
-                            boxShadow: JuniorTheme.shadowMedium,
-                          ),
-                          child: const Icon(
-                            Icons.celebration,
-                            color: Colors.white,
-                            size: 40.0,
+                        // Celebration icon with animation
+                        ScaleTransition(
+                          scale: _scaleAnimation,
+                          child: Container(
+                            width: 100.0,
+                            height: 100.0,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  JuniorTheme.primaryGreen,
+                                  JuniorTheme.primaryGreen.withOpacity(0.8),
+                                  JuniorTheme.primaryYellow,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(
+                                  JuniorTheme.radiusCircular),
+                              boxShadow: JuniorTheme.shadowHeavy,
+                            ),
+                            child: const Icon(
+                              Icons.celebration,
+                              color: Colors.white,
+                              size: 50.0,
+                            ),
                           ),
                         ),
 
@@ -410,16 +422,41 @@ class _JuniorCelebrationOverlayState extends State<JuniorCelebrationOverlay>
                         // Main message
                         Text(
                           widget.message,
-                          style: JuniorTheme.headingMedium,
+                          style: JuniorTheme.headingMedium.copyWith(
+                            fontSize: 24.0,
+                            fontWeight: FontWeight.bold,
+                            color: JuniorTheme.textPrimary,
+                          ),
                           textAlign: TextAlign.center,
                         ),
+
+                        // Coin animation if points are provided
+                        if (widget.points != null && widget.points! > 0) ...[
+                          const SizedBox(height: JuniorTheme.spacingSmall),
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // Animated coin counter
+                              AnimatedCoinCounter(
+                                coins: widget.points!,
+                                textStyle: JuniorTheme.headingLarge.copyWith(
+                                  color: JuniorTheme.accentGold,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
 
                         // Sub message
                         if (widget.subMessage != null) ...[
                           const SizedBox(height: JuniorTheme.spacingSmall),
                           Text(
                             widget.subMessage!,
-                            style: JuniorTheme.bodyMedium,
+                            style: JuniorTheme.bodyMedium.copyWith(
+                              fontSize: 16.0,
+                              color: JuniorTheme.textSecondary,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ],

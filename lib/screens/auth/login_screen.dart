@@ -88,7 +88,7 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
 
               // Teacher Login Button
               ElevatedButton(

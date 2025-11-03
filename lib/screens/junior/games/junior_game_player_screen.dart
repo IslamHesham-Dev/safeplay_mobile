@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'dart:math' as math;
 import '../../../design_system/junior_theme.dart';
 import '../../../models/activity.dart';
 import '../../../models/game_activity.dart';
 import '../../../models/lesson.dart';
 import '../../../widgets/junior/junior_confetti.dart';
+import '../../../widgets/junior/junior_coin_animation.dart';
+import '../../../services/junior_activity_progress_service.dart';
+import '../../../providers/auth_provider.dart';
 import 'number_grid_race_game.dart';
 import 'koala_counter_adventure_game.dart';
 import 'ordinal_drag_order_game.dart';
@@ -39,6 +44,12 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
   int _totalPoints = 0;
   bool _gameCompleted = false;
   Map<String, dynamic> _answers = {};
+  String? _sessionId;
+  final JuniorActivityProgressService _progressService =
+      JuniorActivityProgressService();
+  List<GameResponse> _allResponses = [];
+  DateTime _sessionStartTime = DateTime.now();
+  int _totalCorrectAnswers = 0;
 
   @override
   void initState() {
@@ -47,6 +58,33 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
       0,
       (sum, question) => sum + question.points,
     );
+    _sessionStartTime = DateTime.now();
+    _startSession();
+  }
+
+  Future<void> _startSession() async {
+    try {
+      final auth = context.read<AuthProvider>();
+      final child = auth.currentChild ?? auth.currentUser;
+
+      if (child == null) {
+        debugPrint('⚠️ No child logged in for session tracking');
+        return;
+      }
+
+      final activityId = widget.lesson.content['activityId'] as String? ??
+          widget.lesson.metadata['activityId'] as String? ??
+          widget.lesson.id;
+
+      _sessionId = await _progressService.startActivitySession(
+        childId: child.id,
+        activityId: activityId,
+        gameType: widget.gameType,
+      );
+      debugPrint('✅ Started game session: $_sessionId');
+    } catch (e) {
+      debugPrint('❌ Error starting session: $e');
+    }
   }
 
   void _onAnswerSubmitted({
@@ -54,7 +92,47 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
     required dynamic userAnswer,
     required bool isCorrect,
     required int pointsEarned,
-  }) {
+  }) async {
+    final question = widget.questions[_currentQuestionIndex];
+    final timeSpent = DateTime.now().difference(_sessionStartTime).inSeconds;
+
+    // Track the answer
+    final response = GameResponse(
+      id: 'response_${questionId}_${DateTime.now().millisecondsSinceEpoch}',
+      questionId: questionId,
+      questionTemplateId: question.id,
+      userAnswer: userAnswer,
+      correctAnswer: question.correctAnswer,
+      isCorrect: isCorrect,
+      pointsEarned: isCorrect ? pointsEarned : 0,
+      timeSpentSeconds: timeSpent,
+      answeredAt: DateTime.now(),
+      responseMetadata: {
+        'questionIndex': _currentQuestionIndex,
+        'totalQuestions': widget.questions.length,
+      },
+    );
+
+    _allResponses.add(response);
+
+    // Record in database if session is active
+    if (_sessionId != null) {
+      try {
+        await _progressService.recordQuestionAnswer(
+          sessionId: _sessionId!,
+          questionId: questionId,
+          questionTemplateId: question.id,
+          userAnswer: userAnswer,
+          correctAnswer: question.correctAnswer,
+          isCorrect: isCorrect,
+          pointsEarned: pointsEarned,
+          timeSpentSeconds: timeSpent,
+        );
+      } catch (e) {
+        debugPrint('❌ Error recording answer: $e');
+      }
+    }
+
     setState(() {
       _answers[questionId] = {
         'userAnswer': userAnswer,
@@ -64,13 +142,14 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
 
       if (isCorrect) {
         _score += pointsEarned;
+        _totalCorrectAnswers++;
       }
     });
 
     // Show feedback
     if (isCorrect) {
       HapticFeedback.lightImpact();
-      _showSuccessFeedback();
+      _showSuccessFeedback(pointsEarned);
     } else {
       HapticFeedback.heavyImpact();
       _showTryAgainFeedback();
@@ -87,30 +166,75 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
     }
   }
 
-  void _completeGame() {
+  Future<void> _completeGame() async {
     setState(() {
       _gameCompleted = true;
     });
     HapticFeedback.mediumImpact();
+
+    // Complete the session in database
+    if (_sessionId != null) {
+      try {
+        final auth = context.read<AuthProvider>();
+        final child = auth.currentChild ?? auth.currentUser;
+
+        if (child != null) {
+          final activityId = widget.lesson.content['activityId'] as String? ??
+              widget.lesson.metadata['activityId'] as String? ??
+              widget.lesson.id;
+
+          final totalTime =
+              DateTime.now().difference(_sessionStartTime).inSeconds;
+
+          await _progressService.completeActivitySession(
+            sessionId: _sessionId!,
+            childId: child.id,
+            activityId: activityId,
+            totalScore: _totalCorrectAnswers,
+            totalPoints: widget.questions.length,
+            totalPointsEarned: _score,
+            totalTimeSeconds: totalTime,
+            allResponses: _allResponses,
+          );
+
+          debugPrint('✅ Activity session completed and saved to database');
+        }
+      } catch (e) {
+        debugPrint('❌ Error completing session: $e');
+      }
+    }
+
     _showCompletionCelebration();
   }
 
-  void _showSuccessFeedback() {
-    final question = widget.questions[_currentQuestionIndex];
+  void _showSuccessFeedback(int pointsEarned) {
+    // Show floating coins animation
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => JuniorCelebrationOverlay(
-        isVisible: true,
-        message: 'Great Job!',
-        subMessage: 'You earned ${question.points} coins!',
-        points: question.points,
-        onDismiss: () {
-          Navigator.of(context).pop();
-          Future.delayed(const Duration(milliseconds: 300), () {
-            _nextQuestion();
-          });
-        },
+      barrierColor: Colors.transparent,
+      builder: (context) => Stack(
+        children: [
+          // Floating coins effect
+          FloatingCoinsAnimation(
+            coinCount: math.min(pointsEarned, 10),
+            duration: const Duration(milliseconds: 2000),
+            onComplete: () {},
+          ),
+          // Celebration overlay
+          JuniorCelebrationOverlay(
+            isVisible: true,
+            message: 'Great Job! 🌟',
+            subMessage: 'You earned coins! 💰',
+            points: pointsEarned,
+            onDismiss: () {
+              Navigator.of(context).pop();
+              Future.delayed(const Duration(milliseconds: 300), () {
+                _nextQuestion();
+              });
+            },
+          ),
+        ],
       ),
     );
   }
@@ -142,80 +266,191 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(JuniorTheme.radiusLarge),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              '🎉',
-              style: TextStyle(fontSize: 64),
+      builder: (context) => Stack(
+        children: [
+          // Confetti background
+          JuniorConfetti(
+            isActive: true,
+            duration: const Duration(seconds: 4),
+            particleCount: 150,
+          ),
+          // Floating coins animation
+          FloatingCoinsAnimation(
+            coinCount: math.min(_score, 15),
+            duration: const Duration(milliseconds: 3000),
+            onComplete: () {},
+          ),
+          // Completion dialog
+          Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(JuniorTheme.radiusLarge),
             ),
-            const SizedBox(height: JuniorTheme.spacingMedium),
-            Text(
-              'Congratulations!',
-              style: JuniorTheme.headingLarge,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: JuniorTheme.spacingSmall),
-            Text(
-              'You completed ${widget.gameTitle}!',
-              style: JuniorTheme.bodyLarge,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: JuniorTheme.spacingLarge),
-            Container(
-              padding: const EdgeInsets.all(JuniorTheme.spacingMedium),
+            backgroundColor: Colors.transparent,
+            child: Container(
+              padding: const EdgeInsets.all(JuniorTheme.spacingLarge),
               decoration: BoxDecoration(
-                gradient: JuniorTheme.primaryGradient,
-                borderRadius: BorderRadius.circular(JuniorTheme.radiusMedium),
+                gradient: LinearGradient(
+                  colors: [
+                    JuniorTheme.backgroundCard,
+                    JuniorTheme.backgroundCard.withOpacity(0.95),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(JuniorTheme.radiusLarge),
+                boxShadow: JuniorTheme.shadowHeavy,
               ),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Animated celebration icon
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.elasticOut,
+                    builder: (context, value, child) {
+                      return Transform.scale(
+                        scale: value,
+                        child: Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                JuniorTheme.primaryGreen,
+                                JuniorTheme.primaryYellow,
+                                JuniorTheme.primaryOrange,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    JuniorTheme.primaryGreen.withOpacity(0.5),
+                                blurRadius: 20,
+                                spreadRadius: 5,
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.celebration,
+                            color: Colors.white,
+                            size: 60,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: JuniorTheme.spacingLarge),
+                  // Congratulations text
                   Text(
-                    'Total Score',
-                    style: JuniorTheme.bodyMedium.copyWith(
-                      color: Colors.white,
+                    '🎉 Congratulations! 🎉',
+                    style: JuniorTheme.headingLarge.copyWith(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: JuniorTheme.textPrimary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: JuniorTheme.spacingSmall),
+                  Text(
+                    'You completed ${widget.gameTitle}!',
+                    style: JuniorTheme.bodyLarge.copyWith(
+                      fontSize: 18,
+                      color: JuniorTheme.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: JuniorTheme.spacingLarge),
+                  // Score and coins section
+                  Container(
+                    padding: const EdgeInsets.all(JuniorTheme.spacingMedium),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          JuniorTheme.primaryGreen.withOpacity(0.2),
+                          JuniorTheme.primaryYellow.withOpacity(0.2),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius:
+                          BorderRadius.circular(JuniorTheme.radiusMedium),
+                      border: Border.all(
+                        color: JuniorTheme.primaryGreen.withOpacity(0.3),
+                        width: 2,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.star,
+                              color: JuniorTheme.accentGold,
+                              size: 28,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Score: $_score / $_totalPoints',
+                              style: JuniorTheme.headingMedium.copyWith(
+                                color: JuniorTheme.textPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: JuniorTheme.spacingSmall),
+                        // Animated coin counter
+                        AnimatedCoinCounter(
+                          coins: _score,
+                          textStyle: JuniorTheme.headingLarge.copyWith(
+                            color: JuniorTheme.accentGold,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 32,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  Text(
-                    '$_score / $_totalPoints',
-                    style: JuniorTheme.headingMedium.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                  const SizedBox(height: JuniorTheme.spacingLarge),
+                  // Back button
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pop(); // Close game screen
+                    },
+                    icon: const Icon(Icons.home, color: Colors.white),
+                    label: const Text(
+                      'Back to Dashboard',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: JuniorTheme.primaryGreen,
+                      minimumSize: const Size(double.infinity, 64),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: JuniorTheme.spacingLarge,
+                        vertical: JuniorTheme.spacingMedium,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(JuniorTheme.radiusMedium),
+                      ),
+                      elevation: 8,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: JuniorTheme.spacingLarge),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pop(); // Close game screen
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: JuniorTheme.primaryGreen,
-                minimumSize: const Size(double.infinity, 56),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: JuniorTheme.spacingLarge,
-                  vertical: JuniorTheme.spacingMedium,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(JuniorTheme.radiusMedium),
-                ),
-              ),
-              child: Text(
-                'Back to Dashboard',
-                style: JuniorTheme.buttonText.copyWith(
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -326,31 +561,51 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
             ),
           ),
 
-          // Score display
+          // Score display with animated coin counter
           Container(
             padding: const EdgeInsets.symmetric(
-              horizontal: JuniorTheme.spacingSmall,
+              horizontal: JuniorTheme.spacingMedium,
               vertical: JuniorTheme.spacingXSmall,
             ),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.white.withOpacity(0.3),
+                  Colors.white.withOpacity(0.2),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: BorderRadius.circular(JuniorTheme.radiusMedium),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.star,
-                  color: Colors.white,
-                  size: 20,
+                Icon(
+                  Icons.monetization_on,
+                  color: JuniorTheme.accentGold,
+                  size: 22,
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  '$_score',
-                  style: JuniorTheme.bodyMedium.copyWith(
+                const SizedBox(width: 6),
+                AnimatedCoinCounter(
+                  coins: _score,
+                  textStyle: JuniorTheme.bodyMedium.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
+                    fontSize: 18,
                   ),
+                  coinColor: JuniorTheme.accentGold,
                 ),
               ],
             ),

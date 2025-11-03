@@ -11,60 +11,28 @@ import '../models/activity.dart';
 class JuniorGamesService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// Load all games for junior age group from question templates
-  /// Groups templates by gameType and creates lessons for each game
-  ///
-  /// NOTE: This method attempts to read from questionTemplates collection.
-  /// If permission denied, it will fall back to published activities or use
-  /// a workaround approach.
+  /// Load all games for junior age group from published activities
+  /// Only loads real activities created by teachers - no dummy/demo data
   Future<List<Lesson>> loadJuniorGames() async {
     try {
       debugPrint(
-          '🎮 JuniorGamesService: Loading junior games from templates...');
+          '🎮 JuniorGamesService: Loading junior games from published activities...');
 
-      // Try loading templates directly from Firebase
-      try {
-        final snapshot = await _firestore
-            .collection('questionTemplates')
-            .where('isActive', isEqualTo: true)
-            .where('ageGroups', arrayContains: 'junior')
-            .get();
-
-        if (snapshot.docs.isNotEmpty) {
-          return _processTemplates(snapshot.docs);
-        }
-      } on FirebaseException catch (e) {
-        if (e.code == 'permission-denied') {
-          debugPrint(
-              '⚠️ JuniorGamesService: Permission denied reading templates, using fallback...');
-          final activities = await _loadGamesFromActivities();
-          // If no activities found, use demo games
-          if (activities.isEmpty) {
-            debugPrint(
-                '⚠️ JuniorGamesService: No activities found after permission denied, using demo games');
-            return _createDemoGames();
-          }
-          return activities;
-        }
-        rethrow;
-      }
-
-      // If no templates found, try loading from published activities
+      // Load directly from published activities (no template fallback)
       final activities = await _loadGamesFromActivities();
 
-      // If no activities found, use demo games for testing
       if (activities.isEmpty) {
-        debugPrint(
-            '⚠️ JuniorGamesService: No activities found, using demo games');
-        return _createDemoGames();
+        debugPrint('⚠️ JuniorGamesService: No published activities found');
+        return [];
       }
 
+      debugPrint(
+          '✅ JuniorGamesService: Loaded ${activities.length} activities from database');
       return activities;
     } catch (e) {
       debugPrint('❌ JuniorGamesService: Error loading games: $e');
-      // Final fallback: return demo games so children can test
-      debugPrint('🎮 JuniorGamesService: Using demo games as final fallback');
-      return _createDemoGames();
+      // Return empty list - no dummy data fallback
+      return [];
     }
   }
 
@@ -75,9 +43,12 @@ class JuniorGamesService {
       debugPrint(
           '📚 JuniorGamesService: Loading from activities collection...');
 
+      // Load directly from Firestore to get raw data with gameConfig
+      // This ensures we can properly parse GameActivity instances
+      debugPrint('📚 Loading activities directly from Firestore...');
       final snapshot = await _firestore
           .collection('activities')
-          .where('ageGroup', isEqualTo: 'junior')
+          .where('ageGroup', isEqualTo: AgeGroup.junior.name)
           .where('published', isEqualTo: true)
           .where('publishState', isEqualTo: 'published')
           .get();
@@ -88,58 +59,98 @@ class JuniorGamesService {
       }
 
       debugPrint(
-          '✅ JuniorGamesService: Found ${snapshot.docs.length} published activities');
+          '✅ JuniorGamesService: Found ${snapshot.docs.length} published activities in Firestore');
 
-      // Group activities by game type
-      final gamesMap = <GameType, List<Map<String, dynamic>>>{};
-
+      // Convert all activities to lessons (one lesson per activity)
+      final lessons = <Lesson>[];
       for (final doc in snapshot.docs) {
         try {
-          final data = doc.data();
+          final rawData = doc.data();
 
-          // Extract game type from activity metadata
-          final gameTypeName = data['gameConfig']?['gameType'] as String? ??
-              data['metadata']?['gameType'] as String?;
-
-          if (gameTypeName != null) {
-            try {
-              final gameType = GameType.values.firstWhere(
-                (e) => e.name == gameTypeName,
-              );
-
-              if (gameType.supportedAgeGroups.contains(AgeGroup.junior)) {
-                gamesMap.putIfAbsent(gameType, () => []).add({
-                  'id': doc.id,
-                  ...data,
-                });
-              }
-            } catch (e) {
+          // Try to parse as GameActivity if it has gameConfig, otherwise as Activity
+          Activity activity;
+          try {
+            if (rawData.containsKey('gameConfig') &&
+                rawData['gameConfig'] != null &&
+                rawData['gameConfig'] is Map) {
+              // Parse as GameActivity
+              activity = GameActivity.fromJson({
+                'id': doc.id,
+                ...rawData,
+              });
+              debugPrint('✅ Parsed as GameActivity: ${activity.id}');
+            } else {
+              // Parse as regular Activity
+              activity = Activity.fromJson({
+                'id': doc.id,
+                ...rawData,
+              });
               debugPrint(
-                  '⚠️ JuniorGamesService: Unknown gameType: $gameTypeName');
+                  '⚠️ Parsed as regular Activity (no gameConfig): ${activity.id}');
+            }
+          } catch (e, stackTrace) {
+            debugPrint('❌ Error parsing activity ${doc.id}: $e');
+            debugPrint('Stack trace: $stackTrace');
+            continue; // Skip this activity
+          }
+
+          // Extract game type from activity
+          String? gameTypeName;
+
+          if (activity is GameActivity) {
+            gameTypeName = activity.gameConfig.gameType.name;
+            debugPrint(
+                '✅ Found GameActivity: ${activity.id} with gameType: $gameTypeName');
+          } else {
+            // For regular Activity, try to extract from JSON
+            final activityJson = activity.toJson();
+            final gameConfig =
+                activityJson['gameConfig'] as Map<String, dynamic>?;
+            gameTypeName = gameConfig?['gameType'] as String?;
+
+            if (gameTypeName == null) {
+              debugPrint(
+                  '⚠️ Activity ${activity.id} has no gameConfig, trying metadata...');
+              // Try metadata as last resort
+              gameTypeName = activityJson['metadata']?['gameType'] as String?;
             }
           }
-        } catch (e) {
+
+          if (gameTypeName == null) {
+            debugPrint(
+                '⚠️ JuniorGamesService: Activity ${activity.id} has no gameType, skipping');
+            continue;
+          }
+
+          try {
+            final gameType = GameType.values.firstWhere(
+              (e) => e.name == gameTypeName,
+            );
+
+            if (!gameType.supportedAgeGroups.contains(AgeGroup.junior)) {
+              debugPrint(
+                  '⚠️ Activity ${activity.id} gameType $gameTypeName not supported for junior');
+              continue;
+            }
+
+            // Create a lesson from this activity
+            final lesson = _createLessonFromActivity(gameType, activity);
+            lessons.add(lesson);
+            debugPrint(
+                '✅ Created lesson from activity: ${activity.id} -> ${lesson.title}');
+          } catch (e) {
+            debugPrint(
+                '⚠️ JuniorGamesService: Unknown gameType: $gameTypeName - $e');
+          }
+        } catch (e, stackTrace) {
           debugPrint(
               '⚠️ JuniorGamesService: Error parsing activity ${doc.id}: $e');
-        }
-      }
-
-      // Create lessons from activities
-      final lessons = <Lesson>[];
-      for (final entry in gamesMap.entries) {
-        final gameType = entry.key;
-        final activities = entry.value;
-
-        // Create a lesson from the first activity of this game type
-        if (activities.isNotEmpty) {
-          final activity = activities.first;
-          final lesson = _createLessonFromActivity(gameType, activity);
-          lessons.add(lesson);
+          debugPrint('Stack trace: $stackTrace');
         }
       }
 
       debugPrint(
-          '✅ JuniorGamesService: Created ${lessons.length} games from activities');
+          '✅ JuniorGamesService: Created ${lessons.length} lessons from ${snapshot.docs.length} activities');
       return lessons;
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') {
@@ -225,49 +236,54 @@ class JuniorGamesService {
   /// Create a lesson from a published activity
   Lesson _createLessonFromActivity(
     GameType gameType,
-    Map<String, dynamic> activityData,
+    Activity activity,
   ) {
-    final primarySubject = ActivitySubject.fromString(
-          activityData['subject']?.toString() ?? 'math',
-        ) ??
-        ActivitySubject.math;
+    final primarySubject = activity.subject;
 
-    final gameConfig = activityData['gameConfig'] as Map<String, dynamic>?;
-    final templateIds = gameConfig?['questionTemplateIds'] as List? ?? [];
+    // Extract template IDs from GameActivity if available
+    String activityId = activity.id;
+    List<String> templateIds = [];
+
+    if (activity is GameActivity) {
+      templateIds = activity.gameConfig.questionTemplateIds;
+    } else {
+      // For regular Activity, try to get from JSON (gameConfig might be in original JSON)
+      final activityJson = activity.toJson();
+      final gameConfig = activityJson['gameConfig'] as Map<String, dynamic>?;
+      templateIds = (gameConfig?['questionTemplateIds'] as List?)
+              ?.map((e) => e.toString())
+              .whereType<String>()
+              .toList() ??
+          [];
+    }
 
     return Lesson(
-      id: activityData['id'] ?? 'activity_${gameType.name}',
-      title: activityData['title']?.toString() ?? gameType.displayName,
-      description:
-          activityData['description']?.toString() ?? gameType.description,
+      id: activityId,
+      title: activity.title,
+      description: activity.description,
       ageGroupTarget: ['6-8'],
       exerciseType: _getExerciseTypeFromGameType(gameType),
       mappedGameType: _getMappedGameTypeFromGameType(gameType),
-      rewardPoints: (activityData['points'] as num?)?.toInt() ?? 50,
+      rewardPoints: activity.points,
       subject: primarySubject.name.toLowerCase(),
-      difficulty: (activityData['difficulty']?.toString() ?? 'easy'),
-      learningObjectives: (activityData['learningObjectives'] as List?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [],
-      skills: (activityData['skills'] as List?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [],
+      difficulty: activity.difficulty.name,
+      learningObjectives: activity.learningObjectives,
+      skills: activity.skills,
       content: {
         'gameType': gameType.name,
-        'questionTemplateIds': templateIds.map((e) => e.toString()).toList(),
+        'questionTemplateIds': templateIds,
         'templateCount': templateIds.length,
-        'activityId': activityData['id'],
+        'questionCount': activity.questions.length,
+        'activityId': activityId,
       },
       isActive: true,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+      createdAt: activity.createdAt,
+      updatedAt: activity.updatedAt,
       metadata: {
         'gameType': gameType.name,
-        'questionTemplateIds': templateIds.map((e) => e.toString()).toList(),
+        'questionTemplateIds': templateIds,
         'isGameBased': true,
-        'activityId': activityData['id'],
+        'activityId': activityId,
       },
     );
   }
@@ -495,8 +511,9 @@ class JuniorGamesService {
     }
   }
 
-  /// Create demo games for testing when Firebase has no data or permissions are denied
-  /// These games will work immediately and allow children to test the game system
+  /// DEPRECATED: Demo games removed - only real activities from database
+  /// This method is kept for reference but should never be called
+  @Deprecated('Demo games removed - use real activities from database')
   List<Lesson> _createDemoGames() {
     debugPrint('🎮 JuniorGamesService: Creating demo games for testing...');
 

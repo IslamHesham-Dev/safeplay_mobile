@@ -47,29 +47,56 @@ class _TemplateBrowserScreenState extends State<TemplateBrowserScreen> {
     _loadTemplates();
   }
 
+  @override
+  void didUpdateWidget(TemplateBrowserScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reload templates if filters changed
+    if (oldWidget.selectedSubject != widget.selectedSubject ||
+        oldWidget.selectedAgeGroup != widget.selectedAgeGroup ||
+        oldWidget.includeBreakActivities != widget.includeBreakActivities) {
+      _loadTemplates();
+    }
+    // Update selected templates if they changed externally
+    if (widget.selectedTemplates != oldWidget.selectedTemplates) {
+      _selectedTemplates = List.from(widget.selectedTemplates);
+    }
+  }
+
   Future<void> _loadTemplates() async {
+    debugPrint('📚 TemplateBrowserScreen: Loading templates...');
+    debugPrint('📚 Subject: ${widget.selectedSubject}');
+    debugPrint('📚 Age Group: ${widget.selectedAgeGroup}');
+    debugPrint('📚 Include Break Activities: ${widget.includeBreakActivities}');
+
     setState(() => _loading = true);
 
     try {
       final allTemplates = <QuestionTemplate>[];
 
       // Load curriculum questions
+      debugPrint('📚 Loading curriculum templates...');
       final curriculumTemplates =
           await _simpleTemplateService.getAllTemplates();
+      debugPrint(
+          '📚 Loaded ${curriculumTemplates.length} curriculum templates');
       allTemplates.addAll(curriculumTemplates);
 
       // Load break activities if needed
       if (widget.includeBreakActivities) {
+        debugPrint('📚 Loading break activities for Junior...');
         final juniorBreaks = await _breakActivitiesService.getBreakActivities(
           ageGroup: AgeGroup.junior,
           activeOnly: true,
         );
+        debugPrint('📚 Loaded ${juniorBreaks.length} Junior break activities');
         allTemplates.addAll(juniorBreaks);
 
+        debugPrint('📚 Loading break activities for Bright...');
         final brightBreaks = await _breakActivitiesService.getBreakActivities(
           ageGroup: AgeGroup.bright,
           activeOnly: true,
         );
+        debugPrint('📚 Loaded ${brightBreaks.length} Bright break activities');
         allTemplates.addAll(brightBreaks);
       }
 
@@ -139,10 +166,20 @@ class _TemplateBrowserScreenState extends State<TemplateBrowserScreen> {
 
       _allTemplates = _filteredTemplates;
       _applySearchFilter();
-    } catch (e) {
-      debugPrint('Error loading templates: $e');
+
+      debugPrint(
+          '✅ TemplateBrowserScreen: Loading complete. Showing ${_filteredTemplates.length} templates');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Error loading templates: $e');
+      debugPrint('❌ Stack trace: $stackTrace');
+      // Show error in empty state
+      _filteredTemplates = [];
+      _allTemplates = [];
     } finally {
-      setState(() => _loading = false);
+      setState(() {
+        _loading = false;
+        debugPrint('🔄 TemplateBrowserScreen: Loading state set to false');
+      });
     }
   }
 
@@ -264,7 +301,7 @@ class _TemplateBrowserScreenState extends State<TemplateBrowserScreen> {
             Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
-              'No templates found',
+              _loading ? 'Loading templates...' : 'No templates found',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -273,10 +310,26 @@ class _TemplateBrowserScreenState extends State<TemplateBrowserScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Try adjusting your filters or search query',
+              _loading
+                  ? 'Please wait while we fetch available templates'
+                  : 'Try adjusting your filters or search query',
               style: TextStyle(color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
+            if (!_loading) ...[
+              const SizedBox(height: 16),
+              Text(
+                'Current filters:\n'
+                'Subject: ${widget.selectedSubject?.name ?? "All"}\n'
+                'Age Group: ${widget.selectedAgeGroup.name}\n'
+                'Break Activities: ${widget.includeBreakActivities ? "Included" : "Excluded"}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[500],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ],
         ),
       ),

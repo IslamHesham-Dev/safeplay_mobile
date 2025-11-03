@@ -106,183 +106,176 @@ class _ActivityCreationWizardScreenState
               ),
             ),
 
-            // Scrollable content area (includes guidelines if shown + step content)
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // Guidelines display (if shown) - takes full size
-                    if (_showConstraints)
-                      Card(
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(
-                            color: SafePlayColors.brandTeal500.withOpacity(0.2),
-                            width: 1,
+            // Guidelines display (if shown and not on Browse Templates step)
+            if (_showConstraints && _currentStep != 1)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                constraints: const BoxConstraints(maxHeight: 300),
+                child: SingleChildScrollView(
+                  child: Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(
+                        color: SafePlayColors.brandTeal500.withOpacity(0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Header (no close button)
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                SafePlayColors.brandTeal500.withOpacity(0.9),
+                                SafePlayColors.brandTeal500,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(16),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(Icons.rule,
+                                    color: Colors.white, size: 20),
+                              ),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Text(
+                                  'Publishing Guidelines',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Header (no close button)
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    SafePlayColors.brandTeal500
-                                        .withOpacity(0.9),
-                                    SafePlayColors.brandTeal500,
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(16),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: const Icon(Icons.rule,
-                                        color: Colors.white, size: 20),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Expanded(
-                                    child: Text(
-                                      'Publishing Guidelines',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // Content - takes natural size
-                            Container(
-                              color: Colors.grey[50],
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: PublishingConstraintsUtils
-                                        .getAllConstraints()
+                        // Content - takes natural size
+                        Container(
+                          color: Colors.grey[50],
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children:
+                                PublishingConstraintsUtils.getAllConstraints()
                                     .map((constraint) {
-                                  return Padding(
+                              return Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Card(
+                                  elevation: 0,
+                                  color: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side: BorderSide(
+                                      color: constraint.color.withOpacity(0.2),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Padding(
                                     padding: const EdgeInsets.all(16),
-                                    child: Card(
-                                      elevation: 0,
-                                      color: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                        side: BorderSide(
-                                          color:
-                                              constraint.color.withOpacity(0.2),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
                                           children: [
-                                            Row(
+                                            Container(
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: constraint.color
+                                                    .withOpacity(0.1),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: Icon(
+                                                constraint.icon,
+                                                color: constraint.color,
+                                                size: 20,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Text(
+                                                constraint.category,
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                  color: Colors.grey[800],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+                                        ...constraint.constraints.map((item) {
+                                          return Padding(
+                                            padding: const EdgeInsets.only(
+                                                left: 36, bottom: 8),
+                                            child: Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Container(
-                                                  padding:
-                                                      const EdgeInsets.all(8),
+                                                  margin: const EdgeInsets.only(
+                                                      top: 6),
+                                                  width: 6,
+                                                  height: 6,
                                                   decoration: BoxDecoration(
                                                     color: constraint.color
-                                                        .withOpacity(0.1),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8),
-                                                  ),
-                                                  child: Icon(
-                                                    constraint.icon,
-                                                    color: constraint.color,
-                                                    size: 20,
+                                                        .withOpacity(0.6),
+                                                    shape: BoxShape.circle,
                                                   ),
                                                 ),
-                                                const SizedBox(width: 12),
+                                                const SizedBox(width: 10),
                                                 Expanded(
                                                   child: Text(
-                                                    constraint.category,
+                                                    item,
                                                     style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 16,
-                                                      color: Colors.grey[800],
+                                                      fontSize: 14,
+                                                      color: Colors.grey[700],
+                                                      height: 1.5,
                                                     ),
                                                   ),
                                                 ),
                                               ],
                                             ),
-                                            const SizedBox(height: 12),
-                                            ...constraint.constraints
-                                                .map((item) {
-                                              return Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 36, bottom: 8),
-                                                child: Row(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Container(
-                                                      margin:
-                                                          const EdgeInsets.only(
-                                                              top: 6),
-                                                      width: 6,
-                                                      height: 6,
-                                                      decoration: BoxDecoration(
-                                                        color: constraint.color
-                                                            .withOpacity(0.6),
-                                                        shape: BoxShape.circle,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 10),
-                                                    Expanded(
-                                                      child: Text(
-                                                        item,
-                                                        style: TextStyle(
-                                                          fontSize: 14,
-                                                          color:
-                                                              Colors.grey[700],
-                                                          height: 1.5,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            }),
-                                          ],
-                                        ),
-                                      ),
+                                          );
+                                        }),
+                                      ],
                                     ),
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                          ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
                         ),
-                      ),
-
-                    // Step content
-                    _buildCurrentStep(),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
+
+            // Step content - Browse Templates step needs full Expanded, others are scrollable
+            Expanded(
+              child: _currentStep == 1
+                  ? _buildCurrentStep() // Browse Templates - handles its own layout with Expanded
+                  : SingleChildScrollView(
+                      child: _buildCurrentStep(), // Other steps - scrollable
+                    ),
             ),
 
             // Navigation buttons (like auth screens)
@@ -375,11 +368,15 @@ class _ActivityCreationWizardScreenState
   }
 
   Widget _buildCurrentStep() {
+    // Browse Templates step needs to handle its own scrolling
+    if (_currentStep == 1) {
+      return _buildBrowseTemplatesStep();
+    }
+
+    // Other steps are scrollable
     switch (_currentStep) {
       case 0:
         return _buildFiltersStep();
-      case 1:
-        return _buildBrowseTemplatesStep();
       case 2:
         return _buildConfigureStep();
       case 3:
