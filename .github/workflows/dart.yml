@@ -14,25 +14,14 @@ jobs:
         with:
           channel: 'stable'
           architecture: x64
-          
       - run: flutter pub get
       
-      # CRITICAL: Clean up old Pods and Artifacts for fresh build
-      - name: Clean up old Pods and Artifacts
-        run: |
-          rm -rf ios/Pods
-          rm -f ios/Podfile.lock
-          rm -rf build/ios
-      
-      # Recommended: Use 'pod install --repo-update' for speed and to apply Podfile fixes
-      - name: Install Pods (and apply fixes)
-        run: pod install --repo-update
+
+      - run: pod repo update
         working-directory: ios
 
-      # NOTE: This step relies on the fix you added to the Podfile to pass compilation.
       - run: flutter build ios --release --no-codesign
 
-      # --- Manual IPA Packaging Steps ---
       - run: mkdir Payload
         working-directory: build/ios/iphoneos
 
