@@ -165,3 +165,4 @@ The child dashboard now features a modern, engaging design that:
 The new design successfully combines the playful, child-friendly elements from the provided screenshots with SafePlay's existing brand identity, creating an engaging and modern learning experience for children.
 
 
+

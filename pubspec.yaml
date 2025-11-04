@@ -82,7 +82,6 @@ dev_dependencies:
   integration_test:
     sdk: flutter
   fake_cloud_firestore: ^4.0.0
-  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
@@ -94,15 +93,3 @@ flutter:
     - assets/images/avatars/
     - assets/audio/narration/
     - assets/audio/phonics/
-
-# Flutter Launcher Icons configuration
-flutter_launcher_icons:
-  android: true
-  ios: true
-  image_path: "assets/icon.png"
-  min_sdk_android: 21 # Android minSdkVersion
-  adaptive_icon_background: "#FFFFFF" # White background for Android adaptive icon
-  adaptive_icon_foreground: "assets/icon.png"
-  
-  # Remove old launcher icons (optional but recommended)
-  remove_alpha_ios: true

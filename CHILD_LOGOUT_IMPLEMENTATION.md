@@ -194,3 +194,4 @@ The child dashboard now has a complete logout functionality that allows children
 Children can now easily log out from their dashboard and return to the "Who is here?" screen to either log back in or switch to a different child profile.
 
 
+

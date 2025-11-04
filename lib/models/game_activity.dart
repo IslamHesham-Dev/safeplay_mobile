@@ -528,3 +528,4 @@ class GameResponse extends Equatable {
 }
 
 
+

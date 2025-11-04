@@ -139,3 +139,4 @@ Children should now be properly redirected to the unified child dashboard after 
 The fix ensures that the authentication state is properly managed and the router can detect when a child is logged in, enabling the automatic redirect to the dashboard.
 
 
+

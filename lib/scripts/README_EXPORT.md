@@ -92,3 +92,4 @@ The script prints statistics about:
 - Firestore-specific types are converted to JSON-compatible formats
 - The export includes a timestamp of when the export was performed
 - All data is exported in a flat structure with document IDs at the root level of each object
+
