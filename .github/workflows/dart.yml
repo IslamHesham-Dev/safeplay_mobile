@@ -17,26 +17,24 @@ jobs:
           channel: 'stable'
           architecture: x64
 
-      - run: flutter pub get
+      - name: Get dependencies
+        run: flutter pub get
 
       - name: Build for Simulator (Debug mode)
         run: flutter build ios --simulator --debug
 
-      - name: Prepare Payload
+      - name: Prepare Payload folder
         run: |
-          mkdir Payload
-          mv build/ios/iphonesimulator/Runner.app Payload/
+          mkdir -p build/ios/iphonesimulator/Payload
+          cp -R build/ios/iphonesimulator/Runner.app build/ios/iphonesimulator/Payload/
 
-      - name: Create IPA
+      - name: Create IPA from Payload
         run: |
           cd build/ios/iphonesimulator
-          zip -qq -r -9 FlutterIpaExport.ipa Payload
+          zip -r -9 FlutterIpaExport.ipa Payload
 
-      - name: Upload IPA to Release
-        uses: svenstaro/upload-release-action@v2
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/ios/iphonesimulator/FlutterIpaExport.ipa
-          tag: v1.0
-          overwrite: true
-          body: "Unsigned debug simulator IPA (works without Apple signing)"
+          name: FlutterIpaExport
+          path: build/ios/iphonesimulator/FlutterIpaExport.ipa
