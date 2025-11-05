@@ -1,42 +1,60 @@
-name: iOS-simulator-ipa-build
+name: iOS-ipa-build
 
 on:
   workflow_dispatch:
 
 jobs:
   build-ios:
-    name: 🧪 iOS Simulator Build
+    name: 🎉 iOS Build (with Free Apple ID)
     runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v3
 
-      - uses: subosito/flutter-action@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           architecture: x64
 
-      - name: Get dependencies
-        run: flutter pub get
+      - run: flutter pub get
 
-      - name: Build iOS for simulator
-        run: flutter build ios --simulator --release
+      - name: Setup CocoaPods
+        run: pod repo update
+        working-directory: ios
 
-      - name: Prepare IPA structure
+      - name: Authenticate with Apple
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          echo "Authenticating with Apple Developer Services..."
+          xcrun altool --authenticate -u "$APPLE_ID" -p "$APPLE_APP_PASSWORD" || true
+
+      - name: Build iOS (with provisioning updates)
+        run: |
+          flutter build ios --release --no-codesign
+          xcodebuild -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -allowProvisioningUpdates
+
+      - name: Prepare Payload
         run: |
           mkdir Payload
-          mv Runner.app Payload/
-        working-directory: build/ios/iphonesimulator
+          mv build/ios/iphoneos/Runner.app Payload/
 
-      - name: Create simulator IPA
-        run: zip -qq -r -9 FlutterIpaExport.ipa Payload
-        working-directory: build/ios/iphonesimulator
+      - name: Create IPA
+        run: |
+          cd build/ios/iphoneos
+          zip -qq -r -9 FlutterIpaExport.ipa Payload
 
-      - name: Upload IPA to release
+      - name: Upload IPA to Release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/ios/iphonesimulator/FlutterIpaExport.ipa
+          file: build/ios/iphoneos/FlutterIpaExport.ipa
           tag: v1.0
           overwrite: true
-          body: "Simulator build IPA (for experimental sideloading use only)"
+          body: "Unsigned IPA build via free Apple ID"
