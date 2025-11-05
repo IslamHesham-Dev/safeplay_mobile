@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import '../../design_system/colors.dart';
-import '../../navigation/route_names.dart';
 import '../../screens/auth/junior_picture_password_login.dart';
 import '../../screens/auth/bright_picture_pin_login.dart';
 

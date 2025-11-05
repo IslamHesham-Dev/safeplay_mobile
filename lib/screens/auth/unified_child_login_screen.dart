@@ -702,27 +702,29 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
   }
 
   Widget _buildBrightLogin() {
-    return BrightPicturePinLogin(
+    return _BrightPicturePinLoginEmbedded(
       key: const ValueKey('bright-login'),
       onPicturePinComplete: _onPicturePinComplete,
     );
   }
 }
 
-/// Bright Minds login interface with picture + PIN
-class BrightPicturePinLogin extends StatefulWidget {
+/// Bright Minds login interface with picture + PIN (embedded version)
+class _BrightPicturePinLoginEmbedded extends StatefulWidget {
   final Function(List<String>, String) onPicturePinComplete;
 
-  const BrightPicturePinLogin({
+  const _BrightPicturePinLoginEmbedded({
     super.key,
     required this.onPicturePinComplete,
   });
 
   @override
-  State<BrightPicturePinLogin> createState() => _BrightPicturePinLoginState();
+  State<_BrightPicturePinLoginEmbedded> createState() =>
+      _BrightPicturePinLoginEmbeddedState();
 }
 
-class _BrightPicturePinLoginState extends State<BrightPicturePinLogin> {
+class _BrightPicturePinLoginEmbeddedState
+    extends State<_BrightPicturePinLoginEmbedded> {
   final List<String> _brightPictures = brightPictureOptions;
 
   bool _pictureStepComplete = false;
