@@ -1,11 +1,11 @@
-name: iOS-ipa-build
+name: iOS-ipa-build-simulator
 
 on:
   workflow_dispatch:
 
 jobs:
   build-ios:
-    name: 🎉 iOS Build (with Free Apple ID)
+    name: 🧩 iOS Simulator Build (Unsigned IPA)
     runs-on: macos-latest
 
     steps:
@@ -19,42 +19,24 @@ jobs:
 
       - run: flutter pub get
 
-      - name: Setup CocoaPods
-        run: pod repo update
-        working-directory: ios
-
-      - name: Authenticate with Apple
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
-        run: |
-          echo "Authenticating with Apple Developer Services..."
-          xcrun altool --authenticate -u "$APPLE_ID" -p "$APPLE_APP_PASSWORD" || true
-
-      - name: Build iOS (with provisioning updates)
-        run: |
-          flutter build ios --release --no-codesign
-          xcodebuild -workspace ios/Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -sdk iphoneos \
-            -allowProvisioningUpdates
+      - name: Build for Simulator (Debug mode)
+        run: flutter build ios --simulator --debug
 
       - name: Prepare Payload
         run: |
           mkdir Payload
-          mv build/ios/iphoneos/Runner.app Payload/
+          mv build/ios/iphonesimulator/Runner.app Payload/
 
       - name: Create IPA
         run: |
-          cd build/ios/iphoneos
+          cd build/ios/iphonesimulator
           zip -qq -r -9 FlutterIpaExport.ipa Payload
 
       - name: Upload IPA to Release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/ios/iphoneos/FlutterIpaExport.ipa
+          file: build/ios/iphonesimulator/FlutterIpaExport.ipa
           tag: v1.0
           overwrite: true
-          body: "Unsigned IPA build via free Apple ID"
+          body: "Unsigned debug simulator IPA (works without Apple signing)"
