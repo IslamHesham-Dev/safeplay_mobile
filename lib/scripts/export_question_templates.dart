@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:io' if (dart.library.html) 'dart:html' as io;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -99,7 +99,12 @@ Future<void> exportQuestionTemplates() async {
       return;
     } else {
       // For non-web platforms, save to file
-      final outputFile = File('question_templates_export.json');
+      if (kIsWeb) {
+        print(
+            '❌ File export not supported on web. This script should be run on desktop/mobile.');
+        return;
+      }
+      final outputFile = io.File('question_templates_export.json');
       await outputFile.writeAsString(jsonString);
       filePath = outputFile.absolute.path;
 

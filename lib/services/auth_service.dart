@@ -4,10 +4,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:local_auth/local_auth.dart';
+import 'package:local_auth/local_auth.dart'
+    if (dart.library.html) 'local_auth_stub.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:convert';
-import 'dart:io';
+import 'dart:io' if (dart.library.html) 'dart:html' as io;
 import '../models/user_profile.dart';
 import 'local_auth_store.dart';
 import 'local_child_storage.dart';
@@ -18,7 +20,7 @@ class AuthService {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
   final FlutterSecureStorage _secureStorage;
-  final LocalAuthentication _localAuth;
+  final LocalAuthentication? _localAuth;
   final LocalAuthStore _localAuthStore;
 
   AuthService({
@@ -30,7 +32,7 @@ class AuthService {
   })  : _auth = auth ?? FirebaseAuth.instance,
         _firestore = firestore ?? FirebaseFirestore.instance,
         _secureStorage = secureStorage ?? const FlutterSecureStorage(),
-        _localAuth = localAuth ?? LocalAuthentication(),
+        _localAuth = kIsWeb ? null : (localAuth ?? LocalAuthentication()),
         _localAuthStore = localAuthStore ?? LocalAuthStore();
 
   // Collections
@@ -259,9 +261,17 @@ class AuthService {
       };
       return allowedCodes.contains(error.code);
     }
+    if (kIsWeb) {
+      return error is FirebaseException || error is PlatformException;
+    }
+    // On non-web platforms, check for SocketException
+    final errorString = error.toString().toLowerCase();
+    final isNetworkError = errorString.contains('socket') ||
+        errorString.contains('network') ||
+        errorString.contains('connection');
     return error is FirebaseException ||
         error is PlatformException ||
-        error is SocketException;
+        isNetworkError;
   }
 
   Map<String, dynamic> _buildDefaultParentProfile({
@@ -468,7 +478,14 @@ class AuthService {
         );
       }
       rethrow;
-    } on SocketException catch (socketError) {
+    } catch (socketError) {
+      if (kIsWeb) rethrow;
+      // Check if it's a network error (SocketException on non-web)
+      final errorString = socketError.toString().toLowerCase();
+      final isNetworkError = errorString.contains('socket') ||
+          errorString.contains('network') ||
+          errorString.contains('connection');
+      if (!isNetworkError) rethrow;
       print('[AuthService]: Network error during signup: $socketError');
       if (_shouldFallbackToLocalOnSignup(socketError)) {
         return await _signUpLocalAccount(
@@ -639,13 +656,18 @@ class AuthService {
 
   /// Sign in with biometric authentication
   Future<UserProfile?> signInWithBiometric() async {
+    // Biometric authentication is not available on web
+    if (kIsWeb || _localAuth == null) {
+      return null;
+    }
+
     try {
       // Check if biometric is available
-      final canCheckBiometrics = await _localAuth.canCheckBiometrics;
+      final canCheckBiometrics = await _localAuth!.canCheckBiometrics;
       if (!canCheckBiometrics) return null;
 
       // Authenticate with biometrics
-      final authenticated = await _localAuth.authenticate(
+      final authenticated = await _localAuth!.authenticate(
         localizedReason: 'Authenticate to access SafePlay',
         options: const AuthenticationOptions(
           stickyAuth: true,

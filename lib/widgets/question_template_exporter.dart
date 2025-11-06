@@ -1,9 +1,11 @@
 import 'dart:convert';
-import 'dart:io' show File;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../scripts/extract_question_templates_from_source.dart';
+
+// Import dart:io only for non-web platforms
+import 'dart:io' if (dart.library.html) '../utils/file_stub.dart' as io;
 
 /// Widget to export question templates from source code to JSON
 /// This extracts data directly from the seeding scripts (no Firebase needed)
@@ -72,8 +74,11 @@ class _QuestionTemplateExporterState extends State<QuestionTemplateExporter> {
       }
     } else {
       // For mobile/desktop, save to file
+      // Note: This code path is only executed on non-web platforms
       try {
-        final file = File('question_templates_export.json');
+        // On non-web, io.File refers to dart:io.File
+        // ignore: undefined_class
+        final file = io.File('question_templates_export.json');
         await file.writeAsString(_jsonData!);
 
         if (mounted) {

@@ -453,3 +453,5 @@ class FloatingCoin {
     required this.rotationSpeed,
   });
 }
+
+

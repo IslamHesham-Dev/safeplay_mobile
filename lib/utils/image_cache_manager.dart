@@ -1,9 +1,10 @@
-import 'dart:io';
+import 'dart:io' if (dart.library.html) 'dart:html' as io;
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:convert';
 
 /// Image cache manager for optimized image loading
@@ -15,10 +16,13 @@ class ImageCacheManager {
   static const int _maxCacheSize = 100 * 1024 * 1024; // 100 MB
   static const Duration _cacheExpiry = Duration(days: 7);
 
-  /// Get cached image path
-  Future<String> getCacheDirectory() async {
+  /// Get cached image path (not available on web)
+  Future<String?> getCacheDirectory() async {
+    if (kIsWeb) {
+      return null;
+    }
     final directory = await getTemporaryDirectory();
-    final cacheDir = Directory('${directory.path}/image_cache');
+    final cacheDir = io.Directory('${directory.path}/image_cache');
     if (!await cacheDir.exists()) {
       await cacheDir.create(recursive: true);
     }
@@ -30,17 +34,23 @@ class ImageCacheManager {
     return md5.convert(utf8.encode(url)).toString();
   }
 
-  /// Get cached file path
-  Future<File> _getCacheFile(String url) async {
+  /// Get cached file path (not available on web)
+  Future<io.File?> _getCacheFile(String url) async {
+    if (kIsWeb) return null;
     final cacheDir = await getCacheDirectory();
+    if (cacheDir == null) return null;
     final cacheKey = _getCacheKey(url);
-    return File('$cacheDir/$cacheKey');
+    return io.File('$cacheDir/$cacheKey');
   }
 
   /// Check if image is cached
   Future<bool> isCached(String url) async {
+    if (kIsWeb) {
+      // On web, rely on browser cache
+      return false;
+    }
     final file = await _getCacheFile(url);
-    if (!await file.exists()) return false;
+    if (file == null || !await file.exists()) return false;
 
     // Check if cache is expired
     final lastModified = await file.lastModified();
@@ -50,10 +60,15 @@ class ImageCacheManager {
 
   /// Get cached image
   Future<Uint8List?> getCachedImage(String url) async {
+    if (kIsWeb) {
+      // On web, just download (browser handles caching)
+      return null;
+    }
     if (!await isCached(url)) return null;
 
     try {
       final file = await _getCacheFile(url);
+      if (file == null) return null;
       return await file.readAsBytes();
     } catch (e) {
       debugPrint('Error reading cached image: $e');
@@ -68,8 +83,14 @@ class ImageCacheManager {
       if (response.statusCode != 200) return null;
 
       final bytes = response.bodyBytes;
-      final file = await _getCacheFile(url);
-      await file.writeAsBytes(bytes);
+
+      // Only cache to file system on non-web platforms
+      if (!kIsWeb) {
+        final file = await _getCacheFile(url);
+        if (file != null) {
+          await file.writeAsBytes(bytes);
+        }
+      }
 
       return bytes;
     } catch (e) {
@@ -88,16 +109,18 @@ class ImageCacheManager {
     return await downloadAndCache(url);
   }
 
-  /// Clear expired cache
+  /// Clear expired cache (not available on web)
   Future<void> clearExpiredCache() async {
+    if (kIsWeb) return;
     final cacheDir = await getCacheDirectory();
-    final directory = Directory(cacheDir);
+    if (cacheDir == null) return;
+    final directory = io.Directory(cacheDir);
 
     if (!await directory.exists()) return;
 
     final files = directory.listSync();
     for (final file in files) {
-      if (file is File) {
+      if (file is io.File) {
         final lastModified = await file.lastModified();
         final age = DateTime.now().difference(lastModified);
         if (age > _cacheExpiry) {
@@ -107,27 +130,31 @@ class ImageCacheManager {
     }
   }
 
-  /// Clear all cache
+  /// Clear all cache (not available on web)
   Future<void> clearAllCache() async {
+    if (kIsWeb) return;
     final cacheDir = await getCacheDirectory();
-    final directory = Directory(cacheDir);
+    if (cacheDir == null) return;
+    final directory = io.Directory(cacheDir);
 
     if (await directory.exists()) {
       await directory.delete(recursive: true);
     }
   }
 
-  /// Get cache size
+  /// Get cache size (not available on web)
   Future<int> getCacheSize() async {
+    if (kIsWeb) return 0;
     final cacheDir = await getCacheDirectory();
-    final directory = Directory(cacheDir);
+    if (cacheDir == null) return 0;
+    final directory = io.Directory(cacheDir);
 
     if (!await directory.exists()) return 0;
 
     int totalSize = 0;
     final files = directory.listSync();
     for (final file in files) {
-      if (file is File) {
+      if (file is io.File) {
         totalSize += await file.length();
       }
     }
@@ -151,12 +178,14 @@ class ImageCacheManager {
     }
   }
 
-  /// Clear oldest files
+  /// Clear oldest files (not available on web)
   Future<void> _clearOldestFiles(int targetSize) async {
+    if (kIsWeb) return;
     final cacheDir = await getCacheDirectory();
-    final directory = Directory(cacheDir);
+    if (cacheDir == null) return;
+    final directory = io.Directory(cacheDir);
 
-    final files = directory.listSync().whereType<File>().toList();
+    final files = directory.listSync().whereType<io.File>().toList();
 
     // Sort by last modified (oldest first)
     files.sort((a, b) {
@@ -224,4 +253,3 @@ class CachedNetworkImageWidget extends StatelessWidget {
     );
   }
 }
-

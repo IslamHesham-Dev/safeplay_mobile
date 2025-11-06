@@ -1,25 +1,39 @@
 {
-    "flutter": {
-        "platforms": {
-            "android": {
-                "default": {
-                    "projectId": "safeplay-portal",
-                    "appId": "1:482780859595:android:1d36f4aa1bfdc11cb0df4e",
-                    "fileOutput": "android/app/google-services.json"
-                }
-            },
-            "dart": {
-                "lib/firebase_options.dart": {
-                    "projectId": "safeplay-portal",
-                    "configurations": {
-                        "android": "1:482780859595:android:1d36f4aa1bfdc11cb0df4e",
-                        "ios": "1:482780859595:ios:524fe23c5dbfb526b0df4e",
-                        "macos": "1:482780859595:ios:524fe23c5dbfb526b0df4e",
-                        "web": "1:482780859595:web:34be1ebb20c162dfb0df4e",
-                        "windows": "1:482780859595:web:12130ff6de159fbeb0df4e"
-                    }
-                }
-            }
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "safeplay-portal",
+          "appId": "1:482780859595:android:1d36f4aa1bfdc11cb0df4e",
+          "fileOutput": "android/app/google-services.json"
         }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "safeplay-portal",
+          "configurations": {
+            "android": "1:482780859595:android:1d36f4aa1bfdc11cb0df4e",
+            "ios": "1:482780859595:ios:524fe23c5dbfb526b0df4e",
+            "macos": "1:482780859595:ios:524fe23c5dbfb526b0df4e",
+            "web": "1:482780859595:web:34be1ebb20c162dfb0df4e",
+            "windows": "1:482780859595:web:12130ff6de159fbeb0df4e"
+          }
+        }
+      }
     }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
 }

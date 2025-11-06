@@ -1,8 +1,9 @@
-import 'dart:io';
+import 'dart:io' if (dart.library.html) 'dart:html' as io;
 import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 /// Camera and media service for photo/video capture
@@ -12,6 +13,11 @@ class CameraService {
 
   /// Initialize camera service
   Future<void> initialize() async {
+    // Camera package doesn't work on web
+    if (kIsWeb) {
+      debugPrint('Camera initialization skipped on web');
+      return;
+    }
     try {
       _cameras = await availableCameras();
     } catch (e) {
@@ -44,8 +50,8 @@ class CameraService {
   List<CameraDescription>? get cameras => _cameras;
 
   /// Take photo using camera
-  Future<File?> takePhoto() async {
-    if (!await requestCameraPermission()) {
+  Future<XFile?> takePhoto() async {
+    if (!kIsWeb && !await requestCameraPermission()) {
       debugPrint('Camera permission denied');
       return null;
     }
@@ -58,8 +64,7 @@ class CameraService {
         imageQuality: 85,
       );
 
-      if (photo == null) return null;
-      return File(photo.path);
+      return photo;
     } catch (e) {
       debugPrint('Error taking photo: $e');
       return null;
@@ -67,8 +72,8 @@ class CameraService {
   }
 
   /// Pick photo from gallery
-  Future<File?> pickFromGallery() async {
-    if (!await requestPhotoLibraryPermission()) {
+  Future<XFile?> pickFromGallery() async {
+    if (!kIsWeb && !await requestPhotoLibraryPermission()) {
       debugPrint('Photo library permission denied');
       return null;
     }
@@ -81,8 +86,7 @@ class CameraService {
         imageQuality: 85,
       );
 
-      if (photo == null) return null;
-      return File(photo.path);
+      return photo;
     } catch (e) {
       debugPrint('Error picking photo: $e');
       return null;
@@ -90,13 +94,13 @@ class CameraService {
   }
 
   /// Record video
-  Future<File?> recordVideo({int maxDurationSeconds = 60}) async {
-    if (!await requestCameraPermission()) {
+  Future<XFile?> recordVideo({int maxDurationSeconds = 60}) async {
+    if (!kIsWeb && !await requestCameraPermission()) {
       debugPrint('Camera permission denied');
       return null;
     }
 
-    if (!await requestMicrophonePermission()) {
+    if (!kIsWeb && !await requestMicrophonePermission()) {
       debugPrint('Microphone permission denied');
       return null;
     }
@@ -107,8 +111,7 @@ class CameraService {
         maxDuration: Duration(seconds: maxDurationSeconds),
       );
 
-      if (video == null) return null;
-      return File(video.path);
+      return video;
     } catch (e) {
       debugPrint('Error recording video: $e');
       return null;
@@ -116,8 +119,8 @@ class CameraService {
   }
 
   /// Pick video from gallery
-  Future<File?> pickVideoFromGallery() async {
-    if (!await requestPhotoLibraryPermission()) {
+  Future<XFile?> pickVideoFromGallery() async {
+    if (!kIsWeb && !await requestPhotoLibraryPermission()) {
       debugPrint('Photo library permission denied');
       return null;
     }
@@ -127,8 +130,7 @@ class CameraService {
         source: ImageSource.gallery,
       );
 
-      if (video == null) return null;
-      return File(video.path);
+      return video;
     } catch (e) {
       debugPrint('Error picking video: $e');
       return null;
@@ -136,8 +138,8 @@ class CameraService {
   }
 
   /// Take multiple photos
-  Future<List<File>> takeMultiplePhotos() async {
-    if (!await requestPhotoLibraryPermission()) {
+  Future<List<XFile>> takeMultiplePhotos() async {
+    if (!kIsWeb && !await requestPhotoLibraryPermission()) {
       debugPrint('Photo library permission denied');
       return [];
     }
@@ -149,25 +151,30 @@ class CameraService {
         imageQuality: 85,
       );
 
-      return photos.map((photo) => File(photo.path)).toList();
+      return photos;
     } catch (e) {
       debugPrint('Error picking multiple photos: $e');
       return [];
     }
   }
 
-  /// Save photo to app directory
-  Future<String?> savePhoto(File photo, String filename) async {
+  /// Save photo to app directory (not available on web)
+  Future<String?> savePhoto(XFile photo, String filename) async {
+    if (kIsWeb) {
+      debugPrint('Saving photos to local directory not supported on web');
+      return null;
+    }
     try {
       final directory = await getApplicationDocumentsDirectory();
-      final photosDir = Directory('${directory.path}/photos');
+      final photosDir = io.Directory('${directory.path}/photos');
 
       if (!await photosDir.exists()) {
         await photosDir.create(recursive: true);
       }
 
       final savedPath = '${photosDir.path}/$filename';
-      await photo.copy(savedPath);
+      final file = io.File(photo.path);
+      await file.copy(savedPath);
 
       return savedPath;
     } catch (e) {
@@ -176,27 +183,41 @@ class CameraService {
     }
   }
 
-  /// Get saved photos directory
-  Future<Directory> getPhotosDirectory() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final photosDir = Directory('${directory.path}/photos');
-
-    if (!await photosDir.exists()) {
-      await photosDir.create(recursive: true);
+  /// Get saved photos directory (not available on web)
+  Future<io.Directory?> getPhotosDirectory() async {
+    if (kIsWeb) {
+      return null;
     }
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final photosDir = io.Directory('${directory.path}/photos');
 
-    return photosDir;
+      if (!await photosDir.exists()) {
+        await photosDir.create(recursive: true);
+      }
+
+      return photosDir;
+    } catch (e) {
+      debugPrint('Error getting photos directory: $e');
+      return null;
+    }
   }
 
-  /// Get all saved photos
-  Future<List<File>> getSavedPhotos() async {
+  /// Get all saved photos (not available on web)
+  Future<List<XFile>> getSavedPhotos() async {
+    if (kIsWeb) {
+      return [];
+    }
     try {
       final photosDir = await getPhotosDirectory();
+      if (photosDir == null) return [];
+
       final files = photosDir.listSync();
 
       return files
-          .whereType<File>()
+          .whereType<io.File>()
           .where((file) => _isImageFile(file.path))
+          .map((file) => XFile(file.path))
           .toList();
     } catch (e) {
       debugPrint('Error getting saved photos: $e');
@@ -204,10 +225,13 @@ class CameraService {
     }
   }
 
-  /// Delete photo
+  /// Delete photo (not available on web)
   Future<bool> deletePhoto(String path) async {
+    if (kIsWeb) {
+      return false;
+    }
     try {
-      final file = File(path);
+      final file = io.File(path);
       if (await file.exists()) {
         await file.delete();
         return true;
@@ -225,10 +249,13 @@ class CameraService {
     return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].contains(extension);
   }
 
-  /// Get photo file size
+  /// Get photo file size (not available on web)
   Future<int> getPhotoSize(String path) async {
+    if (kIsWeb) {
+      return 0;
+    }
     try {
-      final file = File(path);
+      final file = io.File(path);
       return await file.length();
     } catch (e) {
       debugPrint('Error getting photo size: $e');
@@ -236,11 +263,14 @@ class CameraService {
     }
   }
 
-  /// Clear all saved photos
+  /// Clear all saved photos (not available on web)
   Future<void> clearAllPhotos() async {
+    if (kIsWeb) {
+      return;
+    }
     try {
       final photosDir = await getPhotosDirectory();
-      if (await photosDir.exists()) {
+      if (photosDir != null && await photosDir.exists()) {
         await photosDir.delete(recursive: true);
       }
     } catch (e) {
@@ -251,7 +281,7 @@ class CameraService {
 
 /// Camera screen widget
 class CameraScreen extends StatefulWidget {
-  final Function(File) onPhotoTaken;
+  final Function(XFile) onPhotoTaken;
 
   const CameraScreen({
     super.key,
@@ -273,6 +303,11 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Future<void> _initializeCamera() async {
+    if (kIsWeb) {
+      debugPrint('Camera preview not available on web');
+      return;
+    }
+
     final cameraService = CameraService();
     await cameraService.initialize();
 
@@ -310,7 +345,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
     try {
       final XFile photo = await _controller!.takePicture();
-      widget.onPhotoTaken(File(photo.path));
+      widget.onPhotoTaken(photo);
       if (mounted) {
         Navigator.pop(context);
       }
@@ -321,6 +356,18 @@ class _CameraScreenState extends State<CameraScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Camera'),
+        ),
+        body: const Center(
+          child: Text(
+              'Camera preview not available on web. Use image picker instead.'),
+        ),
+      );
+    }
+
     if (!_isInitialized || _controller == null) {
       return const Scaffold(
         body: Center(
@@ -367,4 +414,3 @@ class _CameraScreenState extends State<CameraScreen> {
     );
   }
 }
-

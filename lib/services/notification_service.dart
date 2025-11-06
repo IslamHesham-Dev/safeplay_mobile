@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:go_router/go_router.dart';
@@ -11,8 +12,8 @@ import '../navigation/route_names.dart';
 /// Push notification service using Firebase Cloud Messaging
 class NotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
-  final FlutterLocalNotificationsPlugin _localNotifications =
-      FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin? _localNotifications =
+      kIsWeb ? null : FlutterLocalNotificationsPlugin();
 
   static const String _fcmTokenKey = 'fcm_token';
   GlobalKey<NavigatorState>? _navigatorKey;
@@ -32,43 +33,46 @@ class NotificationService {
       return;
     }
 
-    const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+    // Local notifications are not available on web
+    if (!kIsWeb && _localNotifications != null) {
+      const androidSettings =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
+      const iosSettings = DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
 
-    const initSettings = InitializationSettings(
-      android: androidSettings,
-      iOS: iosSettings,
-    );
+      const initSettings = InitializationSettings(
+        android: androidSettings,
+        iOS: iosSettings,
+      );
 
-    await _localNotifications.initialize(
-      initSettings,
-      onDidReceiveNotificationResponse: _onNotificationTapped,
-    );
+      await _localNotifications!.initialize(
+        initSettings,
+        onDidReceiveNotificationResponse: _onNotificationTapped,
+      );
 
-    const incidentChannel = AndroidNotificationChannel(
-      'safeplay_channel',
-      'SafePlay Notifications',
-      description: 'Notifications for SafePlay app',
-      importance: Importance.high,
-    );
-    const reminderChannel = AndroidNotificationChannel(
-      'safeplay_reminders',
-      'SafePlay Reminders',
-      description: 'Learning reminders and scheduled notifications',
-      importance: Importance.high,
-    );
+      const incidentChannel = AndroidNotificationChannel(
+        'safeplay_channel',
+        'SafePlay Notifications',
+        description: 'Notifications for SafePlay app',
+        importance: Importance.high,
+      );
+      const reminderChannel = AndroidNotificationChannel(
+        'safeplay_reminders',
+        'SafePlay Reminders',
+        description: 'Learning reminders and scheduled notifications',
+        importance: Importance.high,
+      );
 
-    final androidImplementation =
-        _localNotifications.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-    if (androidImplementation != null) {
-      await androidImplementation.createNotificationChannel(incidentChannel);
-      await androidImplementation.createNotificationChannel(reminderChannel);
+      final androidImplementation = _localNotifications!
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>();
+      if (androidImplementation != null) {
+        await androidImplementation.createNotificationChannel(incidentChannel);
+        await androidImplementation.createNotificationChannel(reminderChannel);
+      }
     }
 
     final token = await _fcm.getToken();
@@ -128,6 +132,12 @@ class NotificationService {
     String body,
     Map<String, dynamic> data,
   ) async {
+    // Local notifications are not available on web
+    if (kIsWeb || _localNotifications == null) {
+      debugPrint('Local notification (web): $title - $body');
+      return;
+    }
+
     const androidDetails = AndroidNotificationDetails(
       'safeplay_channel',
       'SafePlay Notifications',
@@ -148,7 +158,7 @@ class NotificationService {
       iOS: iosDetails,
     );
 
-    await _localNotifications.show(
+    await _localNotifications!.show(
       DateTime.now().millisecondsSinceEpoch ~/ 1000,
       title,
       body,
@@ -184,6 +194,13 @@ class NotificationService {
     String body,
     DateTime scheduledTime,
   ) async {
+    // Local notifications are not available on web
+    if (kIsWeb || _localNotifications == null) {
+      debugPrint(
+          'Scheduled notification (web): $title - $body at $scheduledTime');
+      return;
+    }
+
     const androidDetails = AndroidNotificationDetails(
       'safeplay_reminders',
       'SafePlay Reminders',
@@ -199,7 +216,7 @@ class NotificationService {
       iOS: iosDetails,
     );
 
-    await _localNotifications.show(
+    await _localNotifications!.show(
       scheduledTime.millisecondsSinceEpoch ~/ 1000,
       title,
       body,
@@ -238,7 +255,9 @@ class NotificationService {
   }
 
   Future<void> cancelAllNotifications() async {
-    await _localNotifications.cancelAll();
+    if (!kIsWeb && _localNotifications != null) {
+      await _localNotifications!.cancelAll();
+    }
   }
 
   void _onNotificationTapped(NotificationResponse response) {
