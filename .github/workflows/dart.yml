@@ -1,40 +1,55 @@
-name: iOS-ipa-build-simulator
+name: iOS-ipa-build
 
 on:
   workflow_dispatch:
 
 jobs:
   build-ios:
-    name: 🧩 iOS Simulator Build (Unsigned IPA)
-    runs-on: macos-latest
+    name: iOS Flutter Build (Unsigned)
+    runs-on: macos-15  # use macOS Sequoia explicitly
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Setup Flutter
+      # Set up Flutter with correct version
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.24.0'  # or your current version
           channel: 'stable'
           architecture: x64
 
-      - name: Get dependencies
+      - run: flutter doctor -v
+
+      - name: Install dependencies
         run: flutter pub get
 
-      - name: Build for Simulator (Debug mode)
-        run: flutter build ios --simulator --debug
-
-      - name: Prepare Payload folder
+      # Clean iOS cache and Pods to fix Xcode 16 compatibility
+      - name: Clean Pods & DerivedData
         run: |
-          mkdir -p build/ios/iphonesimulator/Payload
-          cp -R build/ios/iphonesimulator/Runner.app build/ios/iphonesimulator/Payload/
+          rm -rf ios/Pods ios/Podfile.lock build/ ios/Flutter/Flutter.framework ios/Flutter/Flutter.podspec
+          pod repo update
+          pod install
+        working-directory: ios
 
-      - name: Create IPA from Payload
+      # Ensure xcodebuild can compile without codesigning
+      - name: Build iOS Release (No Code Sign)
         run: |
-          cd build/ios/iphonesimulator
-          zip -r -9 FlutterIpaExport.ipa Payload
+          flutter build ios --release --no-codesign
+        env:
+          COCOAPODS_DISABLE_STATS: true
+          LANG: en_US.UTF-8
 
-      - name: Upload IPA artifact
+      # Manual packaging
+      - name: Package IPA
+        run: |
+          cd build/ios/iphoneos
+          mkdir Payload
+          mv Runner.app Payload/
+          zip -qq -r -9 FlutterApp.ipa Payload
+
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: FlutterIpaExport
-          path: build/ios/iphonesimulator/FlutterIpaExport.ipa
+          name: FlutterApp-ipa
+          path: build/ios/iphoneos/FlutterApp.ipa
