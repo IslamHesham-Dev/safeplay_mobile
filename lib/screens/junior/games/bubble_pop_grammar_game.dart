@@ -1,9 +1,11 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../design_system/junior_theme.dart';
 import '../../../models/activity.dart';
+import '../../../navigation/route_names.dart';
 
 class BubblePopGrammarGame extends StatefulWidget {
   final ActivityQuestion question;
@@ -30,6 +32,11 @@ class BubblePopGrammarGame extends StatefulWidget {
 
 class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
     with TickerProviderStateMixin {
+  static const double _bubbleSize = 130.0;
+  static const double _bubbleSpacing = 24.0;
+  final GlobalKey _bubbleStackKey = GlobalKey();
+  final GlobalKey _coinCounterKey = GlobalKey();
+  OverlayEntry? _coinOverlayEntry;
   late final AnimationController _floatController;
   late final AnimationController _celebrationController;
   late final AnimationController _shakeController;
@@ -128,6 +135,8 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
 
   @override
   void dispose() {
+    _coinOverlayEntry?.remove();
+    _coinOverlayEntry = null;
     _floatController.dispose();
     _celebrationController.dispose();
     _shakeController.dispose();
@@ -145,6 +154,7 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
 
     if (isCorrect) {
       SystemSound.play(SystemSoundType.click);
+      _startCoinFlight(option);
       setState(() {
         _selectedOption = option;
         _answerLocked = true;
@@ -196,6 +206,46 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
     }
   }
 
+  void _startCoinFlight(String option) {
+    final overlay = Overlay.maybeOf(
+      context,
+      rootOverlay: true,
+    );
+
+    final bubblePos = _bubblePositions[option];
+    final stackBox =
+        _bubbleStackKey.currentContext?.findRenderObject() as RenderBox?;
+    final coinBox =
+        _coinCounterKey.currentContext?.findRenderObject() as RenderBox?;
+
+    if (overlay == null || bubblePos == null || stackBox == null || coinBox == null) {
+      return;
+    }
+
+    final stackOrigin = stackBox.localToGlobal(Offset.zero);
+    final start = stackOrigin +
+        bubblePos +
+        const Offset(_bubbleSize / 2, _bubbleSize / 2);
+
+    final coinOrigin = coinBox.localToGlobal(Offset.zero);
+    final end = coinOrigin +
+        Offset(coinBox.size.width / 2, coinBox.size.height / 2);
+
+    _coinOverlayEntry?.remove();
+    final entry = OverlayEntry(
+      builder: (_) => _CoinFlightOverlay(
+        start: start,
+        end: end,
+        onComplete: () {
+          _coinOverlayEntry?.remove();
+          _coinOverlayEntry = null;
+        },
+      ),
+    );
+    _coinOverlayEntry = entry;
+    overlay.insert(entry);
+  }
+
   String _formatTime(int seconds) {
     final minutes = seconds ~/ 60;
     final secs = seconds % 60;
@@ -212,7 +262,10 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
         : 'Tap the correct word part!';
 
     // Calculate bubble positions to prevent overlap
-    _calculateBubblePositions(screenSize);
+    _calculateBubblePositions(
+      screenSize,
+      mediaQuery.padding.top + mediaQuery.viewPadding.top,
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -257,7 +310,14 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
                     children: [
                       // Back button
                       IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () {
+                          final router = GoRouter.of(context);
+                          if (router.canPop()) {
+                            router.pop();
+                          } else {
+                            router.go(RouteNames.childDashboard);
+                          }
+                        },
                         icon: const Icon(Icons.arrow_back, color: Colors.white),
                         style: IconButton.styleFrom(
                           backgroundColor: Colors.white.withValues(alpha: 0.2),
@@ -266,6 +326,7 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
                       ),
                       // Coins counter
                       Container(
+                        key: _coinCounterKey,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
@@ -434,6 +495,7 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
                 // Bubbles area - circular bubbles in grid layout
                 Expanded(
                   child: Stack(
+                    key: _bubbleStackKey,
                     clipBehavior: Clip.none,
                     children: _options.map((option) {
                       final position = _bubblePositions[option] ?? Offset.zero;
@@ -507,10 +569,10 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
                               color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Text(
-                              _answerLocked
-                                  ? '+$_earnedPoints XP!'
-                                  : 'Earn +$_earnedPoints XP',
+                          child: Text(
+                            _answerLocked
+                                ? '+$_earnedPoints XP! 🪙'
+                                : 'Earn +$_earnedPoints XP 🪙',
                               style: JuniorTheme.bodySmall.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -543,7 +605,7 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
                       boxShadow: JuniorTheme.shadowHeavy,
                     ),
                     child: Text(
-                      'Great job!',
+                      'Great job! 🎉',
                       style: JuniorTheme.headingLarge.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -559,28 +621,30 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
     );
   }
 
-  void _calculateBubblePositions(Size screenSize) {
+  void _calculateBubblePositions(Size screenSize, double topPadding) {
     if (_bubblePositions.isNotEmpty) return; // Already calculated
 
-    final bubbleSize = 120.0;
-    final spacing = 20.0;
-    final availableWidth = screenSize.width - 32; // Padding
-
-    // Calculate how many bubbles per row (3 max)
+    const horizontalPadding = 24.0;
+    final spacing = _bubbleSpacing;
     final bubblesPerRow = math.min(3, _options.length);
-
-    // Calculate spacing between bubbles
     final totalBubbleWidth =
-        (bubblesPerRow * bubbleSize) + ((bubblesPerRow - 1) * spacing);
-    final startX = (availableWidth - totalBubbleWidth) / 2;
-    final startY = screenSize.height * 0.25; // Start from 25% down
+        (bubblesPerRow * _bubbleSize) + ((bubblesPerRow - 1) * spacing);
+    final idealStartX = (screenSize.width - totalBubbleWidth) / 2;
+    final maxStart = screenSize.width - horizontalPadding - totalBubbleWidth;
+    final startX = idealStartX.clamp(
+      horizontalPadding,
+      math.max(horizontalPadding, maxStart),
+    );
+    final safeTop =
+        math.max(topPadding + 120.0, screenSize.height * 0.22);
+    const rowSpacingExtra = 32.0;
 
     for (int i = 0; i < _options.length; i++) {
       final row = i ~/ bubblesPerRow;
       final col = i % bubblesPerRow;
 
-      final x = startX + (col * (bubbleSize + spacing));
-      final y = startY + (row * (bubbleSize + spacing + 20));
+      final x = startX + (col * (_bubbleSize + spacing));
+      final y = safeTop + (row * (_bubbleSize + spacing + rowSpacingExtra));
 
       _bubblePositions[_options[i]] = Offset(x, y);
     }
@@ -714,6 +778,93 @@ class _WrongAnswerTooltip extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _CoinFlightOverlay extends StatefulWidget {
+  final Offset start;
+  final Offset end;
+  final VoidCallback onComplete;
+
+  const _CoinFlightOverlay({
+    required this.start,
+    required this.end,
+    required this.onComplete,
+  });
+
+  @override
+  State<_CoinFlightOverlay> createState() => _CoinFlightOverlayState();
+}
+
+class _CoinFlightOverlayState extends State<_CoinFlightOverlay>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..forward().whenComplete(() => widget.onComplete());
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Offset _bezierPoint(double t) {
+    final start = widget.start;
+    final end = widget.end;
+    final control = Offset(
+      (start.dx + end.dx) / 2,
+      math.min(start.dy, end.dy) - 120,
+    );
+
+    final x = math.pow(1 - t, 2) * start.dx +
+        2 * (1 - t) * t * control.dx +
+        math.pow(t, 2) * end.dx;
+    final y = math.pow(1 - t, 2) * start.dy +
+        2 * (1 - t) * t * control.dy +
+        math.pow(t, 2) * end.dy;
+
+    return Offset(x.toDouble(), y.toDouble());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final progress = Curves.easeInOut.transform(_controller.value);
+          final position = _bezierPoint(progress);
+          return Positioned(
+            left: position.dx - 16,
+            top: position.dy - 16,
+            child: Opacity(
+              opacity: 1 - progress * 0.3,
+              child: Transform.scale(
+                scale: 1 - progress * 0.2,
+                child: Icon(
+                  Icons.monetization_on,
+                  size: 32,
+                  color: Colors.amber.shade400,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
