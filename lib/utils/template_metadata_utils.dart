@@ -5,8 +5,31 @@ import '../models/user_type.dart';
 
 /// Utility class for extracting and working with template metadata
 class TemplateMetadataUtils {
+  static const Map<String, GameType> _forcedGameTypes = {
+    // BubblePop Grammar mapping
+    'english_junior_001_spelling_suffixes_ing': GameType.bubblePopGrammar,
+    'english_junior_003_vocabulary_plurals_f_to_v': GameType.bubblePopGrammar,
+    'english_junior_004_adverbs_how': GameType.bubblePopGrammar,
+    'english_junior_007_spelling_ed_endings': GameType.bubblePopGrammar,
+    // Seashell Quiz mapping
+    'english_junior_002_grammar_adverbs': GameType.seashellQuiz,
+    'english_junior_005_language_strands_oral': GameType.seashellQuiz,
+    'english_junior_006_comprehension_fact': GameType.seashellQuiz,
+    // Fish Tank Quiz mapping
+    'math_junior_003_addition_basic': GameType.fishTankQuiz,
+    'math_junior_004_subtraction_basic': GameType.fishTankQuiz,
+    'math_junior_008_data_handling': GameType.fishTankQuiz,
+    'math_junior_011_shapes_triangle': GameType.fishTankQuiz,
+    'math_junior_012_comparing_numbers': GameType.fishTankQuiz,
+  };
+
   /// Extract game types from a template's JSON data
   static List<GameType> getGameTypesFromTemplate(QuestionTemplate template) {
+    final forcedGameType = _forcedGameTypes[template.id];
+    if (forcedGameType != null) {
+      return [forcedGameType];
+    }
+
     final json = template.toJson();
     final gameTypesData = json['gameTypes'] as List?;
 
@@ -31,6 +54,11 @@ class TemplateMetadataUtils {
 
   /// Get the recommended game type from template (first in list, or inferred)
   static GameType? getRecommendedGameType(QuestionTemplate template) {
+    final forcedGameType = _forcedGameTypes[template.id];
+    if (forcedGameType != null) {
+      return forcedGameType;
+    }
+
     final gameTypes = getGameTypesFromTemplate(template);
 
     if (gameTypes.isNotEmpty) {

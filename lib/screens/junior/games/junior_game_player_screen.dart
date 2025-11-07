@@ -17,6 +17,9 @@ import 'pattern_builder_game.dart';
 import 'memory_match_game.dart';
 import 'word_builder_game.dart';
 import 'story_sequencer_game.dart';
+import 'bubble_pop_grammar_game.dart';
+import 'seashell_quiz_game.dart';
+import 'fish_tank_quiz_game.dart';
 
 /// Main game player screen that routes to specific game implementations
 class JuniorGamePlayerScreen extends StatefulWidget {
@@ -146,10 +149,16 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
       }
     });
 
-    // Show feedback
+    // Show feedback and auto-advance for correct answers
     if (isCorrect) {
       HapticFeedback.lightImpact();
       _showSuccessFeedback(pointsEarned);
+      // Auto-advance to next question after a delay
+      Future.delayed(const Duration(milliseconds: 2500), () {
+        if (mounted) {
+          _nextQuestion();
+        }
+      });
     } else {
       HapticFeedback.heavyImpact();
       _showTryAgainFeedback();
@@ -486,170 +495,7 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
     // Route to appropriate game widget based on game type
     return Scaffold(
       backgroundColor: JuniorTheme.backgroundLight,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            _buildHeader(),
-
-            // Progress indicator
-            _buildProgressIndicator(),
-
-            // Game content
-            Expanded(
-              child: _buildGameWidget(question),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(JuniorTheme.spacingMedium),
-      decoration: BoxDecoration(
-        gradient: JuniorTheme.primaryGradient,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(JuniorTheme.radiusLarge),
-          bottomRight: Radius.circular(JuniorTheme.radiusLarge),
-        ),
-        boxShadow: JuniorTheme.shadowMedium,
-      ),
-      child: Row(
-        children: [
-          // Back button
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: Container(
-              width: 56,
-              height: 56,
-              padding: const EdgeInsets.all(JuniorTheme.spacingSmall),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(JuniorTheme.radiusMedium),
-              ),
-              child: const Icon(
-                Icons.arrow_back,
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
-          ),
-
-          const SizedBox(width: JuniorTheme.spacingMedium),
-
-          // Title
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.gameTitle,
-                  style: JuniorTheme.headingMedium.copyWith(
-                    color: Colors.white,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  'Question ${_currentQuestionIndex + 1} of ${widget.questions.length}',
-                  style: JuniorTheme.bodySmall.copyWith(
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Score display with animated coin counter
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: JuniorTheme.spacingMedium,
-              vertical: JuniorTheme.spacingXSmall,
-            ),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.white.withOpacity(0.3),
-                  Colors.white.withOpacity(0.2),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(JuniorTheme.radiusMedium),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.3),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.monetization_on,
-                  color: JuniorTheme.accentGold,
-                  size: 22,
-                ),
-                const SizedBox(width: 6),
-                AnimatedCoinCounter(
-                  coins: _score,
-                  textStyle: JuniorTheme.bodyMedium.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                  coinColor: JuniorTheme.accentGold,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProgressIndicator() {
-    final progress = (_currentQuestionIndex + 1) / widget.questions.length;
-    return Container(
-      padding: const EdgeInsets.all(JuniorTheme.spacingMedium),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Progress',
-                style: JuniorTheme.bodySmall,
-              ),
-              Text(
-                '${(_currentQuestionIndex + 1)}/${widget.questions.length}',
-                style: JuniorTheme.bodySmall.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: JuniorTheme.spacingXSmall),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(JuniorTheme.radiusMedium),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: JuniorTheme.backgroundCard,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                JuniorTheme.primaryGreen,
-              ),
-              minHeight: 8,
-            ),
-          ),
-        ],
-      ),
+      body: _buildGameWidget(question),
     );
   }
 
@@ -672,6 +518,28 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
         );
       case GameType.patternBuilder:
         return PatternBuilderGame(
+          question: question,
+          onAnswerSubmitted: _onAnswerSubmitted,
+        );
+      case GameType.bubblePopGrammar:
+        return BubblePopGrammarGame(
+          question: question,
+          onAnswerSubmitted: _onAnswerSubmitted,
+          currentScore: _score,
+          onComplete: () {
+            // When final question is answered, complete the game
+            if (_currentQuestionIndex >= widget.questions.length - 1) {
+              _completeGame();
+            }
+          },
+        );
+      case GameType.seashellQuiz:
+        return SeashellQuizGame(
+          question: question,
+          onAnswerSubmitted: _onAnswerSubmitted,
+        );
+      case GameType.fishTankQuiz:
+        return FishTankQuizGame(
           question: question,
           onAnswerSubmitted: _onAnswerSubmitted,
         );

@@ -341,8 +341,8 @@ class _TeacherActivitiesManagementViewState
                     _buildFilterChip(
                         'Junior (6-8)', _selectedAgeGroup == AgeGroup.junior),
                     const SizedBox(width: 8),
-                    _buildFilterChip('Bright (9-12)',
-                        _selectedAgeGroup == AgeGroup.bright),
+                    _buildFilterChip(
+                        'Bright (9-12)', _selectedAgeGroup == AgeGroup.bright),
                   ],
                 ),
               ),
@@ -439,7 +439,7 @@ class _TeacherActivitiesManagementViewState
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: widget.onCreateActivity,
-                icon: const Icon(Icons.add),
+                icon: const Icon(Icons.add, color: Colors.white),
                 label: const Text('Create Activity'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: SafePlayColors.brandTeal500,
@@ -463,8 +463,7 @@ class _TeacherActivitiesManagementViewState
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.assignment_outlined,
-                size: 64, color: Colors.grey[400]),
+            Icon(Icons.assignment_outlined, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               'No activities found',

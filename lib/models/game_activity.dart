@@ -9,6 +9,9 @@ enum GameType {
   koalaCounterAdventure,
   ordinalDragOrder,
   patternBuilder,
+  bubblePopGrammar,
+  seashellQuiz,
+  fishTankQuiz,
 
   // Bright Minds Games (9-12 years)
   fractionNavigator,
@@ -31,6 +34,12 @@ enum GameType {
         return 'Ordinal Order Challenge';
       case GameType.patternBuilder:
         return 'Pattern Builder';
+      case GameType.bubblePopGrammar:
+        return 'BubblePop Grammar';
+      case GameType.seashellQuiz:
+        return 'Seashell Quiz';
+      case GameType.fishTankQuiz:
+        return 'Fish Tank Quiz';
       case GameType.fractionNavigator:
         return 'Fraction Navigator';
       case GameType.inverseOperationChain:
@@ -58,6 +67,12 @@ enum GameType {
         return 'Practice ordinal numbers and positional language';
       case GameType.patternBuilder:
         return 'Complete visual and number patterns';
+      case GameType.bubblePopGrammar:
+        return 'Tap the correct word part bubbles to build grammar skills';
+      case GameType.seashellQuiz:
+        return 'Answer multiple-choice questions with animated seashells';
+      case GameType.fishTankQuiz:
+        return 'Swim with answer fish to solve math challenges';
       case GameType.fractionNavigator:
         return 'Order and convert fractions, decimals, and percentages';
       case GameType.inverseOperationChain:
@@ -81,6 +96,9 @@ enum GameType {
       case GameType.koalaCounterAdventure:
       case GameType.ordinalDragOrder:
       case GameType.patternBuilder:
+      case GameType.bubblePopGrammar:
+      case GameType.seashellQuiz:
+      case GameType.fishTankQuiz:
         return [AgeGroup.junior];
       case GameType.fractionNavigator:
       case GameType.inverseOperationChain:
@@ -106,6 +124,11 @@ enum GameType {
       case GameType.ordinalDragOrder:
       case GameType.patternBuilder:
         return [ActivitySubject.math, ActivitySubject.reading];
+      case GameType.fishTankQuiz:
+        return [ActivitySubject.math];
+      case GameType.bubblePopGrammar:
+      case GameType.seashellQuiz:
+        return [ActivitySubject.reading, ActivitySubject.writing];
       case GameType.memoryMatch:
       case GameType.wordBuilder:
       case GameType.storySequencer:

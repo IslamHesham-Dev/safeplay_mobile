@@ -954,38 +954,30 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: SafePlayColors.brandTeal500.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Icon(
-                Icons.add_circle_outline,
-                size: 64,
-                color: SafePlayColors.brandTeal500,
-              ),
+            Icon(
+              Icons.assignment_outlined,
+              size: 64,
+              color: Colors.grey[400],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             Text(
-              'Create New Activity',
+              'No published activities yet',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey[800],
+                color: Colors.grey[600],
               ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Build engaging activities from templates!\nSelect questions, choose game type, and publish for children.',
+              'Create and publish your first activity to see it here!',
               style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[600],
-                height: 1.5,
+                fontSize: 14,
+                color: Colors.grey[500],
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () {
                 Navigator.push(
@@ -998,20 +990,16 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
                   _loadDashboardData();
                 });
               },
-              icon: const Icon(Icons.add_circle, size: 24),
-              label: const Text(
-                'Start Activity Creation',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: const Text('Create Activity'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: SafePlayColors.brandTeal500,
                 foregroundColor: Colors.white,
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                elevation: 4,
               ),
             ),
           ],
@@ -1023,7 +1011,17 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
   Widget _buildMyActivitiesTab() {
     return TeacherActivitiesManagementView(
       embedded: true,
-      onCreateActivity: () => setState(() => _currentIndex = 1),
+      onCreateActivity: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ActivityCreationWizardScreen(),
+          ),
+        ).then((_) {
+          // Refresh data when returning
+          _loadDashboardData();
+        });
+      },
     );
   }
 

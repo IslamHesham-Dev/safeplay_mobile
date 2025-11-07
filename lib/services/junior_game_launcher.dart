@@ -344,6 +344,76 @@ class JuniorGameLauncher {
             points: 25,
           ),
         ];
+      case GameType.bubblePopGrammar:
+        return [
+          ActivityQuestion(
+            id: 'demo_q1',
+            type: QuestionType.multipleChoice,
+            question: 'Find the part you add to DROP to make it "dropped".',
+            options: ['ed', 'dropp', 'er'],
+            correctAnswer: 'ed',
+            explanation: 'We double the consonant and add -ed.',
+            hint: 'Which part is added at the end?',
+            points: 10,
+          ),
+          ActivityQuestion(
+            id: 'demo_q2',
+            type: QuestionType.multipleChoice,
+            question: 'To change LIVE to "living", what ending do we add?',
+            options: ['ing', 'liv', 'ed'],
+            correctAnswer: 'ing',
+            explanation: 'Drop the silent e and add -ing.',
+            hint: 'Remove the e before adding the new ending.',
+            points: 10,
+          ),
+        ];
+      case GameType.seashellQuiz:
+        return [
+          ActivityQuestion(
+            id: 'demo_q1',
+            type: QuestionType.multipleChoice,
+            question: 'An adverb gives more information about...?',
+            options: ['A noun', 'A person', 'An action (verb)'],
+            correctAnswer: 'An action (verb)',
+            explanation: 'Adverbs describe actions.',
+            hint: 'Think about words like quickly or slowly.',
+            points: 10,
+          ),
+          ActivityQuestion(
+            id: 'demo_q2',
+            type: QuestionType.multipleChoice,
+            question: 'Which language strand involves listening and speaking?',
+            options: ['Oral language', 'Visual language', 'Written language'],
+            correctAnswer: 'Oral language',
+            explanation: 'Oral language is communication we speak and hear.',
+            hint: 'It is how we talk and listen.',
+            points: 10,
+          ),
+        ];
+      case GameType.fishTankQuiz:
+        return [
+          ActivityQuestion(
+            id: 'demo_q1',
+            type: QuestionType.multipleChoice,
+            question:
+                'If you have 4 cookies and you get 2 more, how many do you have?',
+            options: ['4', '5', '6'],
+            correctAnswer: '6',
+            explanation: '4 + 2 = 6.',
+            hint: 'Count on from four.',
+            points: 10,
+          ),
+          ActivityQuestion(
+            id: 'demo_q2',
+            type: QuestionType.multipleChoice,
+            question: 'What is 17 take away 5?',
+            options: ['12', '10', '22'],
+            correctAnswer: '12',
+            explanation: '17 - 5 = 12.',
+            hint: 'Count backwards five steps.',
+            points: 10,
+          ),
+        ];
 
       case GameType.memoryMatch:
         return [

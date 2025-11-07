@@ -223,6 +223,12 @@ class _JuniorTaskCardState extends State<JuniorTaskCard>
       case GameType.ordinalDragOrder:
       case GameType.patternBuilder:
         return const Color(0xFFFFE4E1); // Light pink/orange
+      case GameType.bubblePopGrammar:
+        return const Color(0xFFB3E5FC); // Underwater blue
+      case GameType.seashellQuiz:
+        return const Color(0xFFFFF3E0); // Sandy shell tone
+      case GameType.fishTankQuiz:
+        return const Color(0xFFE1F5FE); // Ocean teal
       case GameType.memoryMatch:
       case GameType.wordBuilder:
       case GameType.storySequencer:
@@ -319,6 +325,12 @@ class _JuniorTaskCardState extends State<JuniorTaskCard>
             ),
           ],
         );
+      case GameType.bubblePopGrammar:
+        return Icon(Icons.bubble_chart, size: 64.0, color: iconColor);
+      case GameType.seashellQuiz:
+        return Icon(Icons.water_damage, size: 64.0, color: iconColor);
+      case GameType.fishTankQuiz:
+        return Icon(Icons.set_meal, size: 64.0, color: iconColor);
       case GameType.memoryMatch:
         // Cards/memory icon
         return Icon(Icons.style, size: 64.0, color: iconColor);

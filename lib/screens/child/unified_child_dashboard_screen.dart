@@ -936,6 +936,12 @@ class _UnifiedChildDashboardScreenState
         return [SafePlayColors.juniorCyan, SafePlayColors.brandTeal500];
       case GameType.patternBuilder:
         return [SafePlayColors.brightAmber, SafePlayColors.brandOrange500];
+      case GameType.bubblePopGrammar:
+        return [const Color(0xFF64B5F6), const Color(0xFF1976D2)];
+      case GameType.seashellQuiz:
+        return [const Color(0xFFFFE0B2), const Color(0xFFFFB74D)];
+      case GameType.fishTankQuiz:
+        return [const Color(0xFF4FC3F7), const Color(0xFF0288D1)];
       case GameType.dataVisualization:
         return [SafePlayColors.juniorLime, SafePlayColors.brightTeal];
       case GameType.cartesianGrid:
@@ -959,6 +965,12 @@ class _UnifiedChildDashboardScreenState
         return Icons.sort;
       case GameType.patternBuilder:
         return Icons.pattern;
+      case GameType.bubblePopGrammar:
+        return Icons.bubble_chart;
+      case GameType.seashellQuiz:
+        return Icons.water_damage;
+      case GameType.fishTankQuiz:
+        return Icons.set_meal;
       case GameType.fractionNavigator:
         return Icons.calculate;
       case GameType.inverseOperationChain:

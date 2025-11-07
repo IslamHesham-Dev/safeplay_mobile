@@ -623,6 +623,12 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen>
         return Icons.sort;
       case GameType.patternBuilder:
         return Icons.pattern;
+      case GameType.bubblePopGrammar:
+        return Icons.bubble_chart;
+      case GameType.seashellQuiz:
+        return Icons.water_damage;
+      case GameType.fishTankQuiz:
+        return Icons.set_meal;
       case GameType.fractionNavigator:
         return Icons.calculate;
       case GameType.inverseOperationChain:
