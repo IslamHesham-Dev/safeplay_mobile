@@ -8,16 +8,40 @@ import '../../providers/auth_provider.dart';
 import '../../services/activity_service.dart';
 
 /// Screen for teachers to view and manage all their activities
-class TeacherActivitiesManagementScreen extends StatefulWidget {
+class TeacherActivitiesManagementScreen extends StatelessWidget {
   const TeacherActivitiesManagementScreen({super.key});
 
   @override
-  State<TeacherActivitiesManagementScreen> createState() =>
-      _TeacherActivitiesManagementScreenState();
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('My Published Activities'),
+        backgroundColor: SafePlayColors.brandTeal500,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: const TeacherActivitiesManagementView(),
+    );
+  }
 }
 
-class _TeacherActivitiesManagementScreenState
-    extends State<TeacherActivitiesManagementScreen> {
+class TeacherActivitiesManagementView extends StatefulWidget {
+  const TeacherActivitiesManagementView({
+    super.key,
+    this.embedded = false,
+    this.onCreateActivity,
+  });
+
+  final bool embedded;
+  final VoidCallback? onCreateActivity;
+
+  @override
+  State<TeacherActivitiesManagementView> createState() =>
+      _TeacherActivitiesManagementViewState();
+}
+
+class _TeacherActivitiesManagementViewState
+    extends State<TeacherActivitiesManagementView> {
   final ActivityService _activityService = ActivityService();
   final TextEditingController _searchController = TextEditingController();
 
@@ -286,131 +310,180 @@ class _TeacherActivitiesManagementScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Published Activities'),
-        backgroundColor: SafePlayColors.brandTeal500,
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: Column(
-        children: [
-          // Search and filters
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.white,
-            child: Column(
-              children: [
-                TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search activities...',
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[100],
+    return Column(
+      children: [
+        // Search and filters
+        Container(
+          padding: const EdgeInsets.all(16),
+          color: Colors.white,
+          child: Column(
+            children: [
+              TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search activities...',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  filled: true,
+                  fillColor: Colors.grey[100],
                 ),
-                const SizedBox(height: 12),
-                // Age group filter chips (only Junior/Bright, no subject filters)
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildFilterChip('All', _selectedAgeGroup == null),
-                      const SizedBox(width: 8),
-                      _buildFilterChip(
-                          'Junior (6-8)', _selectedAgeGroup == AgeGroup.junior),
-                      const SizedBox(width: 8),
-                      _buildFilterChip('Bright (9-12)',
-                          _selectedAgeGroup == AgeGroup.bright),
-                    ],
-                  ),
+              ),
+              const SizedBox(height: 12),
+              // Age group filter chips (only Junior/Bright, no subject filters)
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildFilterChip('All', _selectedAgeGroup == null),
+                    const SizedBox(width: 8),
+                    _buildFilterChip(
+                        'Junior (6-8)', _selectedAgeGroup == AgeGroup.junior),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('Bright (9-12)',
+                        _selectedAgeGroup == AgeGroup.bright),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  '${_filteredActivities.length} activity(ies)',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${_filteredActivities.length} activity(ies)',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
+        ),
 
-          // Activities list
-          Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _error != null
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.error_outline,
-                                size: 64, color: Colors.grey[400]),
-                            const SizedBox(height: 16),
-                            Text(
-                              _error!,
-                              style: TextStyle(color: Colors.grey[600]),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: _loadActivities,
-                              child: const Text('Retry'),
-                            ),
-                          ],
-                        ),
-                      )
-                    : _filteredActivities.isEmpty
-                        ? Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(32),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.assignment_outlined,
-                                      size: 64, color: Colors.grey[400]),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'No activities found',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    _searchQuery.isNotEmpty ||
-                                            _selectedAgeGroup != null
-                                        ? 'Try adjusting your search or filters'
-                                        : 'No published activities yet. Publish an activity to see it here!',
-                                    style: TextStyle(color: Colors.grey[600]),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-                        : RefreshIndicator(
-                            onRefresh: _loadActivities,
-                            child: ListView.builder(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: _filteredActivities.length,
-                              itemBuilder: (context, index) {
-                                final activity = _filteredActivities[index];
-                                return _buildActivityCard(activity);
-                              },
-                            ),
+        // Activities list
+        Expanded(
+          child: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : _error != null
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.error_outline,
+                              size: 64, color: Colors.grey[400]),
+                          const SizedBox(height: 16),
+                          Text(
+                            _error!,
+                            style: TextStyle(color: Colors.grey[600]),
+                            textAlign: TextAlign.center,
                           ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _loadActivities,
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    )
+                  : _filteredActivities.isEmpty
+                      ? _buildEmptyState()
+                      : RefreshIndicator(
+                          onRefresh: _loadActivities,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _filteredActivities.length,
+                            itemBuilder: (context, index) {
+                              final activity = _filteredActivities[index];
+                              return _buildActivityCard(activity);
+                            },
+                          ),
+                        ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState() {
+    final bool hasActiveFilters =
+        _searchQuery.isNotEmpty || _selectedAgeGroup != null;
+
+    if (widget.embedded && !hasActiveFilters) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.assignment_outlined,
+                size: 64,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No published activities yet',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Create and publish your first activity to see it here!',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[500],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: widget.onCreateActivity,
+                icon: const Icon(Icons.add),
+                label: const Text('Create Activity'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: SafePlayColors.brandTeal500,
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
+      );
+    }
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.assignment_outlined,
+                size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              'No activities found',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              hasActiveFilters
+                  ? 'Try adjusting your search or filters'
+                  : 'No published activities yet. Publish an activity to see it here!',
+              style: TextStyle(color: Colors.grey[600]),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
