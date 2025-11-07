@@ -50,8 +50,59 @@ class AvatarWidget extends StatelessWidget {
   }
 
   Widget _buildGeneratedAvatar() {
-    // Use gender-specific emoji if available, otherwise use initials
-    final displayText = _getDisplayText();
+    // Use gender-specific image if available
+    if (gender != null) {
+      final imagePath = gender == 'female'
+          ? 'assets/images/avatars/girl_img.png'
+          : 'assets/images/avatars/boy_img.png';
+
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(size / 2),
+          border: Border.all(color: SafePlayColors.neutral300, width: 2),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(size / 2),
+          child: Image.asset(
+            imagePath,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              // Fallback to emoji if image fails
+              final displayText = gender == 'female' ? '👧' : '👦';
+              final bgColor = backgroundColor ?? _getColorFromName(name);
+              final txtColor = textColor ?? Colors.white;
+              return Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(size / 2),
+                  border:
+                      Border.all(color: SafePlayColors.neutral300, width: 2),
+                ),
+                child: Center(
+                  child: Text(
+                    displayText,
+                    style: TextStyle(
+                      color: txtColor,
+                      fontSize: size * 0.5,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    }
+
+    // Use initials if no gender
+    final displayText = _getInitials(name);
     final bgColor = backgroundColor ?? _getColorFromName(name);
     final txtColor = textColor ?? Colors.white;
 
@@ -68,22 +119,12 @@ class AvatarWidget extends StatelessWidget {
           displayText,
           style: TextStyle(
             color: txtColor,
-            fontSize: gender != null ? size * 0.5 : size * 0.4,
+            fontSize: size * 0.4,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
     );
-  }
-
-  String _getDisplayText() {
-    // Use gender-specific emoji if gender is provided
-    if (gender != null) {
-      return gender == 'female' ? '👧' : '👦';
-    }
-
-    // Fallback to initials
-    return _getInitials(name);
   }
 
   String _getInitials(String name) {

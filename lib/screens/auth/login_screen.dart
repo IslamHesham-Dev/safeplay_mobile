@@ -47,7 +47,7 @@ class LoginScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.person, size: 24),
+                    const Icon(Icons.person, size: 24, color: Colors.white),
                     const SizedBox(width: 12),
                     Text(
                       'Parent Login',
@@ -94,7 +94,7 @@ class LoginScreen extends StatelessWidget {
               ElevatedButton(
                 onPressed: () => context.push(RouteNames.teacherLogin),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: SafePlayColors.brandTeal500,
+                  backgroundColor: SafePlayColors.brightDeepPurple,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -103,7 +103,7 @@ class LoginScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.school, size: 24),
+                    const Icon(Icons.school, size: 24, color: Colors.white),
                     const SizedBox(width: 12),
                     Text(
                       'Teacher Login',

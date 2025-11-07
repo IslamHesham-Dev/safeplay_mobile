@@ -334,7 +334,7 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Back button
+              // Back button and title in same row
               Row(
                 children: [
                   IconButton(
@@ -345,18 +345,19 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
                       foregroundColor: SafePlayColors.brandTeal500,
                     ),
                   ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              // Welcome message
-              Text(
-                'Who\'s here?',
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: SafePlayColors.brandTeal500,
+                  Expanded(
+                    child: Text(
+                      'Who\'s here?',
+                      style:
+                          Theme.of(context).textTheme.headlineLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: SafePlayColors.brandTeal500,
+                              ),
+                      textAlign: TextAlign.center,
                     ),
+                  ),
+                  const SizedBox(width: 48), // Balance the back button width
+                ],
               ),
 
               const SizedBox(height: 16),
@@ -397,7 +398,7 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
                           // Add Child button
                           ElevatedButton.icon(
                             onPressed: _showAddChildDialog,
-                            icon: const Icon(Icons.add),
+                            icon: const Icon(Icons.add, color: Colors.white),
                             label: const Text('Add Another Child'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: SafePlayColors.brandTeal500,
@@ -415,52 +416,58 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.child_care_outlined,
-            size: 80,
-            color: SafePlayColors.neutral400,
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'No children found',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: SafePlayColors.neutral600,
-                  fontWeight: FontWeight.bold,
+    return Column(
+      children: [
+        Expanded(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.child_care_outlined,
+                  size: 80,
+                  color: SafePlayColors.neutral400,
                 ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Add your child\'s profile and set up their login credentials.',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: SafePlayColors.neutral500,
+                const SizedBox(height: 24),
+                Text(
+                  'No children found',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: SafePlayColors.neutral600,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _showAddChildDialog,
-            icon: const Icon(Icons.add),
-            label: Text(_getAddButtonText()),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: SafePlayColors.brandTeal500,
-              foregroundColor: Colors.white,
+                const SizedBox(height: 8),
+                Text(
+                  'Add your child\'s profile and set up their login credentials.',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: SafePlayColors.neutral500,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          TextButton.icon(
-            onPressed: () => context.pop(),
-            icon: const Icon(Icons.arrow_back),
-            label: const Text('Go Back'),
-            style: TextButton.styleFrom(
-              foregroundColor: SafePlayColors.brandTeal500,
-            ),
+        ),
+        // Buttons at bottom
+        ElevatedButton.icon(
+          onPressed: _showAddChildDialog,
+          icon: const Icon(Icons.add, color: Colors.white),
+          label: Text(_getAddButtonText()),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: SafePlayColors.brandTeal500,
+            foregroundColor: Colors.white,
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 16),
+        TextButton.icon(
+          onPressed: () => context.pop(),
+          icon: const Icon(Icons.arrow_back),
+          label: const Text('Go Back'),
+          style: TextButton.styleFrom(
+            foregroundColor: SafePlayColors.brandTeal500,
+          ),
+        ),
+      ],
     );
   }
 
@@ -493,9 +500,19 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
               CircleAvatar(
                 radius: 40,
                 backgroundColor: ageGroupColor.withValues(alpha: 0.1),
-                child: Text(
-                  _getChildAvatar(child),
-                  style: const TextStyle(fontSize: 40),
+                child: ClipOval(
+                  child: Image.asset(
+                    _getChildAvatarPath(child),
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Text(
+                        _getChildAvatar(child),
+                        style: const TextStyle(fontSize: 40),
+                      );
+                    },
+                  ),
                 ),
               ),
 
@@ -537,6 +554,20 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
         ),
       ),
     );
+  }
+
+  String _getChildAvatarPath(ChildProfile child) {
+    // Use gender-based avatar if available
+    if (child.gender != null) {
+      return child.gender == 'female'
+          ? 'assets/images/avatars/girl_img.png'
+          : 'assets/images/avatars/boy_img.png';
+    }
+
+    // Fallback to age group
+    return child.ageGroup == AgeGroup.junior
+        ? 'assets/images/avatars/girl_img.png'
+        : 'assets/images/avatars/boy_img.png';
   }
 
   String _getChildAvatar(ChildProfile child) {
@@ -586,9 +617,19 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
                 backgroundColor: isJunior
                     ? SafePlayColors.juniorPurple.withValues(alpha: 0.1)
                     : SafePlayColors.brightIndigo.withValues(alpha: 0.1),
-                child: Text(
-                  _getChildAvatar(_selectedChild!),
-                  style: const TextStyle(fontSize: 50),
+                child: ClipOval(
+                  child: Image.asset(
+                    _getChildAvatarPath(_selectedChild!),
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Text(
+                        _getChildAvatar(_selectedChild!),
+                        style: const TextStyle(fontSize: 50),
+                      );
+                    },
+                  ),
                 ),
               ),
 

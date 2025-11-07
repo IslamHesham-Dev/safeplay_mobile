@@ -203,21 +203,22 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Custom Header with Teacher Info
-            _buildCustomHeader(),
+      body: Column(
+        children: [
+          // Custom Header with Teacher Info - extends to top
+          _buildCustomHeader(),
 
-            // Stats Overview Cards (only on Dashboard)
-            if (_currentIndex == 0) _buildStatsOverview(),
+          // Stats Overview Cards (only on Dashboard)
+          if (_currentIndex == 0) _buildStatsOverview(),
 
-            // Main Content
-            Expanded(
+          // Main Content with SafeArea
+          Expanded(
+            child: SafeArea(
+              top: false,
               child: _buildCurrentPage(),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
@@ -316,7 +317,12 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
 
   Widget _buildCustomHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        MediaQuery.of(context).padding.top + 16,
+        20,
+        20,
+      ),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -395,32 +401,16 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
                 ),
               ),
               // Action buttons
-              Row(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.refresh, color: Colors.white),
-                      onPressed: _loadDashboardData,
-                      tooltip: 'Refresh Data',
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.logout, color: Colors.white),
-                      onPressed: () => context.read<AuthProvider>().signOut(),
-                      tooltip: 'Sign Out',
-                    ),
-                  ),
-                ],
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.logout, color: Colors.white),
+                  onPressed: () => context.read<AuthProvider>().signOut(),
+                  tooltip: 'Sign Out',
+                ),
               ),
             ],
           ),
@@ -562,163 +552,157 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
   }
 
   Widget _buildDashboardTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Quick Actions Section
-          Container(
-            margin: const EdgeInsets.only(bottom: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.flash_on,
-                      color: SafePlayColors.brandTeal500,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Quick Actions',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+    return RefreshIndicator(
+      onRefresh: _loadDashboardData,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Quick Actions Section
+            Container(
+              margin: const EdgeInsets.only(bottom: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.flash_on,
+                        color: SafePlayColors.brandTeal500,
+                        size: 24,
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildActionCard(
-                        'Create New Activity',
-                        'Build activities from templates',
-                        Icons.add_circle_outline,
-                        () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ActivityCreationWizardScreen(),
-                            ),
-                          ).then((_) {
-                            // Refresh data when returning
-                            _loadDashboardData();
-                          });
-                        },
-                        gradient: LinearGradient(
-                          colors: [
-                            SafePlayColors.brandTeal500,
-                            SafePlayColors.brandTeal500.withOpacity(0.8)
-                          ],
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Quick Actions',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildActionCard(
-                        'Browse Templates',
-                        'Explore question templates',
-                        Icons.library_books_outlined,
-                        () => setState(() => _currentIndex = 3),
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.purple,
-                            Colors.purple.withOpacity(0.8)
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _buildActionCard(
-                  'Refresh Data',
-                  'Reload dashboard information',
-                  Icons.refresh_outlined,
-                  _loadDashboardData,
-                  gradient: LinearGradient(
-                    colors: [Colors.blue, Colors.blue.withOpacity(0.8)],
+                    ],
                   ),
-                ),
-              ],
-            ),
-          ),
-
-          // Recent Activities Section
-          Container(
-            margin: const EdgeInsets.only(bottom: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.history,
-                      color: SafePlayColors.brandTeal500,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Recent Activities',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildActionCard(
+                          'Create New Activity',
+                          'Build activities from templates',
+                          Icons.add_circle_outline,
+                          () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const ActivityCreationWizardScreen(),
+                              ),
+                            ).then((_) {
+                              // Refresh data when returning
+                              _loadDashboardData();
+                            });
+                          },
+                          gradient: LinearGradient(
+                            colors: [
+                              SafePlayColors.brandTeal500,
+                              SafePlayColors.brandTeal500.withOpacity(0.8)
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                if (_activities.isEmpty)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(32),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey[200]!),
-                    ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.assignment_outlined,
-                          size: 48,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No activities created yet',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.w500,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildActionCard(
+                          'Browse Templates',
+                          'Explore question templates',
+                          Icons.library_books_outlined,
+                          () => setState(() => _currentIndex = 3),
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.purple,
+                              Colors.purple.withOpacity(0.8)
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Start by creating your first activity!',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                else
-                  ..._activities
-                      .take(3)
-                      .map((activity) => _buildActivityCard(activity)),
-              ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+
+            // Recent Activities Section
+            Container(
+              margin: const EdgeInsets.only(bottom: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.history,
+                        color: SafePlayColors.brandTeal500,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Recent Activities',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  if (_activities.isEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey[200]!),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.assignment_outlined,
+                            size: 48,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No activities created yet',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Start by creating your first activity!',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    ..._activities
+                        .take(3)
+                        .map((activity) => _buildActivityCard(activity)),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1039,16 +1023,29 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
   Widget _buildMyActivitiesTab() {
     // Show activities directly or empty state
     if (_activities.isEmpty) {
-      return _buildEmptyActivitiesState();
+      return RefreshIndicator(
+        onRefresh: _loadDashboardData,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height - 200,
+            child: _buildEmptyActivitiesState(),
+          ),
+        ),
+      );
     }
 
     // Show all published activities directly (no "View All" button needed)
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _activities.length,
-      itemBuilder: (context, index) {
-        return _buildActivityListItem(_activities[index]);
-      },
+    return RefreshIndicator(
+      onRefresh: _loadDashboardData,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        itemCount: _activities.length,
+        itemBuilder: (context, index) {
+          return _buildActivityListItem(_activities[index]);
+        },
+      ),
     );
   }
 
@@ -1225,9 +1222,12 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
         // Search and Filter Bar
         _buildTemplatesHeader(),
 
-        // Templates Grid/List
+        // Templates Grid/List with RefreshIndicator
         Expanded(
-          child: _buildTemplatesContent(),
+          child: RefreshIndicator(
+            onRefresh: _loadDashboardData,
+            child: _buildTemplatesContent(),
+          ),
         ),
       ],
     );
@@ -1443,6 +1443,7 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
 
   Widget _buildTemplatesContent() {
     return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       itemCount: _filteredTemplates.length,
       itemBuilder: (context, index) {
