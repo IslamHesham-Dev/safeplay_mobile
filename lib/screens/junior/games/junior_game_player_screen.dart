@@ -555,6 +555,14 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
         return SeashellQuizGame(
           question: question,
           onAnswerSubmitted: _onAnswerSubmitted,
+          currentScore: _score,
+          coinCounterKey: _coinCounterKey,
+          onComplete: () {
+            // When final question is answered, complete the game
+            if (_currentQuestionIndex >= widget.questions.length - 1) {
+              _completeGame();
+            }
+          },
         );
       case GameType.fishTankQuiz:
         return FishTankQuizGame(
