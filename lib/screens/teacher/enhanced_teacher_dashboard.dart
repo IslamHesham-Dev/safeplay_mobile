@@ -35,7 +35,8 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
   teacher.TeacherProfile? _teacherProfile;
   List<QuestionTemplate> _templates = [];
   List<QuestionTemplate> _filteredTemplates = [];
-  List<Activity> _activities = [];
+  final Map<String, bool> _activityPublishedFlags = {};
+  List<Activity> _recentPublishedActivitiesCache = [];
   TeacherPublishingStats? _stats;
   bool _loading = false;
   String? _error;
@@ -135,28 +136,67 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
         // Continue without profile
       }
 
-      // Load teacher's published activities (optional - don't block on this)
+      // Load teacher activities (draft + published)
       try {
-        debugPrint('📝 Loading teacher published activities...');
-        _activities =
-            await _teacherService.getTeacherActivities(teacherId: teacherId);
-        // Filter to only published activities
-        _activities = _activities.where((a) => a.published == true).toList();
-        debugPrint('📝 Loaded ${_activities.length} published activities');
-      } catch (e) {
-        debugPrint('⚠️ Could not load teacher activities: $e');
-        _activities = []; // Set empty list if failed
-      }
+        debugPrint('🗂 Loading teacher activities...');
+        final snapshot = await _fetchTeacherActivitiesSnapshot(teacherId);
 
-      // Load publishing stats (optional - don't block on this)
-      try {
-        debugPrint('📊 Loading publishing stats...');
-        _stats = await _teacherService.getPublishingStats(teacherId);
+        final activities = <Activity>[];
+        final publishedFlags = <String, bool>{};
+
+        for (final doc in snapshot.docs) {
+          final data = doc.data();
+          final activity = Activity.fromJson({
+            'id': doc.id,
+            ...data,
+          });
+
+          if (!_matchesTeacher(teacherId, data, activity)) {
+            continue;
+          }
+
+          activities.add(activity);
+          publishedFlags[activity.id] = _extractPublishedFlag(data);
+        }
+
+        final recentPublished = activities
+            .where((activity) => publishedFlags[activity.id] == true)
+            .take(3)
+            .toList();
+
+        void updateState() {
+          _activityPublishedFlags
+            ..clear()
+            ..addAll(publishedFlags);
+          _recentPublishedActivitiesCache = recentPublished;
+          _stats = _calculateStatsFromFlags(publishedFlags, activities);
+        }
+
+        if (mounted) {
+          setState(updateState);
+        } else {
+          updateState();
+        }
+
         debugPrint(
-            '📊 Stats loaded: ${_stats?.totalActivities ?? 0} total activities');
+            '🗂 Loaded ${activities.length} activities (published: ${_stats?.publishedActivities ?? 0}, drafts: ${_stats?.draftActivities ?? 0})');
       } catch (e) {
-        debugPrint('⚠️ Could not load publishing stats: $e');
-        // Continue without stats
+        debugPrint('😕 Could not load teacher activities: $e');
+
+        void updateState() {
+          _activityPublishedFlags.clear();
+          _recentPublishedActivitiesCache = [];
+          _stats = _calculateStatsFromFlags(
+            const <String, bool>{},
+            const <Activity>[],
+          );
+        }
+
+        if (mounted) {
+          setState(updateState);
+        } else {
+          updateState();
+        }
       }
 
       debugPrint('✅ Dashboard data loading complete!');
@@ -658,46 +698,53 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  if (_activities.isEmpty)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(32),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey[200]!),
-                      ),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.assignment_outlined,
-                            size: 48,
-                            color: Colors.grey[400],
+                  Builder(
+                    builder: (context) {
+                      final recentActivities = _recentPublishedActivities();
+                      if (recentActivities.isEmpty) {
+                        return Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(32),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[50],
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.grey[200]!),
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No activities created yet',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.assignment_outlined,
+                                size: 48,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No activities created yet',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Start by creating your first activity!',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[500],
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Start by creating your first activity!',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[500],
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    ..._activities
-                        .take(3)
-                        .map((activity) => _buildActivityCard(activity)),
+                        );
+                      }
+                      return Column(
+                        children: recentActivities
+                            .map((activity) => _buildActivityCard(activity))
+                            .toList(),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -781,168 +828,192 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
   }
 
   Widget _buildActivityCard(Activity activity) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _getSubjectColor(activity.subject).withOpacity(0.2),
-          width: 1,
+    final subjectColor = _dashboardActivitySubjectColor(activity.subject);
+    final backgroundColor = _dashboardActivityBackgroundColor(activity.subject);
+    const textColor = Colors.black87;
+    final isPublished =
+        _activityPublishedFlags[activity.id] ?? activity.published;
+
+    return GestureDetector(
+      onTap: () {
+        // Navigate to Activities tab (index 2)
+        setState(() {
+          _currentIndex = 2;
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        height: 180,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 0,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            // Navigate to activity details
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: _getSubjectColor(activity.subject).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color:
-                          _getSubjectColor(activity.subject).withOpacity(0.3),
-                      width: 1,
+        child: Stack(
+          children: [
+            Positioned(
+              left: 20,
+              top: 20,
+              right: 120,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    activity.title,
+                    style: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                      height: 1.2,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  child: Icon(
-                    _getSubjectIcon(activity.subject),
-                    color: _getSubjectColor(activity.subject),
-                    size: 24,
+                  const SizedBox(height: 8),
+                  Text(
+                    activity.description,
+                    style: TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 14,
+                      fontWeight: FontWeight.normal,
+                      color: textColor.withOpacity(0.7),
+                      height: 1.3,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
                     children: [
-                      Text(
-                        activity.title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: _getSubjectColor(activity.subject)
-                                  .withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
+                        decoration: BoxDecoration(
+                          color: subjectColor.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _dashboardActivitySubjectIcon(activity.subject),
+                              size: 12,
+                              color: subjectColor,
                             ),
-                            child: Text(
-                              activity.ageGroup.name.toUpperCase(),
+                            const SizedBox(width: 4),
+                            Text(
+                              activity.subject == ActivitySubject.reading
+                                  ? 'English'
+                                  : activity.subject.displayName,
                               style: TextStyle(
+                                color: subjectColor,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color: _getSubjectColor(activity.subject),
                               ),
                             ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: (activity.ageGroup == AgeGroup.junior
+                                  ? Colors.orange
+                                  : Colors.purple)
+                              .withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          activity.ageGroup == AgeGroup.junior
+                              ? 'Junior'
+                              : 'Bright',
+                          style: TextStyle(
+                            color: activity.ageGroup == AgeGroup.junior
+                                ? Colors.orange
+                                : Colors.purple,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            activity.subject.displayName,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.monetization_on,
+                        size: 16,
+                        color: textColor.withOpacity(0.6),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${activity.points} points',
+                        style: TextStyle(
+                          fontFamily: 'Nunito',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: textColor.withOpacity(0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              right: -10,
+              bottom: -10,
+              child: _buildDashboardActivityIcon(activity.subject),
+            ),
+            Positioned(
+              top: 12,
+              right: 12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isPublished
+                      ? SafePlayColors.success.withOpacity(0.9)
+                      : Colors.orange.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(width: 12),
-                _buildPublishStateChip(activity.publishState),
-              ],
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isPublished ? Icons.check_circle : Icons.edit_outlined,
+                      size: 14,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      isPublished ? 'Published' : 'Draft',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
+          ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildPublishStateChip(PublishState state) {
-    Color color;
-    String text;
-    IconData icon;
-
-    switch (state) {
-      case PublishState.published:
-        color = Colors.green;
-        text = 'Published';
-        icon = Icons.check_circle;
-        break;
-      case PublishState.draft:
-        color = Colors.orange;
-        text = 'Draft';
-        icon = Icons.edit;
-        break;
-      case PublishState.pendingReview:
-        color = Colors.blue;
-        text = 'Review';
-        icon = Icons.schedule;
-        break;
-      case PublishState.archived:
-        color = Colors.grey;
-        text = 'Archived';
-        icon = Icons.archive;
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 12,
-            color: color,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            text,
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1805,6 +1876,162 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
       case QuestionType.sequencing:
         return Colors.pink;
     }
+  }
+
+  Color _dashboardActivitySubjectColor(ActivitySubject subject) {
+    switch (subject) {
+      case ActivitySubject.math:
+        return Colors.blue;
+      case ActivitySubject.science:
+        return Colors.orange;
+      case ActivitySubject.reading:
+      case ActivitySubject.writing:
+        return Colors.green;
+      case ActivitySubject.social:
+        return Colors.brown;
+      case ActivitySubject.art:
+        return Colors.pink;
+      case ActivitySubject.music:
+        return Colors.purple;
+      case ActivitySubject.coding:
+        return Colors.teal;
+    }
+  }
+
+  Color _dashboardActivityBackgroundColor(ActivitySubject subject) {
+    return _dashboardActivitySubjectColor(subject).withOpacity(0.15);
+  }
+
+  IconData _dashboardActivitySubjectIcon(ActivitySubject subject) {
+    switch (subject) {
+      case ActivitySubject.math:
+        return Icons.calculate;
+      case ActivitySubject.science:
+        return Icons.science;
+      case ActivitySubject.reading:
+      case ActivitySubject.writing:
+        return Icons.book;
+      case ActivitySubject.social:
+        return Icons.people;
+      case ActivitySubject.art:
+        return Icons.palette;
+      case ActivitySubject.music:
+        return Icons.music_note;
+      case ActivitySubject.coding:
+        return Icons.code;
+    }
+  }
+
+  Widget _buildDashboardActivityIcon(ActivitySubject subject) {
+    final color = _dashboardActivitySubjectColor(subject);
+    return Container(
+      width: 100,
+      height: 100,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(0.3),
+            color.withOpacity(0.2),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: color.withOpacity(0.5),
+          width: 2,
+        ),
+      ),
+      child: Icon(
+        _dashboardActivitySubjectIcon(subject),
+        size: 50,
+        color: color,
+      ),
+    );
+  }
+
+  bool _extractPublishedFlag(Map<String, dynamic> data) {
+    if (data.containsKey('published')) {
+      return data['published'] == true;
+    }
+    final publishStateRaw = data['publishState'] as String?;
+    return PublishState.fromRaw(publishStateRaw) == PublishState.published;
+  }
+
+  Future<QuerySnapshot<Map<String, dynamic>>> _fetchTeacherActivitiesSnapshot(
+      String teacherId) async {
+    final collection = FirebaseFirestore.instance
+        .collection(TeacherService.activitiesCollection);
+
+    Future<QuerySnapshot<Map<String, dynamic>>> runQuery(
+      String field, {
+      bool requireResults = false,
+    }) async {
+      try {
+        final ordered = await collection
+            .where(field, isEqualTo: teacherId)
+            .orderBy('updatedAt', descending: true)
+            .get();
+        if (!requireResults || ordered.docs.isNotEmpty) {
+          return ordered;
+        }
+      } on FirebaseException catch (error) {
+        debugPrint(
+            '⚠️ $field orderBy failed: ${error.message ?? error.code}, retrying without ordering');
+      }
+
+      return await collection.where(field, isEqualTo: teacherId).get();
+    }
+
+    var snapshot = await runQuery('teacherId', requireResults: true);
+    if (snapshot.docs.isEmpty) {
+      snapshot = await runQuery('createdBy');
+    }
+    return snapshot;
+  }
+
+  bool _matchesTeacher(
+    String teacherId,
+    Map<String, dynamic> data,
+    Activity activity,
+  ) {
+    final docTeacherId = (data['teacherId'] as String?)?.trim();
+    if (docTeacherId != null && docTeacherId.isNotEmpty) {
+      return docTeacherId == teacherId;
+    }
+    final createdBy = (data['createdBy'] as String?) ??
+        (activity.createdBy.isNotEmpty ? activity.createdBy : null);
+    return createdBy == teacherId;
+  }
+
+  List<Activity> _recentPublishedActivities() =>
+      List<Activity>.from(_recentPublishedActivitiesCache);
+
+  TeacherPublishingStats _calculateStatsFromFlags(
+    Map<String, bool> publishedFlags,
+    List<Activity> activities,
+  ) {
+    final publishedCount = publishedFlags.values.where((flag) => flag).length;
+    final total = publishedFlags.length;
+    final draftCount = total - publishedCount;
+
+    final subjectCounts = <ActivitySubject, int>{};
+    final ageGroupCounts = <AgeGroup, int>{};
+
+    for (final activity in activities) {
+      subjectCounts[activity.subject] =
+          (subjectCounts[activity.subject] ?? 0) + 1;
+      ageGroupCounts[activity.ageGroup] =
+          (ageGroupCounts[activity.ageGroup] ?? 0) + 1;
+    }
+
+    return TeacherPublishingStats(
+      totalActivities: total,
+      publishedActivities: publishedCount,
+      draftActivities: draftCount,
+      activitiesBySubject: subjectCounts,
+      activitiesByAgeGroup: ageGroupCounts,
+    );
   }
 
   Color _getSubjectColor(ActivitySubject subject) {

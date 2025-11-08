@@ -90,46 +90,47 @@ class _TeacherActivitiesManagementViewState
         throw Exception('No teacher ID found');
       }
 
-      // Load only published activities created by this teacher
-      // Try multiple query strategies for better compatibility
-      QuerySnapshot snapshot;
+      // Load activities for this teacher (published filter applied later)
+      final collection = FirebaseFirestore.instance.collection('activities');
 
-      // Strategy 1: Try with both filters and orderBy
-      try {
-        snapshot = await FirebaseFirestore.instance
-            .collection('activities')
-            .where('createdBy', isEqualTo: teacherId)
-            .where('published', isEqualTo: true)
-            .orderBy('updatedAt', descending: true)
-            .get();
-        debugPrint('✅ Loaded with orderBy');
-      } catch (e) {
-        debugPrint('⚠️ OrderBy with two filters failed: $e');
-        // Strategy 2: Try with one filter and orderBy
+      Future<QuerySnapshot<Map<String, dynamic>>> runQuery(
+        String field, {
+        bool requireResults = false,
+      }) async {
         try {
-          snapshot = await FirebaseFirestore.instance
-              .collection('activities')
-              .where('createdBy', isEqualTo: teacherId)
+          final ordered = await collection
+              .where(field, isEqualTo: teacherId)
               .orderBy('updatedAt', descending: true)
               .get();
-          debugPrint('✅ Loaded with orderBy (single filter)');
-        } catch (e2) {
-          debugPrint('⚠️ OrderBy with single filter failed: $e2');
-          // Strategy 3: Load without orderBy
-          snapshot = await FirebaseFirestore.instance
-              .collection('activities')
-              .where('createdBy', isEqualTo: teacherId)
-              .where('published', isEqualTo: true)
-              .get();
-          debugPrint('✅ Loaded without orderBy');
+          if (!requireResults || ordered.docs.isNotEmpty) {
+            debugPrint('✅ Loaded activities ($field + orderBy)');
+            return ordered;
+          }
+        } on FirebaseException catch (error) {
+          debugPrint(
+              '⚠️ $field orderBy failed: ${error.message ?? error.code}, retrying without order');
         }
+        final fallback = await collection
+            .where(field, isEqualTo: teacherId)
+            .get();
+        debugPrint('✅ Loaded activities ($field without order)');
+        return fallback;
+      }
+
+      QuerySnapshot<Map<String, dynamic>> snapshot =
+          await runQuery('teacherId', requireResults: true);
+      if (snapshot.docs.isEmpty) {
+        snapshot = await runQuery('createdBy');
       }
 
       // Store raw data for accessing gameConfig
       _activityRawData.clear();
       for (final doc in snapshot.docs) {
-        final docData = doc.data() as Map<String, dynamic>?;
-        if (docData != null && docData['published'] == true) {
+        final docData = doc.data();
+        if (!_belongsToTeacher(teacherId, docData)) {
+          continue;
+        }
+        if (docData['published'] == true) {
           _activityRawData[doc.id] = docData;
         }
       }
@@ -137,12 +138,10 @@ class _TeacherActivitiesManagementViewState
       _allActivities = snapshot.docs
           .map((doc) {
             try {
-              final docData = doc.data() as Map<String, dynamic>?;
-              if (docData == null) {
-                debugPrint('❌ Activity ${doc.id} has null data');
+              final docData = doc.data();
+              if (!_belongsToTeacher(teacherId, docData)) {
                 return null;
               }
-              // Client-side filter for published
               if (docData['published'] != true) {
                 return null;
               }
@@ -156,8 +155,7 @@ class _TeacherActivitiesManagementViewState
             }
           })
           .whereType<Activity>()
-          .where((activity) =>
-              activity.published == true) // Double-check published
+          .where((activity) => activity.published == true)
           .toList();
 
       // Sort manually if orderBy failed
@@ -1242,5 +1240,18 @@ class _TeacherActivitiesManagementViewState
       case QuestionType.trueFalse:
         return 'True/False';
     }
+  }
+
+  bool _belongsToTeacher(
+      String teacherId, Map<String, dynamic>? docData) {
+    if (docData == null) {
+      return false;
+    }
+    final docTeacherId = (docData['teacherId'] as String?)?.trim();
+    if (docTeacherId != null && docTeacherId.isNotEmpty) {
+      return docTeacherId == teacherId;
+    }
+    final createdBy = (docData['createdBy'] as String?)?.trim();
+    return createdBy == teacherId;
   }
 }

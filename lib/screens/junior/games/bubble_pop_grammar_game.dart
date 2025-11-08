@@ -172,12 +172,12 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
           setState(() {
             _showGreatJob = false;
           });
-        widget.onAnswerSubmitted(
-          questionId: widget.question.id,
-          userAnswer: option,
-          isCorrect: true,
-          pointsEarned: _earnedPoints,
-        );
+          widget.onAnswerSubmitted(
+            questionId: widget.question.id,
+            userAnswer: option,
+            isCorrect: true,
+            pointsEarned: _earnedPoints,
+          );
           // Call onComplete if provided (for final question)
           widget.onComplete?.call();
         }
@@ -288,10 +288,10 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
           ),
           SafeArea(
             child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
                 // Top bar with back button, coins, and time
-              Padding(
+                Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
@@ -339,7 +339,7 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
+                        decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -401,15 +401,15 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
                     ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.95),
-                    borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(24),
                       boxShadow: JuniorTheme.shadowHeavy,
-                  ),
-                  child: Text(
-                    prompt,
-                    textAlign: TextAlign.center,
+                    ),
+                    child: Text(
+                      prompt,
+                      textAlign: TextAlign.center,
                       style: JuniorTheme.headingMedium.copyWith(
-                      color: const Color(0xFF0F3057),
-                      fontWeight: FontWeight.w700,
+                        color: const Color(0xFF0F3057),
+                        fontWeight: FontWeight.w700,
                         fontSize: 22,
                       ),
                     ),
@@ -456,27 +456,27 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
                             ),
                           ),
                         ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
                 ],
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Collect the correct bubble!',
-                  textAlign: TextAlign.center,
-                  style: JuniorTheme.bodyMedium.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    'Collect the correct bubble!',
+                    textAlign: TextAlign.center,
+                    style: JuniorTheme.bodyMedium.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
                       fontSize: 18,
                     ),
                   ),
                 ),
                 const SizedBox(height: 24),
                 // Bubbles area - circular bubbles in grid layout
-              Expanded(
-                child: Stack(
+                Expanded(
+                  child: Stack(
                     clipBehavior: Clip.none,
                     children: _options.map((option) {
                       final position = _bubblePositions[option] ?? Offset.zero;
@@ -518,36 +518,36 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
                         child: child,
                       );
                     },
-      child: ScaleTransition(
+                    child: ScaleTransition(
                       scale: Tween<double>(begin: 1.0, end: 1.15).animate(
-          CurvedAnimation(
-            parent: _celebrationController,
-            curve: Curves.elasticOut,
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
+                        CurvedAnimation(
+                          parent: _celebrationController,
+                          curve: Curves.elasticOut,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
                             padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.25),
-                shape: BoxShape.circle,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.25),
+                              shape: BoxShape.circle,
                               border:
                                   Border.all(color: Colors.white38, width: 2),
-              ),
-              child: const Icon(
-                Icons.scuba_diving,
+                            ),
+                            child: const Icon(
+                              Icons.scuba_diving,
                               size: 32,
-                color: Colors.white,
-              ),
-            ),
+                              color: Colors.white,
+                            ),
+                          ),
                           const SizedBox(height: 8),
-            Container(
+                          Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
@@ -582,14 +582,14 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
                     ),
                     decoration: BoxDecoration(
                       color: JuniorTheme.primaryGreen,
-                borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(24),
                       boxShadow: JuniorTheme.shadowHeavy,
-              ),
-              child: Text(
+                    ),
+                    child: Text(
                       'Great job!',
                       style: JuniorTheme.headingLarge.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
                         fontSize: 32,
                       ),
                     ),
@@ -597,7 +597,7 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
                 ),
               ),
             ),
-          ],
+        ],
       ),
     );
   }
@@ -652,49 +652,49 @@ class _BubbleWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedOpacity(
-        duration: const Duration(milliseconds: 500),
-        opacity: isCollected ? 0.0 : 1.0,
-        child: AnimatedBuilder(
-          animation: Listenable.merge([floatController, shakeController]),
-          builder: (context, child) {
-            final floatOffset =
+      duration: const Duration(milliseconds: 500),
+      opacity: isCollected ? 0.0 : 1.0,
+      child: AnimatedBuilder(
+        animation: Listenable.merge([floatController, shakeController]),
+        builder: (context, child) {
+          final floatOffset =
               math.sin(floatController.value * math.pi * 2) * 6.0;
           final shakeOffset = isShaking
               ? math.sin(shakeController.value * math.pi * 8) * 8.0
               : 0.0;
-            return Transform.translate(
-              offset: Offset(shakeOffset, floatOffset),
-              child: child,
-            );
-          },
-          child: GestureDetector(
-            onTap: onTap,
-            child: Container(
+          return Transform.translate(
+            offset: Offset(shakeOffset, floatOffset),
+            child: child,
+          );
+        },
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
             width: 120,
             height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.white.withValues(alpha: 0.95),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [
+                  Colors.white.withValues(alpha: 0.95),
                   Colors.white.withValues(alpha: 0.75),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                border: Border.all(
-                color: Colors.white.withValues(alpha: 0.9),
-                  width: 3,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 12,
-                  offset: const Offset(0.0, 6.0),
-                  ),
                 ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              child: Center(
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.9),
+                width: 3,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 12,
+                  offset: const Offset(0.0, 6.0),
+                ),
+              ],
+            ),
+            child: Center(
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Text(
