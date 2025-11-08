@@ -56,6 +56,7 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
   DateTime _sessionStartTime = DateTime.now();
   int _totalCorrectAnswers = 0;
   final GlobalKey _coinCounterKey = GlobalKey();
+  bool _completionDialogShown = false;
 
   @override
   void initState() {
@@ -179,8 +180,12 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
   }
 
   Future<void> _completeGame() async {
+    // Prevent multiple calls
+    if (_gameCompleted || _completionDialogShown) return;
+
     setState(() {
       _gameCompleted = true;
+      _completionDialogShown = true;
     });
     HapticFeedback.mediumImpact();
 
@@ -293,12 +298,6 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
             duration: const Duration(seconds: 4),
             particleCount: 150,
           ),
-          // Floating coins animation
-          FloatingCoinsAnimation(
-            coinCount: math.min(_score, 15),
-            duration: const Duration(milliseconds: 3000),
-            onComplete: () {},
-          ),
           // Completion dialog
           Dialog(
             shape: RoundedRectangleBorder(
@@ -403,21 +402,29 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
                       ),
                     ),
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               Icons.star,
                               color: JuniorTheme.accentGold,
-                              size: 28,
+                              size: 24,
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Score: $_score / $_totalPoints',
-                              style: JuniorTheme.headingMedium.copyWith(
-                                color: JuniorTheme.textPrimary,
-                                fontWeight: FontWeight.bold,
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                'Score: $_score / $_totalPoints',
+                                style: JuniorTheme.headingMedium.copyWith(
+                                  color: JuniorTheme.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                                textAlign: TextAlign.center,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
                             ),
                           ],
@@ -425,6 +432,7 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
                         const SizedBox(height: JuniorTheme.spacingSmall),
                         // Animated coin counter
                         AnimatedCoinCounter(
+                          key: const ValueKey('completion_coin_counter'),
                           coins: _score,
                           textStyle: JuniorTheme.headingLarge.copyWith(
                             color: JuniorTheme.accentGold,

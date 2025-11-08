@@ -258,13 +258,17 @@ class _AnimatedCoinCounterState extends State<AnimatedCoinCounter>
       curve: Curves.elasticOut,
     ));
 
-    _controller.forward();
+    // Only animate if controller is not already animating
+    if (!_controller.isAnimating && _controller.value == 0.0) {
+      _controller.forward();
+    }
   }
 
   @override
   void didUpdateWidget(AnimatedCoinCounter oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.coins != widget.coins) {
+    // Only re-animate if coins value actually changed and controller is not animating
+    if (oldWidget.coins != widget.coins && !_controller.isAnimating) {
       _controller.reset();
       _countAnimation = IntTween(
         begin: oldWidget.coins,
