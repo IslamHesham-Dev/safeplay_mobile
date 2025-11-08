@@ -215,7 +215,12 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
                   child: Align(
                     alignment: Alignment.topRight,
                     child: Padding(
-                      padding: const EdgeInsets.all(JuniorTheme.spacingMedium),
+                      padding: const EdgeInsets.only(
+                        top: JuniorTheme.spacingXSmall,
+                        right: JuniorTheme.spacingMedium,
+                        bottom: JuniorTheme.spacingMedium,
+                        left: JuniorTheme.spacingMedium,
+                      ),
                       child: _buildLogoutButton(),
                     ),
                   ),
@@ -1180,19 +1185,20 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
           child: Container(
             width: 56, // Large enough for children (44+ padding)
             height: 56, // Large enough for children (44+ padding)
-            padding: const EdgeInsets.all(JuniorTheme.spacingSmall),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(JuniorTheme.radiusMedium),
               border: Border.all(
-                color: Colors.white.withOpacity(0.3),
+                color: Colors.white.withValues(alpha: 0.3),
                 width: 1.5,
               ),
             ),
-            child: Icon(
-              Icons.logout,
-              color: Colors.white,
-              size: 28, // Clear visual size for children
+            child: Center(
+              child: Icon(
+                Icons.logout,
+                color: Colors.white,
+                size: 28, // Clear visual size for children
+              ),
             ),
           ),
         ),
