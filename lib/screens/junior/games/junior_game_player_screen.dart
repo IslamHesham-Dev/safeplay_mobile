@@ -232,34 +232,34 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
       return;
     } else {
       // For other games, show the full celebration dialog
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        barrierColor: Colors.transparent,
-        builder: (context) => Stack(
-          children: [
-            // Floating coins effect
-            FloatingCoinsAnimation(
-              coinCount: math.min(pointsEarned, 10),
-              duration: const Duration(milliseconds: 2000),
-              onComplete: () {},
-            ),
-            // Celebration overlay
-            JuniorCelebrationOverlay(
-              isVisible: true,
-              message: 'Great Job! 🌟',
-              subMessage: 'You earned coins! 💰',
-              points: pointsEarned,
-              onDismiss: () {
-                Navigator.of(context).pop();
-                Future.delayed(const Duration(milliseconds: 300), () {
-                  _nextQuestion();
-                });
-              },
-            ),
-          ],
-        ),
-      );
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.transparent,
+      builder: (context) => Stack(
+        children: [
+          // Floating coins effect
+          FloatingCoinsAnimation(
+            coinCount: math.min(pointsEarned, 10),
+            duration: const Duration(milliseconds: 2000),
+            onComplete: () {},
+          ),
+          // Celebration overlay
+          JuniorCelebrationOverlay(
+            isVisible: true,
+            message: 'Great Job! 🌟',
+            subMessage: 'You earned coins! 💰',
+            points: pointsEarned,
+            onDismiss: () {
+              Navigator.of(context).pop();
+              Future.delayed(const Duration(milliseconds: 300), () {
+                _nextQuestion();
+              });
+            },
+          ),
+        ],
+      ),
+    );
     }
   }
 
@@ -416,10 +416,10 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
                             const SizedBox(width: 6),
                             Flexible(
                               child: Text(
-                                'Score: $_score / $_totalPoints',
-                                style: JuniorTheme.headingMedium.copyWith(
-                                  color: JuniorTheme.textPrimary,
-                                  fontWeight: FontWeight.bold,
+                              'Score: $_score / $_totalPoints',
+                              style: JuniorTheme.headingMedium.copyWith(
+                                color: JuniorTheme.textPrimary,
+                                fontWeight: FontWeight.bold,
                                   fontSize: 18,
                                 ),
                                 textAlign: TextAlign.center,

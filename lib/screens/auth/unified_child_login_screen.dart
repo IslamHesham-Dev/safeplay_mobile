@@ -786,79 +786,81 @@ class _BrightPicturePinLoginEmbeddedState
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Step indicator
-        Row(
-          children: [
-            Expanded(
-              child: _buildStepCard(
-                '1',
-                'Pictures',
-                _pictureStepComplete,
-                SafePlayColors.brightIndigo,
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Step indicator
+          Row(
+            children: [
+              Expanded(
+                child: _buildStepCard(
+                  '1',
+                  'Pictures',
+                  _pictureStepComplete,
+                  SafePlayColors.brightIndigo,
+                ),
               ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStepCard(
+                  '2',
+                  'PIN',
+                  false,
+                  SafePlayColors.brightIndigo,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 32),
+
+          // Content based on step
+          if (!_pictureStepComplete) ...[
+            Text(
+              'Select your 3 pictures',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: SafePlayColors.brightIndigo,
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildStepCard(
-                '2',
-                'PIN',
-                false,
-                SafePlayColors.brightIndigo,
+            const SizedBox(height: 24),
+            PicturePasswordGrid(
+              pictures: _brightPictures,
+              sequenceLength: 3,
+              onSequenceComplete: _onPicturesSelected,
+              useAvatarStyle: true,
+              selectionColor: SafePlayColors.brightIndigo,
+            ),
+          ] else ...[
+            Text(
+              'Enter your 4-digit PIN',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: SafePlayColors.brightIndigo,
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 24),
+            PinEntryWidget(
+              onPinComplete: _onPinComplete,
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _pictureStepComplete = false;
+                  _selectedPictures = null;
+                });
+              },
+              child: const Text('Change Pictures'),
+              style: TextButton.styleFrom(
+                foregroundColor: SafePlayColors.brightIndigo,
               ),
             ),
           ],
-        ),
-
-        const SizedBox(height: 32),
-
-        // Content based on step
-        if (!_pictureStepComplete) ...[
-          Text(
-            'Select your 3 pictures',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: SafePlayColors.brightIndigo,
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          const SizedBox(height: 24),
-          PicturePasswordGrid(
-            pictures: _brightPictures,
-            sequenceLength: 3,
-            onSequenceComplete: _onPicturesSelected,
-            useAvatarStyle: true,
-            selectionColor: SafePlayColors.brightIndigo,
-          ),
-        ] else ...[
-          Text(
-            'Enter your 4-digit PIN',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: SafePlayColors.brightIndigo,
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          const SizedBox(height: 24),
-          PinEntryWidget(
-            onPinComplete: _onPinComplete,
-          ),
-          const SizedBox(height: 16),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _pictureStepComplete = false;
-                _selectedPictures = null;
-              });
-            },
-            child: const Text('Change Pictures'),
-            style: TextButton.styleFrom(
-              foregroundColor: SafePlayColors.brightIndigo,
-            ),
-          ),
         ],
-      ],
+      ),
     );
   }
 

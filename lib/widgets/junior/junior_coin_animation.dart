@@ -297,11 +297,10 @@ class _AnimatedCoinCounterState extends State<AnimatedCoinCounter>
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                '🪙',
-                style: TextStyle(
-                  fontSize: (widget.textStyle?.fontSize ?? 24) + 4,
-                ),
+              Icon(
+                Icons.monetization_on,
+                color: JuniorTheme.accentGold,
+                size: (widget.textStyle?.fontSize ?? 24) + 4,
               ),
               const SizedBox(width: 8),
               Text(

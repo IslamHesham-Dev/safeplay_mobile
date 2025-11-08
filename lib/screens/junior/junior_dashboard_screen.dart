@@ -265,21 +265,34 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
                             ),
                             Positioned(
                               top: 54, // lowered a bit more for extra spacing
-                              child: Text(
-                                '🪙 coins collected',
-                                textAlign: TextAlign.center,
-                                style: JuniorTheme.bodySmall.copyWith(
-                                  color: JuniorTheme.textPrimary,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  shadows: [
-                                    Shadow(
-                                      color: Colors.white.withOpacity(0.4),
-                                      blurRadius: 3,
-                                      offset: const Offset(0, 1),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.monetization_on,
+                                    color: JuniorTheme.accentGold,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'coins collected',
+                                    textAlign: TextAlign.center,
+                                    style: JuniorTheme.bodySmall.copyWith(
+                                      color: JuniorTheme.textPrimary,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                      shadows: [
+                                        Shadow(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.4),
+                                          blurRadius: 3,
+                                          offset: const Offset(0, 1),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -438,13 +451,24 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
           const SizedBox(height: JuniorTheme.spacingXSmall),
 
           // Coins text - small and thin
-          Text(
-            '🪙 coins collected',
-            style: JuniorTheme.bodySmall.copyWith(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w300,
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.monetization_on,
+                color: JuniorTheme.accentGold,
+                size: 16,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'coins collected',
+                style: JuniorTheme.bodySmall.copyWith(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w300,
+                ),
+              ),
+            ],
           ),
         ],
       ),

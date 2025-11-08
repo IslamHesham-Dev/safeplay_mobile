@@ -117,74 +117,93 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     }
   }
 
-  /// Load bright activities from the shared activity provider
-  Future<void> _loadGamesFromTemplates() async {
-    try {
-      final child = _currentChild;
-      if (child == null) {
-        debugPrint('?s??,? No bright child available for activity load');
-        return;
-      }
-
-      debugPrint('dYZr Loading bright activities for dashboard...');
-      final activityProvider = context.read<ActivityProvider>();
-      await activityProvider.loadActivitiesForChild(child);
-
-      final activities = activityProvider.activities;
-      if (activities.isEmpty) {
-        debugPrint('?s??,? No activities found for bright child');
-        setState(() {
-          _todaysTasks = [];
-          _availableTasks = [];
-          _completedTasks = [];
-        });
-        return;
-      }
-
-      final lessons = activities.map(_lessonFromActivity).toList();
-      final progressMap = activityProvider.progressByActivity;
-      final completedIds = progressMap.entries
-          .where((entry) => entry.value.isCompleted)
-          .map((entry) => entry.key)
-          .toSet();
-
-      final completedTasks =
-          lessons.where((lesson) => completedIds.contains(lesson.id)).toList();
-      final availableTasks =
-          lessons.where((lesson) => !completedIds.contains(lesson.id)).toList();
-
-      final earnedPoints = progressMap.values.fold<int>(
-        0,
-        (sum, progress) => sum + progress.pointsEarned,
-      );
-
-      _childProgress = ChildrenProgress(
-        id: 'progress_',
-        childId: child.id,
-        completedLessons: completedIds.toList(),
-        earnedPoints: earnedPoints,
-        lastActiveDate: DateTime.now(),
-      );
-
-      setState(() {
-        _todaysTasks = lessons;
-        _completedTasks = completedTasks;
-        _availableTasks = availableTasks;
-      });
-
-      debugPrint(
-          '?o. Dashboard: State updated - total: , available: , completed: ');
-    } catch (e) {
-      debugPrint('??O Error loading bright activities: ');
-      setState(() {
-        _error = 'Error loading games: ';
-        _todaysTasks = [];
-        _availableTasks = [];
-        _completedTasks = [];
-      });
-    }
-  }
-
+  /// Load bright activities from the shared activity provider
+
+  Future<void> _loadGamesFromTemplates() async {
+    try {
+      final child = _currentChild;
+
+      if (child == null) {
+        debugPrint('?s??,? No bright child available for activity load');
+
+        return;
+      }
+
+      debugPrint('dYZr Loading bright activities for dashboard...');
+
+      final activityProvider = context.read<ActivityProvider>();
+
+      await activityProvider.loadActivitiesForChild(child);
+
+      final activities = activityProvider.activities;
+
+      if (activities.isEmpty) {
+        debugPrint('?s??,? No activities found for bright child');
+
+        setState(() {
+          _todaysTasks = [];
+
+          _availableTasks = [];
+
+          _completedTasks = [];
+        });
+
+        return;
+      }
+
+      final lessons = activities.map(_lessonFromActivity).toList();
+
+      final progressMap = activityProvider.progressByActivity;
+
+      final completedIds = progressMap.entries
+          .where((entry) => entry.value.isCompleted)
+          .map((entry) => entry.key)
+          .toSet();
+
+      final completedTasks =
+          lessons.where((lesson) => completedIds.contains(lesson.id)).toList();
+
+      final availableTasks =
+          lessons.where((lesson) => !completedIds.contains(lesson.id)).toList();
+
+      final earnedPoints = progressMap.values.fold<int>(
+        0,
+        (sum, progress) => sum + progress.pointsEarned,
+      );
+
+      _childProgress = ChildrenProgress(
+        id: 'progress_',
+        childId: child.id,
+        completedLessons: completedIds.toList(),
+        earnedPoints: earnedPoints,
+        lastActiveDate: DateTime.now(),
+      );
+
+      setState(() {
+        _todaysTasks = lessons;
+
+        _completedTasks = completedTasks;
+
+        _availableTasks = availableTasks;
+      });
+
+      debugPrint(
+          '?o. Dashboard: State updated - total: , available: , completed: ');
+    } catch (e) {
+      debugPrint('??O Error loading bright activities: ');
+
+      setState(() {
+        _error = 'Error loading games: ';
+
+        _todaysTasks = [];
+
+        _availableTasks = [];
+
+        _completedTasks = [];
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
@@ -223,7 +242,12 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                   child: Align(
                     alignment: Alignment.topRight,
                     child: Padding(
-                      padding: const EdgeInsets.all(JuniorTheme.spacingMedium),
+                      padding: const EdgeInsets.only(
+                        top: JuniorTheme.spacingXSmall,
+                        right: JuniorTheme.spacingMedium,
+                        bottom: JuniorTheme.spacingMedium,
+                        left: JuniorTheme.spacingMedium,
+                      ),
                       child: _buildLogoutButton(),
                     ),
                   ),
@@ -268,21 +292,34 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                             ),
                             Positioned(
                               top: 54, // lowered a bit more for extra spacing
-                              child: Text(
-                                'ðŸª™ coins collected',
-                                textAlign: TextAlign.center,
-                                style: JuniorTheme.bodySmall.copyWith(
-                                  color: JuniorTheme.textPrimary,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  shadows: [
-                                    Shadow(
-                                      color: Colors.white.withOpacity(0.4),
-                                      blurRadius: 3,
-                                      offset: const Offset(0, 1),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.monetization_on,
+                                    color: JuniorTheme.accentGold,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'coins collected',
+                                    textAlign: TextAlign.center,
+                                    style: JuniorTheme.bodySmall.copyWith(
+                                      color: JuniorTheme.textPrimary,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                      shadows: [
+                                        Shadow(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.4),
+                                          blurRadius: 3,
+                                          offset: const Offset(0, 1),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -441,13 +478,24 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
           const SizedBox(height: JuniorTheme.spacingXSmall),
 
           // Coins text - small and thin
-          Text(
-            'ðŸª™ coins collected',
-            style: JuniorTheme.bodySmall.copyWith(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w300,
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.monetization_on,
+                color: JuniorTheme.accentGold,
+                size: 16,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'coins collected',
+                style: JuniorTheme.bodySmall.copyWith(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w300,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -643,7 +691,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                   'â­', 'Math Star', 'Complete 5 math lessons'),
               _buildAchievementBadge(
                   'ðŸ“š', 'Reader', 'Complete 3 reading lessons'),
-              _buildAchievementBadge('ðŸŽ¨', 'Artist', 'Complete 2 art lessons'),
+              _buildAchievementBadge(
+                  'ðŸŽ¨', 'Artist', 'Complete 2 art lessons'),
               _buildAchievementBadge(
                   'ðŸ”¬', 'Scientist', 'Complete 2 science lessons'),
               _buildAchievementBadge(
@@ -710,7 +759,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildStatItem('ðŸ“š', '${_completedTasks.length}', 'Lessons'),
-              _buildStatItem('â­', '${_childProgress?.earnedPoints ?? 0}', 'XP'),
+              _buildStatItem(
+                  'â­', '${_childProgress?.earnedPoints ?? 0}', 'XP'),
               _buildStatItem('ðŸ”¥', '7', 'Day Streak'),
             ],
           ),
@@ -1245,19 +1295,20 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
           child: Container(
             width: 56, // Large enough for children (44+ padding)
             height: 56, // Large enough for children (44+ padding)
-            padding: const EdgeInsets.all(JuniorTheme.spacingSmall),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(JuniorTheme.radiusMedium),
               border: Border.all(
-                color: Colors.white.withOpacity(0.3),
+                color: Colors.white.withValues(alpha: 0.3),
                 width: 1.5,
               ),
             ),
-            child: Icon(
-              Icons.logout,
-              color: Colors.white,
-              size: 28, // Clear visual size for children
+            child: Center(
+              child: Icon(
+                Icons.logout,
+                color: Colors.white,
+                size: 28, // Clear visual size for children
+              ),
             ),
           ),
         ),
@@ -1539,6 +1590,3 @@ class NotchedDividerClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
-
-
-
