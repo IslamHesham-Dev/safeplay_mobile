@@ -401,7 +401,7 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
                     ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.95),
-                      borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(24),
                       boxShadow: JuniorTheme.shadowHeavy,
                   ),
                   child: Text(

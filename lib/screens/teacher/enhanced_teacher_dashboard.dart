@@ -1349,46 +1349,50 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
                   ),
                   const SizedBox(height: 12),
                   // Tags row (subject, age group - compact for card)
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
+                  Row(
                     children: [
                       // Subject tags (compact for card)
-                      ...template.subjects.take(1).map((subject) {
-                        final color = _getSubjectColor(subject);
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: color.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                _getSubjectIcon(subject),
-                                size: 12,
-                                color: color,
+                      if (template.subjects.isNotEmpty) ...[
+                        Builder(
+                          builder: (context) {
+                            final subject = template.subjects.first;
+                            final color = _getSubjectColor(subject);
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: color.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                subject == ActivitySubject.reading
-                                    ? 'English'
-                                    : subject.displayName,
-                                style: TextStyle(
-                                  color: color,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _getSubjectIcon(subject),
+                                    size: 12,
+                                    color: color,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    subject == ActivitySubject.reading
+                                        ? 'English'
+                                        : subject.displayName,
+                                    style: TextStyle(
+                                      color: color,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        );
-                      }),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 6),
+                      ],
 
                       // Age group (compact)
-                      if (template.ageGroups.isNotEmpty)
+                      if (template.ageGroups.isNotEmpty) ...[
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
@@ -1410,6 +1414,38 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                             ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+
+                      // Game name tag (for BubblePop Grammar templates)
+                      if (_isBubblePopGrammarTemplate(template.id))
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.games,
+                                size: 12,
+                                color: Colors.blue,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'BubblePop Grammar',
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                     ],
@@ -1447,43 +1483,6 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
               bottom: -10,
               child: _buildTemplateIcon(template, backgroundColor, textColor),
             ),
-            // Add to Activity button (top-right corner)
-            Positioned(
-              top: 12,
-              right: 12,
-              child: Material(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                elevation: 2,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: () => _addTemplateToActivity(template),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.add_circle,
-                          size: 18,
-                          color: SafePlayColors.brandTeal500,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Add',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: SafePlayColors.brandTeal500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),
@@ -1513,6 +1512,17 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
   /// Get text color for template card (dark for readability)
   Color _getTemplateTextColor(QuestionTemplate template) {
     return Colors.black87; // Dark text for good contrast
+  }
+
+  /// Check if template is a BubblePop Grammar template
+  bool _isBubblePopGrammarTemplate(String templateId) {
+    const bubblePopGrammarTemplates = [
+      'english_junior_001_spelling_suffixes_ing',
+      'english_junior_003_vocabulary_plurals_f_to_v',
+      'english_junior_004_adverbs_how',
+      'english_junior_007_spelling_ed_endings',
+    ];
+    return bubblePopGrammarTemplates.contains(templateId);
   }
 
   /// Build template icon (similar to junior cards)
