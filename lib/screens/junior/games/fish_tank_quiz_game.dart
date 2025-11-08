@@ -263,13 +263,16 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
     // Calculate spacing between fish
     final totalFishWidth =
         (fishPerRow * fishWidth) + ((fishPerRow - 1) * spacing);
+    // Center on x-axis
     final startX = (screenWidth - totalFishWidth) / 2;
-    final startY = screenSize.height * 0.35; // Start from 35% down
+    // Move up a little bit - start from 28% down instead of 35%
+    final startY = screenSize.height * 0.28;
 
     for (int i = 0; i < _options.length; i++) {
       final row = i ~/ fishPerRow;
       final col = i % fishPerRow;
 
+      // Center each row on x-axis
       final x = startX + (col * (fishWidth + spacing));
       final y = startY + (row * (fishHeight + spacing + 20));
 
@@ -291,14 +294,31 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
 
     return Container(
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF0F4471), Color(0xFF0E99B7)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
+        // Background color behind fishtank image
+        color: Color(0xFF0F4471), // Deep blue
       ),
       child: Stack(
         children: [
+          // Background image
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/Fishtank.JPG',
+              fit: BoxFit.cover,
+              alignment: Alignment.bottomCenter,
+              errorBuilder: (context, error, stackTrace) {
+                // Fallback to gradient if image fails to load
+                return Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF0F4471), Color(0xFF0E99B7)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

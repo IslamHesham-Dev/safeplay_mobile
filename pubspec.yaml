@@ -89,6 +89,7 @@ flutter:
   assets:
     - assets/images/bg.png
     - assets/seashell.png
+    - assets/images/Fishtank.JPG
     - assets/images/activities/
     - assets/images/achievements/
     - assets/images/avatars/
