@@ -1,13 +1,11 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'dart:math' as math;
 import '../../../design_system/junior_theme.dart';
 import '../../../models/activity.dart';
 import '../../../models/game_activity.dart';
 import '../../../models/lesson.dart';
-import '../../../navigation/route_names.dart';
 import '../../../widgets/junior/junior_confetti.dart';
 import '../../../widgets/junior/junior_coin_animation.dart';
 import '../../../services/junior_activity_progress_service.dart';
@@ -48,11 +46,11 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
   int _score = 0;
   int _totalPoints = 0;
   bool _gameCompleted = false;
-  final Map<String, dynamic> _answers = {};
+  Map<String, dynamic> _answers = {};
   String? _sessionId;
   final JuniorActivityProgressService _progressService =
       JuniorActivityProgressService();
-  final List<GameResponse> _allResponses = [];
+  List<GameResponse> _allResponses = [];
   DateTime _sessionStartTime = DateTime.now();
   int _totalCorrectAnswers = 0;
 
@@ -155,6 +153,12 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
     if (isCorrect) {
       HapticFeedback.lightImpact();
       _showSuccessFeedback(pointsEarned);
+      // Auto-advance to next question after a delay
+      Future.delayed(const Duration(milliseconds: 2500), () {
+        if (mounted) {
+          _nextQuestion();
+        }
+      });
     } else {
       HapticFeedback.heavyImpact();
       _showTryAgainFeedback();
@@ -229,13 +233,12 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
           // Celebration overlay
           JuniorCelebrationOverlay(
             isVisible: true,
-            message: 'Great job! 🎉',
-            subMessage: 'You earned coins! 🪙',
+            message: 'Great Job! 🌟',
+            subMessage: 'You earned coins! 💰',
             points: pointsEarned,
-            duration: const Duration(milliseconds: 1800),
             onDismiss: () {
               Navigator.of(context).pop();
-              Future.delayed(const Duration(milliseconds: 150), () {
+              Future.delayed(const Duration(milliseconds: 300), () {
                 _nextQuestion();
               });
             },
@@ -298,7 +301,7 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
                 gradient: LinearGradient(
                   colors: [
                     JuniorTheme.backgroundCard,
-                    JuniorTheme.backgroundCard.withValues(alpha: 0.95),
+                    JuniorTheme.backgroundCard.withOpacity(0.95),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -334,7 +337,7 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
                             boxShadow: [
                               BoxShadow(
                                 color:
-                                    JuniorTheme.primaryGreen.withValues(alpha: 0.5),
+                                    JuniorTheme.primaryGreen.withOpacity(0.5),
                                 blurRadius: 20,
                                 spreadRadius: 5,
                               ),
@@ -359,9 +362,6 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
                       color: JuniorTheme.textPrimary,
                     ),
                     textAlign: TextAlign.center,
-                    softWrap: false,
-                    maxLines: 1,
-                    overflow: TextOverflow.visible,
                   ),
                   const SizedBox(height: JuniorTheme.spacingSmall),
                   Text(
@@ -379,8 +379,8 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          JuniorTheme.primaryGreen.withValues(alpha: 0.2),
-                          JuniorTheme.primaryYellow.withValues(alpha: 0.2),
+                          JuniorTheme.primaryGreen.withOpacity(0.2),
+                          JuniorTheme.primaryYellow.withOpacity(0.2),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -388,7 +388,7 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
                       borderRadius:
                           BorderRadius.circular(JuniorTheme.radiusMedium),
                       border: Border.all(
-                        color: JuniorTheme.primaryGreen.withValues(alpha: 0.3),
+                        color: JuniorTheme.primaryGreen.withOpacity(0.3),
                         width: 2,
                       ),
                     ),
@@ -428,7 +428,10 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
                   const SizedBox(height: JuniorTheme.spacingLarge),
                   // Back button
                   ElevatedButton.icon(
-                    onPressed: () => context.go(RouteNames.childDashboard),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pop(); // Close game screen
+                    },
                     icon: const Icon(Icons.home, color: Colors.white),
                     label: const Text(
                       'Back to Dashboard',
