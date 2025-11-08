@@ -15,6 +15,7 @@ class BubblePopGrammarGame extends StatefulWidget {
   }) onAnswerSubmitted;
   final VoidCallback? onComplete;
   final int currentScore;
+  final GlobalKey? coinCounterKey;
 
   const BubblePopGrammarGame({
     super.key,
@@ -22,6 +23,7 @@ class BubblePopGrammarGame extends StatefulWidget {
     required this.onAnswerSubmitted,
     this.onComplete,
     this.currentScore = 0,
+    this.coinCounterKey,
   });
 
   @override
@@ -152,6 +154,9 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
       });
       _celebrationController.forward(from: 0.0);
 
+      // Launch coin fly animation
+      _launchCoinFlyAnimation(option);
+
       // Show "Great job!" overlay
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) {
@@ -200,6 +205,43 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
     final minutes = seconds ~/ 60;
     final secs = seconds % 60;
     return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+  }
+
+  void _launchCoinFlyAnimation(String tappedOption) {
+    final bubblePosition = _bubblePositions[tappedOption];
+    if (bubblePosition == null || widget.coinCounterKey == null) return;
+
+    // Get bubble center in global coordinates
+    final renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+    final bubbleGlobalCenter = renderBox.localToGlobal(
+      bubblePosition + const Offset(60, 60), // bubble center (120/2)
+    );
+
+    // Get coin counter center in global coordinates
+    final coinCounterRenderBox =
+        widget.coinCounterKey!.currentContext?.findRenderObject() as RenderBox?;
+    if (coinCounterRenderBox == null) return;
+    final coinCounterGlobalCenter = coinCounterRenderBox.localToGlobal(
+      Offset(coinCounterRenderBox.size.width / 2,
+          coinCounterRenderBox.size.height / 2),
+    );
+
+    // Create overlay entry for coin animation
+    final overlay = Overlay.of(context);
+    final entry = OverlayEntry(
+      builder: (context) => _CoinFlyOverlay(
+        startPosition: bubbleGlobalCenter,
+        targetPosition: coinCounterGlobalCenter,
+        coinCount: math.min(_earnedPoints, 8),
+      ),
+    );
+    overlay.insert(entry);
+
+    // Remove overlay after animation completes
+    Future.delayed(const Duration(milliseconds: 1200), () {
+      entry.remove();
+    });
   }
 
   @override
@@ -266,6 +308,7 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
                       ),
                       // Coins counter
                       Container(
+                        key: widget.coinCounterKey,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
@@ -564,7 +607,7 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
 
     final bubbleSize = 120.0;
     final spacing = 20.0;
-    final availableWidth = screenSize.width - 32; // Padding
+    final screenWidth = screenSize.width;
 
     // Calculate how many bubbles per row (3 max)
     final bubblesPerRow = math.min(3, _options.length);
@@ -572,7 +615,7 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
     // Calculate spacing between bubbles
     final totalBubbleWidth =
         (bubblesPerRow * bubbleSize) + ((bubblesPerRow - 1) * spacing);
-    final startX = (availableWidth - totalBubbleWidth) / 2;
+    final startX = (screenWidth - totalBubbleWidth) / 2;
     final startY = screenSize.height * 0.25; // Start from 25% down
 
     for (int i = 0; i < _options.length; i++) {
@@ -813,4 +856,140 @@ class _LightRaysPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+/// Coin fly animation overlay
+class _CoinFlyOverlay extends StatefulWidget {
+  final Offset startPosition;
+  final Offset targetPosition;
+  final int coinCount;
+
+  const _CoinFlyOverlay({
+    required this.startPosition,
+    required this.targetPosition,
+    required this.coinCount,
+  });
+
+  @override
+  State<_CoinFlyOverlay> createState() => _CoinFlyOverlayState();
+}
+
+class _CoinFlyOverlayState extends State<_CoinFlyOverlay>
+    with TickerProviderStateMixin {
+  late final List<AnimationController> _controllers;
+  late final List<Animation<Offset>> _animations;
+  late final List<Animation<double>> _opacities;
+  final math.Random _random = math.Random();
+
+  @override
+  void initState() {
+    super.initState();
+    final coinCount = math.min(widget.coinCount, 8);
+    _controllers = List.generate(
+      coinCount,
+      (index) => AnimationController(
+        vsync: this,
+        duration: Duration(milliseconds: 800 + _random.nextInt(400)),
+      ),
+    );
+
+    _animations = _controllers.map((controller) {
+      final midX = (widget.startPosition.dx + widget.targetPosition.dx) / 2 +
+          (_random.nextDouble() - 0.5) * 60;
+      final midY = (widget.startPosition.dy + widget.targetPosition.dy) / 2 -
+          (_random.nextDouble() * 80 + 40);
+      final midPoint = Offset(midX, midY);
+
+      return TweenSequence<Offset>([
+        TweenSequenceItem(
+          tween: Tween(begin: widget.startPosition, end: midPoint),
+          weight: 0.5,
+        ),
+        TweenSequenceItem(
+          tween: Tween(begin: midPoint, end: widget.targetPosition),
+          weight: 0.5,
+        ),
+      ]).animate(
+        CurvedAnimation(parent: controller, curve: Curves.easeInOut),
+      );
+    }).toList();
+
+    _opacities = _controllers.map((controller) {
+      return TweenSequence<double>([
+        TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.0), weight: 0.7),
+        TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 0.3),
+      ]).animate(CurvedAnimation(parent: controller, curve: Curves.easeOut));
+    }).toList();
+
+    // Start animations with slight delays
+    for (int i = 0; i < _controllers.length; i++) {
+      Future.delayed(Duration(milliseconds: i * 50), () {
+        if (mounted) _controllers[i].forward();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _controllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      ignoring: true,
+      child: Stack(
+        children: List.generate(_controllers.length, (index) {
+          return AnimatedBuilder(
+            animation: Listenable.merge([_controllers[index]]),
+            builder: (context, child) {
+              final position = _animations[index].value;
+              final opacity = _opacities[index].value;
+              return Positioned(
+                left: position.dx - 15,
+                top: position.dy - 15,
+                child: Opacity(
+                  opacity: opacity,
+                  child: Transform.rotate(
+                    angle: _controllers[index].value * math.pi * 2,
+                    child: Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            JuniorTheme.accentGold,
+                            JuniorTheme.accentGold.withValues(alpha: 0.8),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                JuniorTheme.accentGold.withValues(alpha: 0.5),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.monetization_on,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        }),
+      ),
+    );
+  }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'dart:math' as math;
+
 import '../../../design_system/junior_theme.dart';
 import '../../../models/activity.dart';
 import '../../../models/game_activity.dart';
@@ -10,6 +11,7 @@ import '../../../widgets/junior/junior_confetti.dart';
 import '../../../widgets/junior/junior_coin_animation.dart';
 import '../../../services/junior_activity_progress_service.dart';
 import '../../../providers/auth_provider.dart';
+
 import 'number_grid_race_game.dart';
 import 'koala_counter_adventure_game.dart';
 import 'ordinal_drag_order_game.dart';
@@ -53,6 +55,7 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
   List<GameResponse> _allResponses = [];
   DateTime _sessionStartTime = DateTime.now();
   int _totalCorrectAnswers = 0;
+  final GlobalKey _coinCounterKey = GlobalKey();
 
   @override
   void initState() {
@@ -217,35 +220,42 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
   }
 
   void _showSuccessFeedback(int pointsEarned) {
-    // Show floating coins animation
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      barrierColor: Colors.transparent,
-      builder: (context) => Stack(
-        children: [
-          // Floating coins effect
-          FloatingCoinsAnimation(
-            coinCount: math.min(pointsEarned, 10),
-            duration: const Duration(milliseconds: 2000),
-            onComplete: () {},
-          ),
-          // Celebration overlay
-          JuniorCelebrationOverlay(
-            isVisible: true,
-            message: 'Great Job! 🌟',
-            subMessage: 'You earned coins! 💰',
-            points: pointsEarned,
-            onDismiss: () {
-              Navigator.of(context).pop();
-              Future.delayed(const Duration(milliseconds: 300), () {
-                _nextQuestion();
-              });
-            },
-          ),
-        ],
-      ),
-    );
+    // For bubble pop grammar game, coin animation is handled in the game widget itself
+    // So we skip the dialog animation here to avoid duplicate animations
+    if (widget.gameType == GameType.bubblePopGrammar) {
+      // No message needed - coin animation handles the feedback
+      return;
+    } else {
+      // For other games, show the full celebration dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        barrierColor: Colors.transparent,
+        builder: (context) => Stack(
+          children: [
+            // Floating coins effect
+            FloatingCoinsAnimation(
+              coinCount: math.min(pointsEarned, 10),
+              duration: const Duration(milliseconds: 2000),
+              onComplete: () {},
+            ),
+            // Celebration overlay
+            JuniorCelebrationOverlay(
+              isVisible: true,
+              message: 'Great Job! 🌟',
+              subMessage: 'You earned coins! 💰',
+              points: pointsEarned,
+              onDismiss: () {
+                Navigator.of(context).pop();
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  _nextQuestion();
+                });
+              },
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   void _showTryAgainFeedback() {
@@ -355,7 +365,7 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
                   const SizedBox(height: JuniorTheme.spacingLarge),
                   // Congratulations text
                   Text(
-                    '🎉 Congratulations! 🎉',
+                    'Congratulations!',
                     style: JuniorTheme.headingLarge.copyWith(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -429,8 +439,7 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
                   // Back button
                   ElevatedButton.icon(
                     onPressed: () {
-                      Navigator.of(context).pop();
-                      Navigator.of(context).pop(); // Close game screen
+                      Navigator.of(context).popUntil((route) => route.isFirst);
                     },
                     icon: const Icon(Icons.home, color: Colors.white),
                     label: const Text(
@@ -526,6 +535,7 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
           question: question,
           onAnswerSubmitted: _onAnswerSubmitted,
           currentScore: _score,
+          coinCounterKey: _coinCounterKey,
           onComplete: () {
             // When final question is answered, complete the game
             if (_currentQuestionIndex >= widget.questions.length - 1) {

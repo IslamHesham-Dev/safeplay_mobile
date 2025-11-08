@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+
 import '../../design_system/junior_theme.dart';
 
 /// Animated coin widget that floats up when coins are earned
@@ -292,10 +293,11 @@ class _AnimatedCoinCounterState extends State<AnimatedCoinCounter>
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.monetization_on,
-                color: widget.coinColor ?? JuniorTheme.accentGold,
-                size: (widget.textStyle?.fontSize ?? 24) + 4,
+              Text(
+                '🪙',
+                style: TextStyle(
+                  fontSize: (widget.textStyle?.fontSize ?? 24) + 4,
+                ),
               ),
               const SizedBox(width: 8),
               Text(
@@ -453,5 +455,3 @@ class FloatingCoin {
     required this.rotationSpeed,
   });
 }
-
-
