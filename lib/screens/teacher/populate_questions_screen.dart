@@ -197,6 +197,50 @@ class _PopulateQuestionsScreenState extends State<PopulateQuestionsScreen> {
     }
   }
 
+  Future<void> _updateQuestionTemplate() async {
+    setState(() {
+      _populating = true;
+      _status = 'Updating question template...';
+      _questionsAdded = 0;
+    });
+
+    try {
+      await _populator
+          .updateQuestionTemplate('english_junior_006_comprehension_fact');
+
+      setState(() {
+        _status = '✅ Successfully updated question template!';
+        _populating = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+                'Successfully updated english_junior_006_comprehension_fact template!'),
+            backgroundColor: SafePlayColors.success,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _status = '❌ Error: $e';
+        _populating = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating question template: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -406,14 +450,166 @@ class _PopulateQuestionsScreenState extends State<PopulateQuestionsScreen> {
             const SizedBox(height: 24),
 
             // English Questions Section
-            _buildSubjectCard(
-              'English Questions',
-              Icons.book,
-              Colors.blue,
-              7, // Junior
-              10, // Bright
-              17, // Total
-              _populateEnglishQuestions,
+            Card(
+              color: Colors.blue.withValues(alpha: 0.05),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.book, color: Colors.blue, size: 24),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'English Questions',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Populate English question templates:',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: Column(
+                        children: [
+                          _buildQuestionCountRow('Junior (6-8)', 7,
+                              color: Colors.blue),
+                          const Divider(height: 16),
+                          _buildQuestionCountRow('Bright (9-12)', 10,
+                              color: Colors.blue),
+                          const Divider(height: 16),
+                          _buildQuestionCountRow('Total', 17,
+                              isTotal: true, color: Colors.blue),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (_status != null &&
+                        (_status!.contains('English') ||
+                            _status!.contains('updated'))) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: _status!.startsWith('✅')
+                              ? SafePlayColors.success.withValues(alpha: 0.1)
+                              : _status!.startsWith('❌')
+                                  ? Colors.red.withValues(alpha: 0.1)
+                                  : Colors.blue.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: _status!.startsWith('✅')
+                                ? SafePlayColors.success
+                                : _status!.startsWith('❌')
+                                    ? Colors.red
+                                    : Colors.blue,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _status!,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: _status!.startsWith('✅')
+                                      ? SafePlayColors.success
+                                      : _status!.startsWith('❌')
+                                          ? Colors.red
+                                          : Colors.blue,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed:
+                            _populating ? null : _populateEnglishQuestions,
+                        icon: _populating
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
+                                ),
+                              )
+                            : const Icon(Icons.cloud_upload),
+                        label: Text(
+                          _populating
+                              ? 'Populating...'
+                              : 'Populate English Questions',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _populating ? null : _updateQuestionTemplate,
+                        icon: _populating
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.blue),
+                                ),
+                              )
+                            : const Icon(Icons.update),
+                        label: const Text(
+                          'Update Vocabulary Question',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.blue,
+                          side: const BorderSide(color: Colors.blue, width: 2),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
 
             const SizedBox(height: 24),

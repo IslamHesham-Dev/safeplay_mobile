@@ -16,6 +16,7 @@ import '../../design_system/colors.dart';
 import 'activity_builder_screen.dart';
 import 'activity_creation_wizard_screen.dart';
 import 'teacher_activities_management_screen.dart';
+import 'populate_questions_screen.dart';
 
 class EnhancedTeacherDashboard extends StatefulWidget {
   const EnhancedTeacherDashboard({super.key});
@@ -313,6 +314,20 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
       child: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
+          // If Create button (index 1) is clicked, navigate directly to Create Activity page
+          if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ActivityCreationWizardScreen(),
+              ),
+            ).then((_) {
+              // Refresh data when returning
+              _loadDashboardData();
+            });
+            return; // Don't change the tab index
+          }
+          // For other tabs, change the index normally
           setState(() {
             _currentIndex = index;
           });
@@ -668,6 +683,30 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: _buildActionCard(
+                      'Populate Questions',
+                      'Setup question templates in database',
+                      Icons.cloud_upload,
+                      () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const PopulateQuestionsScreen(),
+                          ),
+                        ).then((_) {
+                          // Refresh data when returning
+                          _loadDashboardData();
+                        });
+                      },
+                      gradient: LinearGradient(
+                        colors: [Colors.orange, Colors.orange.withOpacity(0.8)],
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -1491,12 +1530,12 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
                       ],
 
                       // Game name tag (for BubblePop Grammar templates)
-                      if (_isBubblePopGrammarTemplate(template.id))
+                      if (_isBubblePopGrammarTemplate(template.id)) ...[
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.2),
+                            color: Colors.blue.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -1512,6 +1551,70 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
                                 'BubblePop Grammar',
                                 style: TextStyle(
                                   color: Colors.blue,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+
+                      // Game name tag (for Seashell Quiz templates)
+                      if (_isSeashellQuizTemplate(template.id)) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.teal.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.games,
+                                size: 12,
+                                color: Colors.teal,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Seashell Game',
+                                style: TextStyle(
+                                  color: Colors.teal,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+
+                      // Game name tag (for FishTank Quiz templates)
+                      if (_isFishTankQuizTemplate(template.id))
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.cyan.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.games,
+                                size: 12,
+                                color: Colors.cyan,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'FishTank Game',
+                                style: TextStyle(
+                                  color: Colors.cyan,
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -1594,6 +1697,28 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
       'english_junior_007_spelling_ed_endings',
     ];
     return bubblePopGrammarTemplates.contains(templateId);
+  }
+
+  /// Check if template is a Seashell Quiz template
+  bool _isSeashellQuizTemplate(String templateId) {
+    const seashellQuizTemplates = [
+      'english_junior_002_grammar_adverbs',
+      'english_junior_005_language_strands_oral',
+      'english_junior_006_comprehension_fact',
+    ];
+    return seashellQuizTemplates.contains(templateId);
+  }
+
+  /// Check if template is a FishTank Quiz template
+  bool _isFishTankQuizTemplate(String templateId) {
+    const fishTankQuizTemplates = [
+      'math_junior_003_addition_basic',
+      'math_junior_004_subtraction_basic',
+      'math_junior_008_data_handling',
+      'math_junior_011_shapes_triangle',
+      'math_junior_012_comparing_numbers',
+    ];
+    return fishTankQuizTemplates.contains(templateId);
   }
 
   /// Build template icon (similar to junior cards)

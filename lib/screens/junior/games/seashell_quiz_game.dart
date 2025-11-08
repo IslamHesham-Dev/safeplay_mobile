@@ -45,8 +45,8 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
   bool _hasAdvanced = false;
   DateTime _questionStartTime = DateTime.now();
   int _elapsedSeconds = 0;
-  final Map<String, Offset> _seashellPositions = {};
   bool _showGreatJob = false;
+  final GlobalKey _gridKey = GlobalKey(); // Key for the GridView
 
   List<String> get _options =>
       widget.question.options.map((e) => e.toString()).toList();
@@ -98,7 +98,6 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
     _tooltipOption = null;
     _showHint = false;
     _disabledOptions.clear();
-    _seashellPositions.clear();
 
     _celebrationController.reset();
     _shakeController.reset();
@@ -207,15 +206,36 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
   }
 
   void _launchCoinFlyAnimation(String tappedOption) {
-    final seashellPosition = _seashellPositions[tappedOption];
-    if (seashellPosition == null || widget.coinCounterKey == null) return;
+    // Find the GridView's render box
+    final renderBox = _gridKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null || widget.coinCounterKey == null) return;
+
+    // Approximate seashell center based on GridView item size
+    final optionIndex = _options.indexOf(tappedOption);
+    if (optionIndex == -1) return;
+
+    final size = renderBox.size;
+    // Grid properties (matching GridView.builder configuration)
+    const crossAxisCount = 2;
+    const mainAxisSpacing = 20.0;
+    const crossAxisSpacing = 20.0;
+    const childAspectRatio = 1.1;
+
+    final itemWidth = (size.width - (crossAxisSpacing * (crossAxisCount - 1))) /
+        crossAxisCount;
+    final itemHeight = itemWidth / childAspectRatio;
+
+    final row = optionIndex ~/ crossAxisCount;
+    final col = optionIndex % crossAxisCount;
+
+    // This calculates the center of the tapped item *within the GridView*
+    final seashellLocalCenter = Offset(
+      (col * (itemWidth + crossAxisSpacing)) + (itemWidth / 2),
+      (row * (itemHeight + mainAxisSpacing)) + (itemHeight / 2),
+    );
 
     // Get seashell center in global coordinates
-    final renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null) return;
-    final seashellGlobalCenter = renderBox.localToGlobal(
-      seashellPosition + const Offset(80, 50), // seashell center (approx)
-    );
+    final seashellGlobalCenter = renderBox.localToGlobal(seashellLocalCenter);
 
     // Get coin counter center in global coordinates
     final coinCounterRenderBox =
@@ -243,26 +263,6 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
     });
   }
 
-  void _calculateSeashellPositions(Size screenSize) {
-    if (_seashellPositions.isNotEmpty) return; // Already calculated
-
-    final spacing = 20.0;
-    final seashellWidth = screenSize.width * 0.45;
-    final seashellHeight = 100.0;
-    final startX = (screenSize.width - (2 * seashellWidth + spacing)) / 2;
-    final startY = screenSize.height * 0.5; // Start from 50% down
-
-    for (int i = 0; i < _options.length; i++) {
-      final row = i ~/ 2;
-      final col = i % 2;
-
-      final x = startX + (col * (seashellWidth + spacing));
-      final y = startY + (row * (seashellHeight + spacing + 20));
-
-      _seashellPositions[_options[i]] = Offset(x, y);
-    }
-  }
-
   String _formatTime(int seconds) {
     final minutes = seconds ~/ 60;
     final secs = seconds % 60;
@@ -271,15 +271,9 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
 
   @override
   Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final screenSize = mediaQuery.size;
-
     final prompt = widget.question.question.isNotEmpty
         ? widget.question.question
         : 'Tap the seashell with the correct answer';
-
-    // Calculate seashell positions
-    _calculateSeashellPositions(screenSize);
 
     return Container(
       decoration: const BoxDecoration(
@@ -325,7 +319,8 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
                         onPressed: () => Navigator.of(context).pop(),
                         icon: const Icon(Icons.arrow_back, color: Colors.white),
                         style: IconButton.styleFrom(
-                          backgroundColor: Colors.white.withValues(alpha: 0.2),
+                          backgroundColor:
+                              Colors.white.withAlpha(51), // 0.2 alpha
                           padding: const EdgeInsets.all(8),
                         ),
                       ),
@@ -335,7 +330,7 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
+                          color: Colors.white.withAlpha(51), // 0.2 alpha
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -363,7 +358,7 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
+                          color: Colors.white.withAlpha(51), // 0.2 alpha
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -404,8 +399,8 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
                           ),
                           style: IconButton.styleFrom(
                             backgroundColor: _answerLocked
-                                ? Colors.grey.withValues(alpha: 0.3)
-                                : Colors.white.withValues(alpha: 0.2),
+                                ? Colors.grey.withAlpha(77) // 0.3 alpha
+                                : Colors.white.withAlpha(51), // 0.2 alpha
                             padding: const EdgeInsets.all(8),
                           ),
                           tooltip: 'Show Hint',
@@ -423,7 +418,7 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
                       vertical: 20,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.95),
+                      color: Colors.white.withAlpha(242), // 0.95 alpha
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
                         color: const Color(
@@ -451,7 +446,7 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.95),
+                        color: Colors.amber.withAlpha(242), // 0.95 alpha
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: Colors.amber.shade700,
@@ -459,7 +454,7 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
+                            color: Colors.black.withAlpha(51), // 0.2 alpha
                             blurRadius: 8,
                             offset: const Offset(0.0, 4.0),
                           ),
@@ -508,12 +503,14 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: GridView.builder(
+                      key: _gridKey, // Assign the key here
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         crossAxisSpacing: 20,
                         mainAxisSpacing: 20,
-                        childAspectRatio: 1.1,
+                        childAspectRatio:
+                            1.1, // Aspect ratio might need tweaking
                       ),
                       itemCount: _options.length,
                       itemBuilder: (context, index) {
@@ -566,7 +563,7 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.25),
+                              color: Colors.white.withAlpha(64), // 0.25 alpha
                               shape: BoxShape.circle,
                               border:
                                   Border.all(color: Colors.white38, width: 2),
@@ -582,7 +579,7 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 6),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
+                              color: Colors.white.withAlpha(51), // 0.2 alpha
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
@@ -611,7 +608,7 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
           if (_showGreatJob)
             Positioned.fill(
               child: Container(
-                color: Colors.black.withValues(alpha: 0.3),
+                color: Colors.black.withAlpha(77), // 0.3 alpha
                 child: Center(
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -621,7 +618,7 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.3),
+                          color: Colors.black.withAlpha(77), // 0.3 alpha
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -701,7 +698,7 @@ class _SeashellButton extends StatelessWidget {
                     boxShadow: [
                       BoxShadow(
                         color: const Color(0xFFFFB703) // Darker shadow
-                            .withValues(alpha: 0.4),
+                            .withAlpha(102), // 0.4 alpha
                         offset: const Offset(0, 3),
                         blurRadius: 6,
                         spreadRadius: 1,
@@ -709,19 +706,52 @@ class _SeashellButton extends StatelessWidget {
                     ],
                   ),
                   alignment: Alignment.center,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text(
-                      label,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: Color(0xFF5A3E1B), // Dark brown
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Check if text will wrap to multiple lines
+                      final textPainter = TextPainter(
+                        text: TextSpan(
+                          text: label,
+                          style: const TextStyle(
+                            fontSize: 18, // Original font size
+                            color: Color(0xFF5A3E1B), // Dark brown
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        textDirection: TextDirection.ltr,
+                        maxLines: 2,
+                      );
+                      textPainter.layout(
+                          maxWidth: constraints.maxWidth -
+                              40); // Reduced width to keep text within seashell shape
+                      final isMultiLine = textPainter.didExceedMaxLines ||
+                          textPainter.height >
+                              textPainter.preferredLineHeight * 1.2;
+
+                      return Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal:
+                              16, // Increased horizontal padding to constrain text width
+                          vertical: isMultiLine
+                              ? 4
+                              : 8, // Less top padding if multi-line
+                        ).copyWith(
+                          top: isMultiLine ? 8 : 16, // Shift up if multi-line
+                          bottom: isMultiLine ? 12 : 16,
+                        ),
+                        child: Text(
+                          label,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 18, // Original font size
+                            color: Color(0xFF5A3E1B), // Dark brown
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -741,7 +771,7 @@ class _SeashellButton extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.3),
+                          color: Colors.black.withAlpha(77), // 0.3 alpha
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -781,36 +811,35 @@ class _SeashellButton extends StatelessWidget {
   }
 }
 
-/// Custom clipper for seashell shape (upward bubble with pointed bottom)
+/// Custom clipper for seashell shape (as seen in image)
 class _SeashellClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
+    final double w = size.width;
+    final double h = size.height;
     final Path path = Path();
-    final double width = size.width;
-    final double height = size.height;
 
-    // Start at top center
-    path.moveTo(width * 0.5, 0);
+    // Start slightly below top-left
+    path.moveTo(w * 0.10, h * 0.28);
 
-    // Top-right curve
-    path.quadraticBezierTo(width, 0, width, height * 0.6);
-
-    // Right bottom curve to the point
-    path.quadraticBezierTo(
-      width * 0.9, height * 0.95, // Control point
-      width * 0.5, height, // Bottom point
+    // ---- Top curve (smooth oval dome) ----
+    path.cubicTo(
+      w * 0.28, -h * 0.05, // first control point (raises the middle)
+      w * 0.72, -h * 0.05, // second control point (keeps the curve symmetrical)
+      w * 0.90, h * 0.28, // end point (top-right shoulder)
     );
 
-    // Left bottom curve (mirror)
+    // ---- Right side down to bottom tip ----
     path.quadraticBezierTo(
-      width * 0.1,
-      height * 0.95,
-      0,
-      height * 0.6,
+      w * 0.96, h * 0.60, // smooth downward curve
+      w * 0.5, h, // bottom tip
     );
 
-    // Top-left curve
-    path.quadraticBezierTo(0, 0, width * 0.5, 0);
+    // ---- Left side back up to start ----
+    path.quadraticBezierTo(
+      w * 0.04, h * 0.60, // mirror of right side
+      w * 0.10, h * 0.28, // close to starting point
+    );
 
     path.close();
     return path;
@@ -924,7 +953,7 @@ class _CoinFlyOverlayState extends State<_CoinFlyOverlay>
                         gradient: LinearGradient(
                           colors: [
                             JuniorTheme.accentGold,
-                            JuniorTheme.accentGold.withValues(alpha: 0.8),
+                            JuniorTheme.accentGold.withAlpha(204), // 0.8 alpha
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -932,8 +961,8 @@ class _CoinFlyOverlayState extends State<_CoinFlyOverlay>
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color:
-                                JuniorTheme.accentGold.withValues(alpha: 0.5),
+                            color: JuniorTheme.accentGold
+                                .withAlpha(128), // 0.5 alpha
                             blurRadius: 8,
                             spreadRadius: 1,
                           ),

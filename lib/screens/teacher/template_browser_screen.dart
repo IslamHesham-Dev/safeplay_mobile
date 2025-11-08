@@ -493,7 +493,7 @@ class _TemplateBrowserScreenState extends State<TemplateBrowserScreen> {
                           );
                         }),
                       // Age group tag
-                      if (template.ageGroups.isNotEmpty)
+                      if (template.ageGroups.isNotEmpty) ...[
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
@@ -515,6 +515,102 @@ class _TemplateBrowserScreenState extends State<TemplateBrowserScreen> {
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                             ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+
+                      // Game name tag (for BubblePop Grammar templates)
+                      if (_isBubblePopGrammarTemplate(template.id)) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.games,
+                                size: 12,
+                                color: Colors.blue,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'BubblePop Grammar',
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+
+                      // Game name tag (for Seashell Quiz templates)
+                      if (_isSeashellQuizTemplate(template.id)) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.teal.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.games,
+                                size: 12,
+                                color: Colors.teal,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Seashell Game',
+                                style: TextStyle(
+                                  color: Colors.teal,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+
+                      // Game name tag (for FishTank Quiz templates)
+                      if (_isFishTankQuizTemplate(template.id))
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.cyan.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.games,
+                                size: 12,
+                                color: Colors.cyan,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'FishTank Game',
+                                style: TextStyle(
+                                  color: Colors.cyan,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                     ],
@@ -661,5 +757,38 @@ class _TemplateBrowserScreenState extends State<TemplateBrowserScreen> {
       ),
       child: Icon(icon, size: 50, color: iconColor),
     );
+  }
+
+  /// Check if template is a BubblePop Grammar template
+  bool _isBubblePopGrammarTemplate(String templateId) {
+    const bubblePopGrammarTemplates = [
+      'english_junior_001_spelling_suffixes_ing',
+      'english_junior_003_vocabulary_plurals_f_to_v',
+      'english_junior_004_adverbs_how',
+      'english_junior_007_spelling_ed_endings',
+    ];
+    return bubblePopGrammarTemplates.contains(templateId);
+  }
+
+  /// Check if template is a Seashell Quiz template
+  bool _isSeashellQuizTemplate(String templateId) {
+    const seashellQuizTemplates = [
+      'english_junior_002_grammar_adverbs',
+      'english_junior_005_language_strands_oral',
+      'english_junior_006_comprehension_fact',
+    ];
+    return seashellQuizTemplates.contains(templateId);
+  }
+
+  /// Check if template is a FishTank Quiz template
+  bool _isFishTankQuizTemplate(String templateId) {
+    const fishTankQuizTemplates = [
+      'math_junior_003_addition_basic',
+      'math_junior_004_subtraction_basic',
+      'math_junior_008_data_handling',
+      'math_junior_011_shapes_triangle',
+      'math_junior_012_comparing_numbers',
+    ];
+    return fishTankQuizTemplates.contains(templateId);
   }
 }

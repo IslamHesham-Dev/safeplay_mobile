@@ -1089,7 +1089,8 @@ class QuestionTemplatePopulator {
         'prompt': 'To change LIVE to "living", what is the new ending?',
         'options': ['ing', 'liv'],
         'correctAnswer': 'ing',
-        'explanation': 'Drop the silent "e" in live and add -ing to form living.',
+        'explanation':
+            'Drop the silent "e" in live and add -ing to form living.',
         'hint': 'Remove the letter e before you add the new ending.',
         'points': 20,
         'skills': ['spelling', 'suffixes', 'word-formation'],
@@ -1248,35 +1249,35 @@ class QuestionTemplatePopulator {
         },
       },
 
-      // Question 6: Comprehension (Fact)
+      // Question 6: Vocabulary - Synonyms
       {
         'id': 'english_junior_006_comprehension_fact',
-        'title': 'Reading Comprehension - Fact or Fiction',
-        'type': 'trueFalse',
-        'prompt':
-            'True or False: In the poem My Football Counting Rhyme, the boy kicked the football six times in the kitchen.',
-        'options': ['True', 'False'],
-        'correctAnswer': 'False',
+        'title': 'Vocabulary - Synonyms',
+        'type': 'multipleChoice',
+        'prompt': 'Which word means the same as "happy"?',
+        'options': ['Sad', 'Glad', 'Angry', 'Tired'],
+        'correctAnswer': 'Glad',
         'explanation':
-            'This is a false statement. You need to read the poem carefully to find the correct information about where and how many times the boy kicked the football.',
-        'hint': 'Read the poem carefully and check the facts.',
+            'Glad means the same as happy - they are synonyms. Both words describe a feeling of joy or pleasure.',
+        'hint': 'Think of a word that means the same as happy.',
         'points': 15,
-        'skills': ['comprehension', 'reading', 'fact-checking'],
+        'skills': ['vocabulary', 'synonyms', 'word-meaning'],
         'subjects': ['reading'],
         'ageGroups': ['junior'],
-        'topics': ['Comprehension'],
-        'difficultyLevel': 'medium',
-        'estimatedTimeSeconds': 40,
-        'gameTypes': ['seashellQuiz', 'storySequencer'],
+        'topics': ['Vocabulary', 'Synonyms'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 30,
+        'gameTypes': ['seashellQuiz', 'memoryMatch'],
         'recommendedGameType': 'seashellQuiz',
         'isActive': true,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
         'metadata': {
           'citation': 'PYP 1/2',
-          'learningObjective': 'Distinguish fact from fiction in reading',
-          'prerequisiteSkills': ['basic-reading'],
-          'followUpSkills': ['inference'],
+          'learningObjective':
+              'Identify synonyms - words with similar meanings',
+          'prerequisiteSkills': ['basic-vocabulary'],
+          'followUpSkills': ['antonyms'],
         },
       },
 
@@ -2208,5 +2209,48 @@ class QuestionTemplatePopulator {
         },
       },
     ];
+  }
+
+  /// Update a specific question template in Firestore
+  Future<void> updateQuestionTemplate(String templateId) async {
+    try {
+      debugPrint('🔄 Updating question template: $templateId');
+
+      // Get the current document to preserve createdAt
+      final docRef = _firestore.collection(collectionName).doc(templateId);
+      final docSnapshot = await docRef.get();
+
+      if (!docSnapshot.exists) {
+        throw Exception('Template $templateId does not exist in Firestore');
+      }
+
+      // Get the updated question data from the junior English questions
+      final juniorQuestions = _createJuniorEnglishQuestions();
+      final updatedQuestion = juniorQuestions.firstWhere(
+        (q) => q['id'] == templateId,
+        orElse: () => throw Exception('Template $templateId not found in code'),
+      );
+
+      // Remove the id from the data (it's the document ID)
+      final updateData = Map<String, dynamic>.from(updatedQuestion);
+      updateData.remove('id');
+
+      // Preserve createdAt if it exists
+      final existingData = docSnapshot.data();
+      if (existingData != null && existingData.containsKey('createdAt')) {
+        updateData['createdAt'] = existingData['createdAt'];
+      }
+
+      // Always update updatedAt
+      updateData['updatedAt'] = FieldValue.serverTimestamp();
+
+      // Update the document in Firestore
+      await docRef.set(updateData, SetOptions(merge: true));
+
+      debugPrint('✅ Successfully updated question template: $templateId');
+    } catch (e) {
+      debugPrint('❌ Error updating question template: $e');
+      rethrow;
+    }
   }
 }

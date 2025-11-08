@@ -225,9 +225,11 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
   }
 
   void _showSuccessFeedback(int pointsEarned) {
-    // For bubble pop grammar game, coin animation is handled in the game widget itself
+    // For bubble pop grammar, seashell quiz, and fish tank quiz games, coin animation is handled in the game widget itself
     // So we skip the dialog animation here to avoid duplicate animations
-    if (widget.gameType == GameType.bubblePopGrammar) {
+    if (widget.gameType == GameType.bubblePopGrammar ||
+        widget.gameType == GameType.seashellQuiz ||
+        widget.gameType == GameType.fishTankQuiz) {
       // No message needed - coin animation handles the feedback
       return;
     } else {
@@ -568,6 +570,14 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
         return FishTankQuizGame(
           question: question,
           onAnswerSubmitted: _onAnswerSubmitted,
+          currentScore: _score,
+          coinCounterKey: _coinCounterKey,
+          onComplete: () {
+            // When final question is answered, complete the game
+            if (_currentQuestionIndex >= widget.questions.length - 1) {
+              _completeGame();
+            }
+          },
         );
       case GameType.memoryMatch:
         return MemoryMatchGame(
