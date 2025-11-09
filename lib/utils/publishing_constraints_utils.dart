@@ -20,17 +20,15 @@ class PublishingConstraintsUtils {
         color: Colors.blue,
       ),
 
-      // Duration constraints
+      // Game limit constraints
       ConstraintInfo(
-        category: 'Duration Guidelines',
+        category: 'Game Limits',
         constraints: [
-          'Activity duration: 1-30 minutes total',
-          '⚠️ Note: Duration excludes game/question play time',
-          'Easy difficulty: Maximum 10 minutes',
-          'Medium difficulty: Maximum 20 minutes',
-          'Hard difficulty: Maximum 30 minutes',
+          'Maximum 10 games per activity',
+          'Each game can contain multiple questions',
+          'Activity duration is calculated based on number of games',
         ],
-        icon: Icons.timer,
+        icon: Icons.games,
         color: Colors.orange,
       ),
 
@@ -87,18 +85,8 @@ class PublishingConstraintsUtils {
       }
     }
 
-    // Duration constraints based on difficulty
-    switch (difficulty) {
-      case Difficulty.easy:
-        constraints.add('Easy activities: Maximum 10 minutes');
-        break;
-      case Difficulty.medium:
-        constraints.add('Medium activities: Maximum 20 minutes');
-        break;
-      case Difficulty.hard:
-        constraints.add('Hard activities: Maximum 30 minutes');
-        break;
-    }
+    // Game limit constraints
+    constraints.add('Maximum 10 games per activity');
 
     return constraints;
   }

@@ -53,6 +53,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
 
   // Audio player for background music
   final AudioPlayer _audioPlayer = AudioPlayer();
+  // Audio player for click sounds
+  final AudioPlayer _clickSoundPlayer = AudioPlayer();
 
   String _sanitizeGender(String? gender) {
     if (gender == null) return 'female';
@@ -105,11 +107,21 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     }
   }
 
+  Future<void> _playClickSound() async {
+    try {
+      await _clickSoundPlayer
+          .play(AssetSource('audio/sound effects/sound effects/click.mp3'));
+    } catch (e) {
+      debugPrint('Error playing click sound: $e');
+    }
+  }
+
   @override
   void dispose() {
     _animationController.dispose();
     _stopBackgroundMusic();
     _audioPlayer.dispose();
+    _clickSoundPlayer.dispose();
     super.dispose();
   }
 
@@ -877,7 +889,10 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     required VoidCallback onTap,
   }) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        _playClickSound();
+        onTap();
+      },
       child: Container(
         decoration: BoxDecoration(
           color: color.withOpacity(0.2),
@@ -954,6 +969,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   }
 
   void _navigateToCategory(String category) {
+    _playClickSound();
     switch (category) {
       case 'Math Adventures':
         Navigator.of(context).push(
@@ -1013,6 +1029,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   }
 
   void _handleBottomNavTap(int index) {
+    _playClickSound();
     setState(() {
       // Map: 0 = Home, 1 = Notifications (Achievements), 2 = Rewards
       _currentBottomNavIndex = index;
@@ -1147,7 +1164,10 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
+                  onTap: () {
+                    _playClickSound();
+                    Navigator.of(context).pop();
+                  },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: JuniorTheme.spacingMedium,
@@ -1172,6 +1192,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                   onTap: () {
                     Navigator.of(context).pop();
                     // Start the task
+                    _playClickSound();
                     _startTask(task);
                   },
                   child: Container(
@@ -1253,6 +1274,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
 
   /// Handle logout process with confirmation for bright children
   Future<void> _handleLogout() async {
+    _playClickSound();
     // Show confirmation dialog to prevent accidental logout
     final confirmed = await showDialog<bool>(
       context: context,
@@ -1282,7 +1304,10 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
         actions: [
           // Cancel button (large touch target)
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () {
+              _playClickSound();
+              Navigator.of(context).pop(false);
+            },
             style: TextButton.styleFrom(
               minimumSize: const Size(80, 48), // Large touch target
               padding: const EdgeInsets.symmetric(
@@ -1299,7 +1324,10 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
           ),
           // Confirm button (large touch target)
           ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () {
+              _playClickSound();
+              Navigator.of(context).pop(true);
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: JuniorTheme.primaryOrange,
               minimumSize: const Size(100, 48), // Large touch target

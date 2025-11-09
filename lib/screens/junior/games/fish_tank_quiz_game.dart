@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:math' show Random;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import '../../../design_system/junior_theme.dart';
 import '../../../models/activity.dart';
@@ -39,6 +40,7 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
   late final AnimationController _celebrationController;
   late final AnimationController _tooltipController;
   late final AnimationController _scubaBobController;
+  final AudioPlayer _soundPlayer = AudioPlayer();
   String? _selectedOption;
   String? _shakingOption;
   String? _tooltipOption;
@@ -146,6 +148,7 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
     _celebrationController.dispose();
     _tooltipController.dispose();
     _scubaBobController.dispose();
+    _soundPlayer.dispose();
     super.dispose();
   }
 
@@ -200,6 +203,9 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
 
     if (isCorrect) {
       SystemSound.play(SystemSoundType.click);
+      // Play correct answer sound
+      _soundPlayer.play(AssetSource(
+          'audio/sound effects/sound effects/correct question.wav'));
       setState(() {
         _selectedOption = option;
         _answerLocked = true;

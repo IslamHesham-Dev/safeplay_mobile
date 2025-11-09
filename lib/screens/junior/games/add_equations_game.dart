@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:math' show Random;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import '../../../design_system/junior_theme.dart';
 import '../../../models/activity.dart';
@@ -36,9 +37,9 @@ class _AddEquationsGameState extends State<AddEquationsGame>
   late final AnimationController _celebrationController;
   late final AnimationController _shakeController;
   late final AnimationController _tooltipController;
-  late final AnimationController _scubaBobController;
   late final AnimationController _dragController;
   late final AnimationController _glowController;
+  final AudioPlayer _soundPlayer = AudioPlayer();
 
   String? _selectedAnswer;
   String? _draggedNumber;
@@ -174,10 +175,6 @@ class _AddEquationsGameState extends State<AddEquationsGame>
       vsync: this,
       duration: const Duration(milliseconds: 1000),
     );
-    _scubaBobController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2000),
-    )..repeat(reverse: true);
     _dragController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 200),
@@ -240,9 +237,9 @@ class _AddEquationsGameState extends State<AddEquationsGame>
     _celebrationController.dispose();
     _shakeController.dispose();
     _tooltipController.dispose();
-    _scubaBobController.dispose();
     _dragController.dispose();
     _glowController.dispose();
+    _soundPlayer.dispose();
     super.dispose();
   }
 
@@ -299,6 +296,9 @@ class _AddEquationsGameState extends State<AddEquationsGame>
     if (isCorrect) {
       SystemSound.play(SystemSoundType.click);
       HapticFeedback.lightImpact();
+      // Play correct answer sound
+      _soundPlayer.play(AssetSource(
+          'audio/sound effects/sound effects/correct question.wav'));
       setState(() {
         _selectedAnswer = number;
         _answerLocked = true;
@@ -624,59 +624,26 @@ class _AddEquationsGameState extends State<AddEquationsGame>
                 ),
               ),
 
-              // Scuba character at bottom
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: AnimatedBuilder(
-                  animation: _scubaBobController,
-                  builder: (context, child) {
-                    final bobOffset =
-                        math.sin(_scubaBobController.value * math.pi * 2) * 3.0;
-                    return Transform.translate(
-                      offset: Offset(0.0, bobOffset),
-                      child: child,
-                    );
-                  },
-                  child: ScaleTransition(
-                    scale: Tween<double>(begin: 1.0, end: 1.15).animate(
-                      CurvedAnimation(
-                        parent: _celebrationController,
-                        curve: Curves.elasticOut,
-                      ),
+              // XP text at bottom - centered like other games
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withAlpha(64), // 0.25 alpha
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white38, width: 2),
-                          ),
-                          child: const Text(
-                            '🤿',
-                            style: TextStyle(fontSize: 40),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF023E8A).withAlpha(242),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            'Earn ${_earnedPoints} XP!',
-                            style: JuniorTheme.bodyMedium.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      _answerLocked
+                          ? '+$_earnedPoints XP!'
+                          : 'Earn +$_earnedPoints XP',
+                      style: JuniorTheme.bodySmall.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                 ),

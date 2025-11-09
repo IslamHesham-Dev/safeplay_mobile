@@ -802,6 +802,11 @@ class _TemplateBrowserScreenState extends State<TemplateBrowserScreen> {
       'english_junior_003_vocabulary_plurals_f_to_v',
       'english_junior_004_adverbs_how',
       'english_junior_007_spelling_ed_endings',
+      'english_junior_008_grammar_nouns',
+      'english_junior_009_grammar_verbs',
+      'english_junior_010_grammar_adjectives',
+      'english_junior_011_grammar_pronouns',
+      'english_junior_012_grammar_plurals',
     ];
     return bubblePopGrammarTemplates.contains(templateId);
   }
@@ -812,6 +817,11 @@ class _TemplateBrowserScreenState extends State<TemplateBrowserScreen> {
       'english_junior_002_grammar_adverbs',
       'english_junior_005_language_strands_oral',
       'english_junior_006_comprehension_fact',
+      'english_junior_013_vocabulary_antonyms',
+      'english_junior_014_vocabulary_rhyming',
+      'english_junior_015_vocabulary_categories',
+      'english_junior_016_vocabulary_compound_words',
+      'english_junior_017_vocabulary_sight_words',
     ];
     return seashellQuizTemplates.contains(templateId);
   }
@@ -824,6 +834,11 @@ class _TemplateBrowserScreenState extends State<TemplateBrowserScreen> {
       'math_junior_008_data_handling',
       'math_junior_011_shapes_triangle',
       'math_junior_012_comparing_numbers',
+      'math_junior_017_addition_within_20',
+      'math_junior_018_subtraction_within_20',
+      'math_junior_019_number_comparison',
+      'math_junior_020_place_value_tens',
+      'math_junior_021_doubles_facts',
     ];
     return fishTankQuizTemplates.contains(templateId);
   }

@@ -98,3 +98,7 @@ flutter:
     - assets/audio/phonics/
     - assets/audio/first.mp3
     - assets/audio/third.mp3
+    - assets/audio/sound effects/sound effects/activity completed.wav
+    - assets/audio/sound effects/sound effects/back to dashboard.wav
+    - assets/audio/sound effects/sound effects/click.mp3
+    - assets/audio/sound effects/sound effects/correct question.wav

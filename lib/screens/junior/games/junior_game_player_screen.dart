@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'dart:math' as math;
 
 import '../../../design_system/junior_theme.dart';
@@ -48,6 +49,7 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
   int _currentQuestionIndex = 0;
   int _score = 0;
   int _totalPoints = 0;
+  final AudioPlayer _soundPlayer = AudioPlayer();
   bool _gameCompleted = false;
   Map<String, dynamic> _answers = {};
   String? _sessionId;
@@ -225,6 +227,20 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
     _showCompletionCelebration();
   }
 
+  Future<void> _playSound(String assetPath) async {
+    try {
+      await _soundPlayer.play(AssetSource(assetPath));
+    } catch (e) {
+      debugPrint('Error playing sound $assetPath: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _soundPlayer.dispose();
+    super.dispose();
+  }
+
   void _showSuccessFeedback(int pointsEarned) {
     // For bubble pop grammar, seashell quiz, fish tank quiz, and add equations games, coin animation is handled in the game widget itself
     // So we skip the dialog animation here to avoid duplicate animations
@@ -291,6 +307,8 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
   }
 
   void _showCompletionCelebration() {
+    // Play activity completed sound
+    _playSound('audio/sound effects/sound effects/activity completed.wav');
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -450,8 +468,14 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
                   const SizedBox(height: JuniorTheme.spacingLarge),
                   // Back button
                   ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).popUntil((route) => route.isFirst);
+                    onPressed: () async {
+                      // Play back to dashboard sound
+                      await _playSound(
+                          'audio/sound effects/sound effects/back to dashboard.wav');
+                      if (mounted) {
+                        Navigator.of(context)
+                            .popUntil((route) => route.isFirst);
+                      }
                     },
                     icon: const Icon(Icons.home, color: Colors.white),
                     label: const Text(

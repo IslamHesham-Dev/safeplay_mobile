@@ -329,6 +329,50 @@ class _PopulateQuestionsScreenState extends State<PopulateQuestionsScreen> {
     }
   }
 
+  Future<void> _populateAdditionalGameQuestions() async {
+    setState(() {
+      _populating = true;
+      _status = 'Starting additional game questions population...';
+      _questionsAdded = 0;
+    });
+
+    try {
+      await _populator.populateAdditionalGameQuestions();
+
+      setState(() {
+        _status = '✅ Successfully populated additional game questions!';
+        _questionsAdded = 15; // 5 BubblePop + 5 FishTank + 5 Seashell
+        _populating = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Successfully added $_questionsAdded additional game question templates!'),
+            backgroundColor: SafePlayColors.success,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _status = '❌ Error: $e';
+        _populating = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error populating additional game questions: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -759,6 +803,43 @@ class _PopulateQuestionsScreenState extends State<PopulateQuestionsScreen> {
                           foregroundColor: Colors.blue,
                           side: const BorderSide(color: Colors.blue, width: 2),
                           padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _populating
+                            ? null
+                            : _populateAdditionalGameQuestions,
+                        icon: _populating
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
+                                ),
+                              )
+                            : const Icon(Icons.games),
+                        label: Text(
+                          _populating
+                              ? 'Populating...'
+                              : 'Populate Additional Game Questions (15)',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.purple,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),

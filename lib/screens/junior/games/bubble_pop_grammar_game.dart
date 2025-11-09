@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:math' show Random;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import '../../../design_system/junior_theme.dart';
 import '../../../models/activity.dart';
@@ -38,6 +39,7 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
   late final AnimationController _shakeController;
   late final AnimationController _scubaBobController;
   late final AnimationController _tooltipController;
+  final AudioPlayer _soundPlayer = AudioPlayer();
   final Map<String, Offset> _bubblePositions = {};
   String? _selectedOption;
   String? _shakingOption;
@@ -143,6 +145,7 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
     _shakeController.dispose();
     _scubaBobController.dispose();
     _tooltipController.dispose();
+    _soundPlayer.dispose();
     super.dispose();
   }
 
@@ -155,6 +158,9 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
 
     if (isCorrect) {
       SystemSound.play(SystemSoundType.click);
+      // Play correct answer sound
+      _soundPlayer.play(AssetSource(
+          'audio/sound effects/sound effects/correct question.wav'));
       setState(() {
         _selectedOption = option;
         _answerLocked = true;

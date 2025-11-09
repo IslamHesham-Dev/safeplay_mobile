@@ -502,188 +502,104 @@ class _ActivityBuilderScreenState extends State<ActivityBuilderScreen>
 
   /// Show constraints dialog
   void _showConstraintsDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Container(
-          constraints: const BoxConstraints(maxHeight: 600),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header - Light and friendly
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      SafePlayColors.brandTeal500.withOpacity(0.9),
-                      SafePlayColors.brandTeal500,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child:
-                          const Icon(Icons.rule, color: Colors.white, size: 24),
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text(
-                        'Publishing Guidelines',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+    // Show constraints as a full-screen page instead of a dialog
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(
+            title: const Text('Publishing Guidelines'),
+            backgroundColor: SafePlayColors.brandTeal500,
+            foregroundColor: Colors.white,
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: PublishingConstraintsUtils.getAllConstraints()
+                  .map((constraint) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Card(
+                    elevation: 0,
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: constraint.color.withOpacity(0.2),
+                        width: 1,
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Content - Light background with cards
-              Expanded(
-                child: Container(
-                  color: Colors.grey[50],
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: PublishingConstraintsUtils.getAllConstraints()
-                          .map((constraint) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: Card(
-                            elevation: 0,
-                            color: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: BorderSide(
-                                color: constraint.color.withOpacity(0.2),
-                                width: 1,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: constraint.color.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  constraint.icon,
+                                  color: constraint.color,
+                                  size: 20,
+                                ),
                               ),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  constraint.category,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: Colors.grey[800],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          ...constraint.constraints.map((item) {
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.only(left: 36, bottom: 8),
+                              child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color:
-                                              constraint.color.withOpacity(0.1),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        child: Icon(
-                                          constraint.icon,
-                                          color: constraint.color,
-                                          size: 20,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
-                                          constraint.category,
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                            color: Colors.grey[800],
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                                  Container(
+                                    margin: const EdgeInsets.only(top: 6),
+                                    width: 6,
+                                    height: 6,
+                                    decoration: BoxDecoration(
+                                      color: constraint.color.withOpacity(0.6),
+                                      shape: BoxShape.circle,
+                                    ),
                                   ),
-                                  const SizedBox(height: 12),
-                                  ...constraint.constraints.map((item) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(
-                                          left: 36, bottom: 8),
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Container(
-                                            margin:
-                                                const EdgeInsets.only(top: 6),
-                                            width: 6,
-                                            height: 6,
-                                            decoration: BoxDecoration(
-                                              color: constraint.color
-                                                  .withOpacity(0.6),
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 10),
-                                          Expanded(
-                                            child: Text(
-                                              item,
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.grey[700],
-                                                height: 1.5,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      item,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[700],
+                                        height: 1.5,
                                       ),
-                                    );
-                                  }),
+                                    ),
+                                  ),
                                 ],
                               ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                            );
+                          }),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-
-              // Close button - Light background
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(20),
-                  ),
-                ),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: SafePlayColors.brandTeal500,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    child: const Text('Got it'),
-                  ),
-                ),
-              ),
-            ],
+                );
+              }).toList(),
+            ),
           ),
         ),
       ),
