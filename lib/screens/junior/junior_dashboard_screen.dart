@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
 import '../../providers/auth_provider.dart';
 import '../../models/user_profile.dart';
 import '../../models/user_type.dart';
@@ -16,6 +19,7 @@ import '../../widgets/junior/junior_confetti.dart';
 import '../../widgets/question_template_exporter.dart';
 import '../../services/junior_games_service.dart';
 import '../../services/junior_game_launcher.dart';
+import '../../services/simple_template_service.dart';
 import '../../navigation/route_names.dart';
 import 'games/number_hunt_games.dart';
 import 'games/koala_jumps_games.dart';
@@ -40,6 +44,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   late final Animation<double> _fadeAnimation;
   final JuniorGamesService _gamesService = JuniorGamesService();
   final JuniorGameLauncher _gameLauncher = JuniorGameLauncher();
+  final SimpleTemplateService _templateService = SimpleTemplateService();
 
   List<Lesson> _todaysTasks = [];
   List<Lesson> _completedTasks = [];
@@ -349,26 +354,29 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
               clipper: NotchedDividerClipper(),
               child: CustomPaint(
                 painter: NotchedWhitePainter(),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.only(
-                    left: JuniorTheme.spacingMedium,
-                    right: JuniorTheme.spacingMedium,
-                    top: 80, // Start below notched divider
-                    bottom: 100, // Extra padding for floating nav bar
-                  ),
-                  child: Column(
-                    children: [
-                      // GREETING (below background section, left-aligned)
-                      if (_currentChild != null) ...[
-                        Padding(
-                          padding: const EdgeInsets.only(
-                              left: 16, right: 32, top: 12, bottom: 18),
-                          child: _buildWelcomeMessage(_currentChild!.name),
-                        ),
+                child: RefreshIndicator(
+                  onRefresh: _loadDashboardData,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(
+                      left: JuniorTheme.spacingMedium,
+                      right: JuniorTheme.spacingMedium,
+                      top: 80, // Start below notched divider
+                      bottom: 100, // Extra padding for floating nav bar
+                    ),
+                    child: Column(
+                      children: [
+                        // GREETING (below background section, left-aligned)
+                        if (_currentChild != null) ...[
+                          Padding(
+                            padding: const EdgeInsets.only(
+                                left: 16, right: 32, top: 12, bottom: 18),
+                            child: _buildWelcomeMessage(_currentChild!.name),
+                          ),
+                        ],
+                        // BODY CONTENT (varies by navigation index)
+                        _buildCurrentScreen(),
                       ],
-                      // BODY CONTENT (varies by navigation index)
-                      _buildCurrentScreen(),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -618,6 +626,113 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   Widget _buildAchievementsScreen() {
     // Empty notification/achievements page
     return const SizedBox.shrink();
+  }
+
+  Future<void> _exportQuestionsFromDatabase() async {
+    try {
+      // Show loading dialog
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      }
+
+      // Use SimpleTemplateService to fetch templates (handles permissions better)
+      final templates = await _templateService.getAllTemplates();
+
+      if (templates.isEmpty) {
+        if (mounted) {
+          Navigator.of(context).pop(); // Close loading dialog
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No questions found in the database'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Convert templates to JSON-serializable format
+      final List<Map<String, dynamic>> questionsData = [];
+
+      for (final template in templates) {
+        // Convert template to JSON
+        final templateJson = template.toJson();
+
+        // Ensure id is included
+        final convertedData = <String, dynamic>{
+          'id': template.id,
+          ...templateJson,
+        };
+
+        questionsData.add(convertedData);
+      }
+
+      // Create the export object
+      final exportData = {
+        'metadata': {
+          'exportDate': DateTime.now().toIso8601String(),
+          'totalTemplates': questionsData.length,
+          'source': 'curriculumQuestionTemplates',
+        },
+        'templates': questionsData,
+      };
+
+      // Convert to JSON with pretty printing
+      final jsonString = JsonEncoder.withIndent('  ').convert(exportData);
+
+      // Copy to clipboard
+      await Clipboard.setData(ClipboardData(text: jsonString));
+
+      if (mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '✅ Exported ${questionsData.length} questions! JSON copied to clipboard.',
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } on FirebaseException catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+        String errorMessage = 'Error exporting questions';
+        if (e.code == 'permission-denied') {
+          errorMessage =
+              'Permission denied. You need to be logged in as a teacher to export questions.';
+        } else {
+          errorMessage = 'Error: ${e.message ?? e.code}';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ $errorMessage'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+      debugPrint('Error exporting questions: $e');
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error exporting questions: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+      debugPrint('Error exporting questions: $e');
+    }
   }
 
   Widget _buildAchievementBadges() {

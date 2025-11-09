@@ -12,6 +12,7 @@ enum GameType {
   bubblePopGrammar,
   seashellQuiz,
   fishTankQuiz,
+  addEquations,
 
   // Bright Minds Games (9-12 years)
   fractionNavigator,
@@ -40,6 +41,8 @@ enum GameType {
         return 'Seashell Quiz';
       case GameType.fishTankQuiz:
         return 'Fish Tank Quiz';
+      case GameType.addEquations:
+        return 'Add Equations';
       case GameType.fractionNavigator:
         return 'Fraction Navigator';
       case GameType.inverseOperationChain:
@@ -73,6 +76,8 @@ enum GameType {
         return 'Answer multiple-choice questions with animated seashells';
       case GameType.fishTankQuiz:
         return 'Swim with answer fish to solve math challenges';
+      case GameType.addEquations:
+        return 'Drag numbers to complete addition and subtraction equations';
       case GameType.fractionNavigator:
         return 'Order and convert fractions, decimals, and percentages';
       case GameType.inverseOperationChain:
@@ -99,6 +104,7 @@ enum GameType {
       case GameType.bubblePopGrammar:
       case GameType.seashellQuiz:
       case GameType.fishTankQuiz:
+      case GameType.addEquations:
         return [AgeGroup.junior];
       case GameType.fractionNavigator:
       case GameType.inverseOperationChain:
@@ -125,6 +131,7 @@ enum GameType {
       case GameType.patternBuilder:
         return [ActivitySubject.math, ActivitySubject.reading];
       case GameType.fishTankQuiz:
+      case GameType.addEquations:
         return [ActivitySubject.math];
       case GameType.bubblePopGrammar:
       case GameType.seashellQuiz:
@@ -549,8 +556,3 @@ class GameResponse extends Equatable {
         responseMetadata,
       ];
 }
-
-
-
-
-

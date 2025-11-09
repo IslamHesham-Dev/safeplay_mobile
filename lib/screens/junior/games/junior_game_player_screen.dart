@@ -22,6 +22,7 @@ import 'story_sequencer_game.dart';
 import 'bubble_pop_grammar_game.dart';
 import 'seashell_quiz_game.dart';
 import 'fish_tank_quiz_game.dart';
+import 'add_equations_game.dart';
 
 /// Main game player screen that routes to specific game implementations
 class JuniorGamePlayerScreen extends StatefulWidget {
@@ -225,11 +226,12 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
   }
 
   void _showSuccessFeedback(int pointsEarned) {
-    // For bubble pop grammar, seashell quiz, and fish tank quiz games, coin animation is handled in the game widget itself
+    // For bubble pop grammar, seashell quiz, fish tank quiz, and add equations games, coin animation is handled in the game widget itself
     // So we skip the dialog animation here to avoid duplicate animations
     if (widget.gameType == GameType.bubblePopGrammar ||
         widget.gameType == GameType.seashellQuiz ||
-        widget.gameType == GameType.fishTankQuiz) {
+        widget.gameType == GameType.fishTankQuiz ||
+        widget.gameType == GameType.addEquations) {
       // No message needed - coin animation handles the feedback
       return;
     } else {
@@ -568,6 +570,19 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
         );
       case GameType.fishTankQuiz:
         return FishTankQuizGame(
+          question: question,
+          onAnswerSubmitted: _onAnswerSubmitted,
+          currentScore: _score,
+          coinCounterKey: _coinCounterKey,
+          onComplete: () {
+            // When final question is answered, complete the game
+            if (_currentQuestionIndex >= widget.questions.length - 1) {
+              _completeGame();
+            }
+          },
+        );
+      case GameType.addEquations:
+        return AddEquationsGame(
           question: question,
           onAnswerSubmitted: _onAnswerSubmitted,
           currentScore: _score,

@@ -414,6 +414,39 @@ class JuniorGameLauncher {
             points: 10,
           ),
         ];
+      case GameType.addEquations:
+        return [
+          ActivityQuestion(
+            id: 'demo_q1',
+            type: QuestionType.dragDrop,
+            question: '_ + 6 = 9',
+            options: ['2', '1', '3'],
+            correctAnswer: '3',
+            explanation: 'Three plus six equals nine.',
+            hint: 'What number plus 6 makes 9?',
+            points: 20,
+          ),
+          ActivityQuestion(
+            id: 'demo_q2',
+            type: QuestionType.dragDrop,
+            question: '4 + 4 = _',
+            options: ['7', '9', '8'],
+            correctAnswer: '8',
+            explanation: 'Four plus four equals eight.',
+            hint: 'Count all the items.',
+            points: 20,
+          ),
+          ActivityQuestion(
+            id: 'demo_q3',
+            type: QuestionType.dragDrop,
+            question: '11 + _ = 14',
+            options: ['2', '3', '4'],
+            correctAnswer: '3',
+            explanation: 'Eleven plus three equals fourteen.',
+            hint: 'Start at 11 and count up to 14.',
+            points: 25,
+          ),
+        ];
 
       case GameType.memoryMatch:
         return [

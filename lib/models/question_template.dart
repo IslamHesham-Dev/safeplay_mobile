@@ -18,6 +18,8 @@ class QuestionTemplate extends Equatable {
   final List<String> skills; // skills tags e.g., rounding, conjunctions
   final List<AgeGroup> ageGroups; // age groups this template is suitable for
   final List<ActivitySubject> subjects; // subjects this template covers
+  final List<String> gameTypes; // supported games for this template
+  final String? recommendedGameType;
 
   const QuestionTemplate({
     required this.id,
@@ -33,6 +35,8 @@ class QuestionTemplate extends Equatable {
     this.skills = const [],
     this.ageGroups = const [],
     this.subjects = const [],
+    this.gameTypes = const [],
+    this.recommendedGameType,
   });
 
   factory QuestionTemplate.fromJson(Map<String, dynamic> json) {
@@ -69,6 +73,20 @@ class QuestionTemplate extends Equatable {
               .whereType<ActivitySubject>()
               .toList()
           : const <ActivitySubject>[],
+      gameTypes: (json['gameTypes'] is List)
+          ? (json['gameTypes'] as List)
+              .map((e) => e?.toString())
+              .whereType<String>()
+              .map((e) => e.trim())
+              .where((e) => e.isNotEmpty)
+              .toList()
+          : const <String>[],
+      recommendedGameType: (() {
+        final value = json['recommendedGameType'];
+        if (value == null) return null;
+        final normalized = value.toString().trim();
+        return normalized.isEmpty ? null : normalized;
+      })(),
     );
   }
 
@@ -87,6 +105,8 @@ class QuestionTemplate extends Equatable {
       'skills': skills,
       'ageGroups': ageGroups.map((g) => g.name).toList(),
       'subjects': subjects.map((s) => s.name).toList(),
+      'gameTypes': gameTypes,
+      'recommendedGameType': recommendedGameType,
     }..removeWhere((_, v) => v == null);
   }
 
@@ -126,5 +146,7 @@ class QuestionTemplate extends Equatable {
         skills,
         ageGroups,
         subjects,
+        gameTypes,
+        recommendedGameType,
       ];
 }

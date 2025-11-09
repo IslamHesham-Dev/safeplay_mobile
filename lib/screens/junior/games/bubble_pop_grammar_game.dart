@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:math' show Random;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -47,9 +48,9 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
   bool _hasAdvanced = false;
   DateTime _questionStartTime = DateTime.now();
   int _elapsedSeconds = 0;
+  late List<String> _shuffledOptions;
 
-  List<String> get _options =>
-      widget.question.options.map((e) => e.toString()).toList();
+  List<String> get _options => _shuffledOptions;
 
   String get _correctAnswer =>
       widget.question.correctAnswer?.toString().trim() ?? '';
@@ -57,9 +58,15 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
   int get _earnedPoints =>
       widget.question.points > 0 ? widget.question.points : 10;
 
+  void _shuffleOptions() {
+    final options = widget.question.options.map((e) => e.toString()).toList();
+    _shuffledOptions = List<String>.from(options)..shuffle(Random());
+  }
+
   @override
   void initState() {
     super.initState();
+    _shuffleOptions();
     _floatController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 3200),
@@ -97,6 +104,7 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
   }
 
   void _resetQuestion() {
+    _shuffleOptions();
     _questionStartTime = DateTime.now();
     _elapsedSeconds = 0;
     _answerLocked = false;

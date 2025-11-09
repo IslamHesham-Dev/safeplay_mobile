@@ -210,6 +210,9 @@ int _parseDurationMinutes(dynamic value) {
   return _asInt(value);
 }
 
+String _normalizeTagValue(String value) =>
+    value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+
 /// Activity question media bundle.
 class ActivityQuestionMedia extends Equatable {
   final String? imageUrl;
@@ -442,6 +445,16 @@ class Activity extends Equatable {
   });
 
   int get estimatedDuration => durationMinutes;
+
+  bool hasTag(String tag) {
+    if (tag.trim().isEmpty) return false;
+    final normalizedTarget = _normalizeTagValue(tag);
+    return tags.any(
+      (value) => _normalizeTagValue(value) == normalizedTarget,
+    );
+  }
+
+  bool get hasAddEquationsTag => hasTag('addEquations');
 
   factory Activity.fromJson(Map<String, dynamic> json) {
     final subject = ActivitySubject.fromRaw(json['subject']);

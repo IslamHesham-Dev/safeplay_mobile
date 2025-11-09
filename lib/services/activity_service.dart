@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/activity.dart';
+import '../models/game_activity.dart';
 import '../models/user_type.dart';
 import 'offline_storage_service.dart';
 import '../models/question_template.dart';
@@ -165,9 +166,33 @@ class ActivityService {
     }
 
     // Media required if specified by type; ensure alt text when image used
+    // Exception: Add Equations game provides its own visual interface, so media is not required
+    var isAddEquationsGame = activity.hasAddEquationsTag;
+    if (!isAddEquationsGame && activity is GameActivity) {
+      if (activity.gameConfig.gameType == GameType.addEquations) {
+        isAddEquationsGame = true;
+      } else {
+        final metadataGameType = activity.gameMetadata['gameType'] as String?;
+        if (_isAddEquationsGameType(metadataGameType)) {
+          isAddEquationsGame = true;
+        } else {
+          final perQuestionTypes =
+              activity.gameMetadata['gameTypesPerQuestion'];
+          if (perQuestionTypes is List) {
+            for (final type in perQuestionTypes) {
+              if (_isAddEquationsGameType(type?.toString())) {
+                isAddEquationsGame = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
     for (final q in activity.questions) {
       if ((q.type == QuestionType.dragDrop ||
               q.type == QuestionType.matching) &&
+          !isAddEquationsGame && // Skip media requirement for Add Equations game
           q.media.imageUrl == null &&
           q.media.audioUrl == null &&
           q.media.videoUrl == null) {
@@ -777,3 +802,15 @@ class ActivityService {
         .fold<int>(0, (total, question) => total + question.points);
   }
 }
+
+String _normalizeGameTypeFlag(String? value) {
+  if (value == null) return '';
+  var normalized = value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+  if (normalized.startsWith('gametype')) {
+    normalized = normalized.substring('gametype'.length);
+  }
+  return normalized;
+}
+
+bool _isAddEquationsGameType(String? value) =>
+    _normalizeGameTypeFlag(value) == 'addequations';

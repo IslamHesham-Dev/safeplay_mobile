@@ -942,6 +942,11 @@ class _UnifiedChildDashboardScreenState
         return [const Color(0xFFFFE0B2), const Color(0xFFFFB74D)];
       case GameType.fishTankQuiz:
         return [const Color(0xFF4FC3F7), const Color(0xFF0288D1)];
+      case GameType.addEquations:
+        return [
+          const Color(0xFFFFC84C),
+          const Color(0xFFFFB300)
+        ]; // Yellow-orange gradient
       case GameType.dataVisualization:
         return [SafePlayColors.juniorLime, SafePlayColors.brightTeal];
       case GameType.cartesianGrid:
@@ -971,6 +976,8 @@ class _UnifiedChildDashboardScreenState
         return Icons.water_damage;
       case GameType.fishTankQuiz:
         return Icons.set_meal;
+      case GameType.addEquations:
+        return Icons.add_circle_outline;
       case GameType.fractionNavigator:
         return Icons.calculate;
       case GameType.inverseOperationChain:
@@ -1023,6 +1030,10 @@ class _UnifiedChildDashboardScreenState
       case GameType.koalaCounterAdventure:
       case GameType.ordinalDragOrder:
       case GameType.patternBuilder:
+      case GameType.bubblePopGrammar:
+      case GameType.seashellQuiz:
+      case GameType.fishTankQuiz:
+      case GameType.addEquations:
         return JuniorGameWrapper(
           activity: activity,
           onResponse: onResponse,

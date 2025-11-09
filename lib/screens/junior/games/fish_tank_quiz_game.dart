@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:math' show Random;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -49,9 +50,9 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
   DateTime _questionStartTime = DateTime.now();
   int _elapsedSeconds = 0;
   final Map<String, Offset> _fishPositions = {};
+  late List<String> _shuffledOptions;
 
-  List<String> get _options =>
-      widget.question.options.map((e) => e.toString()).toList();
+  List<String> get _options => _shuffledOptions;
 
   String get _correctAnswer =>
       widget.question.correctAnswer?.toString().trim() ?? '';
@@ -59,9 +60,15 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
   int get _earnedPoints =>
       widget.question.points > 0 ? widget.question.points : 10;
 
+  void _shuffleOptions() {
+    final options = widget.question.options.map((e) => e.toString()).toList();
+    _shuffledOptions = List<String>.from(options)..shuffle(Random());
+  }
+
   @override
   void initState() {
     super.initState();
+    _shuffleOptions();
     _mascotController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
@@ -99,6 +106,7 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
   }
 
   void _resetQuestion() {
+    _shuffleOptions();
     _questionStartTime = DateTime.now();
     _elapsedSeconds = 0;
     _answerLocked = false;
@@ -274,8 +282,7 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
       final fishThisRow = math.min(maxPerRow, remaining);
       final rowTotalWidth =
           (fishThisRow * fishWidth) + ((fishThisRow - 1) * spacing);
-      final rowStartX =
-          (areaSize.width - rowTotalWidth) / 2 + horizontalOffset;
+      final rowStartX = (areaSize.width - rowTotalWidth) / 2 + horizontalOffset;
 
       for (int col = 0; col < fishThisRow; col++) {
         final x = rowStartX + (col * (fishWidth + spacing));
@@ -528,7 +535,8 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
                           if (_tooltipOption != null)
                             Positioned(
                               left: _fishPositions[_tooltipOption]?.dx ?? 0,
-                              top: (_fishPositions[_tooltipOption]?.dy ?? 0) - 40,
+                              top: (_fishPositions[_tooltipOption]?.dy ?? 0) -
+                                  40,
                               child: AnimatedBuilder(
                                 animation: _tooltipController,
                                 builder: (context, child) {
@@ -536,7 +544,8 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
                                     opacity: _tooltipController.value < 0.5
                                         ? _tooltipController.value * 2
                                         : 1.0 -
-                                            ((_tooltipController.value - 0.5) * 2),
+                                            ((_tooltipController.value - 0.5) *
+                                                2),
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 12, vertical: 8),

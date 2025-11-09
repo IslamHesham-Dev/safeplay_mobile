@@ -23,6 +23,33 @@ class TemplateMetadataUtils {
     'math_junior_012_comparing_numbers': GameType.fishTankQuiz,
   };
 
+  static String _normalizeGameTypeValue(String value) {
+    var normalized =
+        value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    if (normalized.startsWith('gametype')) {
+      normalized = normalized.substring('gametype'.length);
+    }
+    return normalized;
+  }
+
+  static GameType? _parseGameType(dynamic rawValue) {
+    if (rawValue == null) return null;
+    final normalized = _normalizeGameTypeValue(rawValue.toString());
+    if (normalized.isEmpty) return null;
+
+    for (final gameType in GameType.values) {
+      final normalizedEnumName = _normalizeGameTypeValue(gameType.name);
+      final normalizedDisplayName =
+          _normalizeGameTypeValue(gameType.displayName);
+      if (normalized == normalizedEnumName ||
+          normalized == normalizedDisplayName) {
+        return gameType;
+      }
+    }
+
+    return null;
+  }
+
   /// Extract game types from a template's JSON data
   static List<GameType> getGameTypesFromTemplate(QuestionTemplate template) {
     final forcedGameType = _forcedGameTypes[template.id];
@@ -30,22 +57,18 @@ class TemplateMetadataUtils {
       return [forcedGameType];
     }
 
-    final json = template.toJson();
-    final gameTypesData = json['gameTypes'] as List?;
-
-    if (gameTypesData == null || gameTypesData.isEmpty) {
+    if (template.gameTypes.isEmpty) {
+      if (_isAddEquationsTemplateId(template.id)) {
+        return [GameType.addEquations];
+      }
       return [];
     }
 
     final gameTypes = <GameType>[];
-    for (final gameTypeName in gameTypesData) {
-      try {
-        final gameType = GameType.values.firstWhere(
-          (e) => e.name == gameTypeName.toString(),
-        );
-        gameTypes.add(gameType);
-      } catch (e) {
-        // Ignore unknown game types
+    for (final gameTypeName in template.gameTypes) {
+      final parsed = _parseGameType(gameTypeName);
+      if (parsed != null) {
+        gameTypes.add(parsed);
       }
     }
 
@@ -65,17 +88,14 @@ class TemplateMetadataUtils {
       return gameTypes.first;
     }
 
+    if (_isAddEquationsTemplateId(template.id)) {
+      return GameType.addEquations;
+    }
+
     // Try to infer from recommendedGameType field
-    final json = template.toJson();
-    final recommendedGameTypeName = json['recommendedGameType'] as String?;
-    if (recommendedGameTypeName != null) {
-      try {
-        return GameType.values.firstWhere(
-          (e) => e.name == recommendedGameTypeName,
-        );
-      } catch (e) {
-        // Ignore
-      }
+    final recommended = _parseGameType(template.recommendedGameType);
+    if (recommended != null) {
+      return recommended;
     }
 
     // Infer from subject and question type
@@ -216,5 +236,11 @@ class TemplateMetadataUtils {
     }
 
     return objectives;
+  }
+
+  static bool _isAddEquationsTemplateId(String templateId) {
+    final normalized = templateId.toLowerCase();
+    return normalized.startsWith('math_junior_add_') ||
+        normalized.startsWith('math_junior_sub_');
   }
 }

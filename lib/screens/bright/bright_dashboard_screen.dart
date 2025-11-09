@@ -376,26 +376,29 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
               clipper: NotchedDividerClipper(),
               child: CustomPaint(
                 painter: NotchedWhitePainter(),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.only(
-                    left: JuniorTheme.spacingMedium,
-                    right: JuniorTheme.spacingMedium,
-                    top: 80, // Start below notched divider
-                    bottom: 100, // Extra padding for floating nav bar
-                  ),
-                  child: Column(
-                    children: [
-                      // GREETING (below background section, left-aligned)
-                      if (_currentChild != null) ...[
-                        Padding(
-                          padding: const EdgeInsets.only(
-                              left: 16, right: 32, top: 12, bottom: 18),
-                          child: _buildWelcomeMessage(_currentChild!.name),
-                        ),
+                child: RefreshIndicator(
+                  onRefresh: _loadDashboardData,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(
+                      left: JuniorTheme.spacingMedium,
+                      right: JuniorTheme.spacingMedium,
+                      top: 80, // Start below notched divider
+                      bottom: 100, // Extra padding for floating nav bar
+                    ),
+                    child: Column(
+                      children: [
+                        // GREETING (below background section, left-aligned)
+                        if (_currentChild != null) ...[
+                          Padding(
+                            padding: const EdgeInsets.only(
+                                left: 16, right: 32, top: 12, bottom: 18),
+                            child: _buildWelcomeMessage(_currentChild!.name),
+                          ),
+                        ],
+                        // BODY CONTENT (varies by navigation index)
+                        _buildCurrentScreen(),
                       ],
-                      // BODY CONTENT (varies by navigation index)
-                      _buildCurrentScreen(),
-                    ],
+                    ),
                   ),
                 ),
               ),

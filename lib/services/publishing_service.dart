@@ -37,10 +37,29 @@ class PublishingService {
         return PublishingResult.failure('Activity not found');
       }
 
+      final activityData = activityDoc.data()!;
       final activity = Activity.fromJson({
         'id': activityDoc.id,
-        ...activityDoc.data()!,
+        ...activityData,
       });
+
+      // Check if this is an Add Equations game from gameConfig or metadata
+      bool isAddEquationsGame = activity.hasAddEquationsTag;
+      final gameConfig = activityData['gameConfig'] as Map<String, dynamic>?;
+      if (gameConfig != null) {
+        final gameType = gameConfig['gameType'] as String?;
+        if (_isAddEquationsGameType(gameType)) {
+          isAddEquationsGame = true;
+        }
+      }
+      final gameMetadata =
+          activityData['gameMetadata'] as Map<String, dynamic>?;
+      if (gameMetadata != null) {
+        final gameType = gameMetadata['gameType'] as String?;
+        if (_isAddEquationsGameType(gameType)) {
+          isAddEquationsGame = true;
+        }
+      }
 
       // Verify teacher ownership
       if (activity.createdBy != teacherId) {
@@ -57,7 +76,8 @@ class PublishingService {
       // This prevents invalid activities from being published
 
       // Perform comprehensive safety review
-      final reviewResult = await _performSafetyReview(activity);
+      final reviewResult = await _performSafetyReview(activity,
+          isAddEquationsGame: isAddEquationsGame);
       if (!reviewResult.isValid) {
         // Validation failed - DO NOT publish or UNPUBLISH if already published
         // Ensure activity is set to draft and unpublished
@@ -161,7 +181,10 @@ class PublishingService {
   }
 
   /// Comprehensive safety review for child-safe content
-  Future<SafetyReviewResult> _performSafetyReview(Activity activity) async {
+  Future<SafetyReviewResult> _performSafetyReview(
+    Activity activity, {
+    bool isAddEquationsGame = false,
+  }) async {
     final reasons = <String>[];
 
     // Content validation
@@ -183,6 +206,12 @@ class PublishingService {
       reasons.add('Activity cannot exceed 20 questions');
     }
 
+    // Check if this is an Add Equations game (check tags if not already determined)
+    // Add Equations game provides its own visual interface, so media is not required
+    if (!isAddEquationsGame) {
+      isAddEquationsGame = activity.hasAddEquationsTag;
+    }
+
     // Age-appropriate content checks
     for (int i = 0; i < activity.questions.length; i++) {
       final question = activity.questions[i];
@@ -193,8 +222,10 @@ class PublishingService {
       }
 
       // Interactive questions need media
+      // Exception: Add Equations game provides its own visual interface, so media is not required
       if ((question.type == QuestionType.dragDrop ||
               question.type == QuestionType.matching) &&
+          !isAddEquationsGame && // Skip media requirement for Add Equations game
           question.media.imageUrl == null &&
           question.media.audioUrl == null &&
           question.media.videoUrl == null) {
@@ -540,3 +571,15 @@ class PublishingStats {
     required this.successRate,
   });
 }
+
+String _normalizeGameTypeFlag(String? value) {
+  if (value == null) return '';
+  var normalized = value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+  if (normalized.startsWith('gametype')) {
+    normalized = normalized.substring('gametype'.length);
+  }
+  return normalized;
+}
+
+bool _isAddEquationsGameType(String? value) =>
+    _normalizeGameTypeFlag(value) == 'addequations';

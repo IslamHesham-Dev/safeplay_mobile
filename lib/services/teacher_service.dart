@@ -288,10 +288,29 @@ class TeacherService {
         throw Exception('Activity not found');
       }
 
+      final activityData = activityDoc.data()!;
       final activity = Activity.fromJson({
         'id': activityDoc.id,
-        ...activityDoc.data()!,
+        ...activityData,
       });
+
+      // Check if this is an Add Equations game from gameConfig or metadata
+      bool isAddEquationsGame = activity.hasAddEquationsTag;
+      final gameConfig = activityData['gameConfig'] as Map<String, dynamic>?;
+      if (gameConfig != null) {
+        final gameType = gameConfig['gameType'] as String?;
+        if (_isAddEquationsGameType(gameType)) {
+          isAddEquationsGame = true;
+        }
+      }
+      final gameMetadata =
+          activityData['gameMetadata'] as Map<String, dynamic>?;
+      if (gameMetadata != null) {
+        final gameType = gameMetadata['gameType'] as String?;
+        if (_isAddEquationsGameType(gameType)) {
+          isAddEquationsGame = true;
+        }
+      }
 
       // Verify teacher ownership
       if (activity.createdBy != teacherId) {
@@ -299,7 +318,8 @@ class TeacherService {
       }
 
       // Perform comprehensive review checks
-      final reviewResult = await _performPublishingReview(activity);
+      final reviewResult = await _performPublishingReview(activity,
+          isAddEquationsGame: isAddEquationsGame);
       if (!reviewResult.isValid) {
         throw Exception(
             'Activity failed review: ${reviewResult.reasons.join(', ')}');
@@ -329,7 +349,9 @@ class TeacherService {
 
   /// Comprehensive review checks for publishing
   Future<PublishingReviewResult> _performPublishingReview(
-      Activity activity) async {
+    Activity activity, {
+    bool isAddEquationsGame = false,
+  }) async {
     final reasons = <String>[];
 
     // Minimum/maximum questions check
@@ -340,13 +362,21 @@ class TeacherService {
       reasons.add('Activity cannot exceed 20 questions');
     }
 
+    // Check if this is an Add Equations game (check tags if not already determined)
+    // Add Equations game provides its own visual interface, so media is not required
+    if (!isAddEquationsGame) {
+      isAddEquationsGame = activity.hasAddEquationsTag;
+    }
+
     // Media and accessibility checks
     for (int i = 0; i < activity.questions.length; i++) {
       final question = activity.questions[i];
 
       // Interactive questions need media
+      // Exception: Add Equations game provides its own visual interface, so media is not required
       if ((question.type == QuestionType.dragDrop ||
               question.type == QuestionType.matching) &&
+          !isAddEquationsGame && // Skip media requirement for Add Equations game
           question.media.imageUrl == null &&
           question.media.audioUrl == null &&
           question.media.videoUrl == null) {
@@ -521,3 +551,15 @@ class TeacherPublishingStats {
   double get publishRate =>
       totalActivities > 0 ? publishedActivities / totalActivities : 0.0;
 }
+
+String _normalizeGameTypeFlag(String? value) {
+  if (value == null) return '';
+  var normalized = value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+  if (normalized.startsWith('gametype')) {
+    normalized = normalized.substring('gametype'.length);
+  }
+  return normalized;
+}
+
+bool _isAddEquationsGameType(String? value) =>
+    _normalizeGameTypeFlag(value) == 'addequations';
