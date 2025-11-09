@@ -2253,4 +2253,909 @@ class QuestionTemplatePopulator {
       rethrow;
     }
   }
+
+  /// Populate new Add Equations questions for Junior age group
+  Future<void> populateAddEquationsQuestions() async {
+    try {
+      debugPrint('🚀 Starting Add Equations questions population...');
+
+      final questions = _createAddEquationsQuestions();
+
+      final batch = _firestore.batch();
+      int count = 0;
+
+      // Add questions
+      for (final question in questions) {
+        final docRef =
+            _firestore.collection(collectionName).doc(question['id'] as String);
+        batch.set(docRef, question);
+        count++;
+      }
+
+      await batch.commit();
+      debugPrint(
+          '✅ Successfully populated $count Add Equations question templates!');
+    } catch (e) {
+      debugPrint('❌ Error populating Add Equations questions: $e');
+      rethrow;
+    }
+  }
+
+  /// Create Add Equations questions from the provided JSON data
+  List<Map<String, dynamic>> _createAddEquationsQuestions() {
+    return [
+      // Add Equations: Missing Addend 1
+      {
+        'id': 'math_junior_add_001_missing_addend',
+        'title': 'Add Equations: Missing Addend 1',
+        'type': 'drag-drop',
+        'prompt': '_ + 6 = 9',
+        'options': ['2', '1', '3'],
+        'correctAnswer': '3',
+        'skills': ['addition', 'missing-addend', 'balancing-equations'],
+        'points': 20,
+        'explanation':
+            'Drag the number 3 to the blank. Three plus six equals nine. The visual shows 3 raspberries and 6 oranges.',
+        'hint': 'Count the raspberries and drag that number to the blank.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Add Equations'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Add Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP K/1',
+          'learningObjective': 'Find missing addend in addition equations',
+          'prerequisiteSkills': ['basic-addition'],
+          'followUpSkills': ['complex-equations'],
+        },
+      },
+      // Add Equations: Simple Addition 1
+      {
+        'id': 'math_junior_add_002_simple_addition',
+        'title': 'Add Equations: Simple Addition 1',
+        'type': 'drag-drop',
+        'prompt': '4 + 4 = _',
+        'options': ['7', '9', '8'],
+        'correctAnswer': '8',
+        'skills': ['addition', 'counting', 'doubles'],
+        'points': 20,
+        'explanation':
+            'Drag the number 8 to the blank. Four plus four equals eight. The visual shows 4 raspberries and 4 oranges.',
+        'hint': 'Count all the fruit and drag the total to the blank.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Add Equations'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Add Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP K/1',
+          'learningObjective': 'Add single-digit numbers',
+          'prerequisiteSkills': ['counting'],
+          'followUpSkills': ['doubles-facts'],
+        },
+      },
+      // Add Equations: Missing Addend 2
+      {
+        'id': 'math_junior_add_003_missing_addend_2',
+        'title': 'Add Equations: Missing Addend 2',
+        'type': 'drag-drop',
+        'prompt': '1 + _ = 7',
+        'options': ['8', '6', '10'],
+        'correctAnswer': '6',
+        'skills': ['addition', 'missing-addend', 'balancing-equations'],
+        'points': 20,
+        'explanation':
+            'Drag the number 6 to the blank. One plus six equals seven.',
+        'hint':
+            'Start at 1 and count up to 7. Drag the number of steps you took.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Add Equations'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Add Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP K/1',
+          'learningObjective': 'Find missing addend in addition equations',
+          'prerequisiteSkills': ['basic-addition'],
+          'followUpSkills': ['complex-equations'],
+        },
+      },
+      // Add Equations: Missing Addend 3
+      {
+        'id': 'math_junior_add_004_missing_addend_3',
+        'title': 'Add Equations: Missing Addend 3',
+        'type': 'drag-drop',
+        'prompt': '_ + 5 = 6',
+        'options': ['3', '2', '1'],
+        'correctAnswer': '1',
+        'skills': ['addition', 'missing-addend'],
+        'points': 20,
+        'explanation':
+            'Drag the number 1 to the blank. One plus five equals six. The visual shows a 1-dot die and a 5-dot die.',
+        'hint': 'What number do you add to 5 to get 6? Drag it to the blank.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Add Equations'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Add Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP K/1',
+          'learningObjective': 'Find missing addend in addition equations',
+          'prerequisiteSkills': ['basic-addition'],
+          'followUpSkills': ['complex-equations'],
+        },
+      },
+      // Add Equations: Simple Addition 2
+      {
+        'id': 'math_junior_add_005_simple_addition_2',
+        'title': 'Add Equations: Simple Addition 2',
+        'type': 'drag-drop',
+        'prompt': '2 + 3 = _',
+        'options': ['2', '4', '5'],
+        'correctAnswer': '5',
+        'skills': ['addition', 'counting'],
+        'points': 20,
+        'explanation':
+            'Drag the number 5 to the blank. Two plus three equals five. The visual shows a 2-dot die and a 3-dot die.',
+        'hint': 'Count the dots on both dice and drag the total to the blank.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Add Equations'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Add Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP K/1',
+          'learningObjective': 'Add single-digit numbers',
+          'prerequisiteSkills': ['counting'],
+          'followUpSkills': ['addition-facts'],
+        },
+      },
+      // Add Equations: Missing Addend 4
+      {
+        'id': 'math_junior_add_006_missing_addend_4',
+        'title': 'Add Equations: Missing Addend 4',
+        'type': 'drag-drop',
+        'prompt': '6 + _ = 10',
+        'options': ['6', '4', '5'],
+        'correctAnswer': '4',
+        'skills': ['addition', 'missing-addend', 'make-ten'],
+        'points': 25,
+        'explanation':
+            'Drag the number 4 to the blank. Six plus four equals ten. The visual shows a ten-frame.',
+        'hint': 'How many more to make 10? Drag the number to the blank.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Add Equations'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Add Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP K/1',
+          'learningObjective': 'Find missing addend to make 10',
+          'prerequisiteSkills': ['basic-addition'],
+          'followUpSkills': ['make-ten-strategies'],
+        },
+      },
+      // Add Equations: Simple Addition 3
+      {
+        'id': 'math_junior_add_007_simple_addition_3',
+        'title': 'Add Equations: Simple Addition 3',
+        'type': 'drag-drop',
+        'prompt': '3 + 5 = _',
+        'options': ['8', '6', '7'],
+        'correctAnswer': '8',
+        'skills': ['addition', 'counting'],
+        'points': 20,
+        'explanation':
+            'Drag the number 8 to the blank. Three plus five equals eight.',
+        'hint': 'You can count on: 5... 6, 7, 8. Drag the final number.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Add Equations'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Add Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP K/1',
+          'learningObjective': 'Add single-digit numbers',
+          'prerequisiteSkills': ['counting'],
+          'followUpSkills': ['addition-facts'],
+        },
+      },
+      // Add Equations: Missing Addend 5
+      {
+        'id': 'math_junior_add_008_missing_addend_5',
+        'title': 'Add Equations: Missing Addend 5',
+        'type': 'drag-drop',
+        'prompt': '_ + 2 = 4',
+        'options': ['2', '3', '1'],
+        'correctAnswer': '2',
+        'skills': ['addition', 'missing-addend', 'doubles'],
+        'points': 20,
+        'explanation':
+            'Drag the number 2 to the blank. Two plus two equals four.',
+        'hint': 'What number plus 2 makes 4? Drag it to the blank.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Add Equations'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Add Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP K/1',
+          'learningObjective': 'Find missing addend in addition equations',
+          'prerequisiteSkills': ['basic-addition'],
+          'followUpSkills': ['doubles-facts'],
+        },
+      },
+      // Add Equations: Simple Addition (Vertical)
+      {
+        'id': 'math_junior_add_009_simple_addition_vertical',
+        'title': 'Add Equations: Simple Addition (Vertical)',
+        'type': 'drag-drop',
+        'prompt': '3 + 7 = _',
+        'options': ['10', '8', '9'],
+        'correctAnswer': '10',
+        'skills': ['addition', 'make-ten'],
+        'points': 25,
+        'explanation':
+            'Drag the number 10 to the blank. Three plus seven makes ten.',
+        'hint': 'This is a \'Make 10\' pair! Drag the answer to the box.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Add Equations'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Add Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP K/1',
+          'learningObjective': 'Add numbers to make 10',
+          'prerequisiteSkills': ['basic-addition'],
+          'followUpSkills': ['make-ten-strategies'],
+        },
+      },
+      // Add Equations: Missing Addend (Vertical)
+      {
+        'id': 'math_junior_add_010_missing_addend_vertical',
+        'title': 'Add Equations: Missing Addend (Vertical)',
+        'type': 'drag-drop',
+        'prompt': '4 + _ = 7',
+        'options': ['4', '5', '3'],
+        'correctAnswer': '3',
+        'skills': ['addition', 'missing-addend'],
+        'points': 20,
+        'explanation':
+            'Drag the number 3 to the blank. Four plus three equals seven.',
+        'hint': 'Start at 4 and count up to 7. Drag the number of steps.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Add Equations'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Add Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP K/1',
+          'learningObjective': 'Find missing addend in addition equations',
+          'prerequisiteSkills': ['basic-addition'],
+          'followUpSkills': ['complex-equations'],
+        },
+      },
+      // Add 10-20: Simple Addition
+      {
+        'id': 'math_junior_add_011_add_10_20_simple',
+        'title': 'Add 10-20: Simple Addition',
+        'type': 'drag-drop',
+        'prompt': '8 + 5 = _',
+        'options': ['11', '13', '10'],
+        'correctAnswer': '13',
+        'skills': ['addition', 'counting-on', 'add-to-20'],
+        'points': 25,
+        'explanation':
+            'Drag the number 13 to the blank. Start at 8 and count on 5: 9, 10, 11, 12, 13.',
+        'hint':
+            'The visual shows 8 items in one tray and 5 in another. Drag the total.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Add 10-20'],
+        'difficultyLevel': 'medium',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Add 10-20',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP 1/2',
+          'learningObjective': 'Add numbers within 20',
+          'prerequisiteSkills': ['basic-addition'],
+          'followUpSkills': ['addition-to-20'],
+        },
+      },
+      // Add 10-20: Missing Addend
+      {
+        'id': 'math_junior_add_012_add_10_20_missing',
+        'title': 'Add 10-20: Missing Addend',
+        'type': 'drag-drop',
+        'prompt': '11 + _ = 14',
+        'options': ['2', '3', '4'],
+        'correctAnswer': '3',
+        'skills': ['addition', 'missing-addend', 'add-to-20'],
+        'points': 25,
+        'explanation':
+            'Drag the number 3 to the blank. Start at 11 and count up to 14: 12, 13, 14. That\'s 3 steps.',
+        'hint': 'How many jumps from 11 to 14? Drag that number.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Add 10-20'],
+        'difficultyLevel': 'medium',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Add 10-20',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP 1/2',
+          'learningObjective': 'Find missing addend within 20',
+          'prerequisiteSkills': ['addition-to-20'],
+          'followUpSkills': ['complex-equations'],
+        },
+      },
+      // Subtract Equations: Missing Minuend 1
+      {
+        'id': 'math_junior_sub_001_missing_minuend',
+        'title': 'Subtract Equations: Missing Minuend 1',
+        'type': 'drag-drop',
+        'prompt': '_ - 1 = 6',
+        'options': ['5', '8', '7'],
+        'correctAnswer': '7',
+        'skills': ['subtraction', 'missing-minuend'],
+        'points': 25,
+        'explanation':
+            'Drag the number 7 to the blank. Seven minus one equals six. The visual shows 7 buttons.',
+        'hint':
+            'What number, when you take 1 away, leaves 6? Drag it to the blank.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Subtract Equations'],
+        'difficultyLevel': 'medium',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Subtract Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP 1/2',
+          'learningObjective': 'Find missing minuend in subtraction equations',
+          'prerequisiteSkills': ['basic-subtraction'],
+          'followUpSkills': ['complex-equations'],
+        },
+      },
+      // Subtract Equations: Simple Subtraction 1
+      {
+        'id': 'math_junior_sub_002_simple_subtraction',
+        'title': 'Subtract Equations: Simple Subtraction 1',
+        'type': 'drag-drop',
+        'prompt': '8 - 5 = _',
+        'options': ['3', '6', '5'],
+        'correctAnswer': '3',
+        'skills': ['subtraction', 'counting'],
+        'points': 20,
+        'explanation':
+            'Drag the number 3 to the blank. Eight minus five equals three. The visual shows 8 buttons, with 5 fading away.',
+        'hint': 'Start with 8 and take 5 away. Drag the answer.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Subtract Equations'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Subtract Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP K/1',
+          'learningObjective': 'Subtract single-digit numbers',
+          'prerequisiteSkills': ['counting'],
+          'followUpSkills': ['subtraction-facts'],
+        },
+      },
+      // Subtract Equations: Missing Subtrahend 1
+      {
+        'id': 'math_junior_sub_003_missing_subtrahend',
+        'title': 'Subtract Equations: Missing Subtrahend 1',
+        'type': 'drag-drop',
+        'prompt': '9 - _ = 7',
+        'options': ['4', '6', '2'],
+        'correctAnswer': '2',
+        'skills': ['subtraction', 'missing-subtrahend'],
+        'points': 25,
+        'explanation':
+            'Drag the number 2 to the blank. Nine minus two equals seven.',
+        'hint':
+            'Start at 9 and count back to 7. How many steps? Drag that number.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Subtract Equations'],
+        'difficultyLevel': 'medium',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Subtract Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP 1/2',
+          'learningObjective':
+              'Find missing subtrahend in subtraction equations',
+          'prerequisiteSkills': ['basic-subtraction'],
+          'followUpSkills': ['complex-equations'],
+        },
+      },
+      // Subtract Equations: Missing Minuend 2
+      {
+        'id': 'math_junior_sub_004_missing_minuend_2',
+        'title': 'Subtract Equations: Missing Minuend 2',
+        'type': 'drag-drop',
+        'prompt': '_ - 1 = 4',
+        'options': ['2', '5', '3'],
+        'correctAnswer': '5',
+        'skills': ['subtraction', 'missing-minuend'],
+        'points': 25,
+        'explanation':
+            'Drag the number 5 to the blank. Five minus one equals four. The visual shows a 5-dot die.',
+        'hint': 'What number, when you take 1 away, leaves 4? Drag it.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Subtract Equations'],
+        'difficultyLevel': 'medium',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Subtract Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP 1/2',
+          'learningObjective': 'Find missing minuend in subtraction equations',
+          'prerequisiteSkills': ['basic-subtraction'],
+          'followUpSkills': ['complex-equations'],
+        },
+      },
+      // Subtract Equations: Simple Subtraction 2
+      {
+        'id': 'math_junior_sub_005_simple_subtraction_2',
+        'title': 'Subtract Equations: Simple Subtraction 2',
+        'type': 'drag-drop',
+        'prompt': '3 - 2 = _',
+        'options': ['3', '1', '2'],
+        'correctAnswer': '1',
+        'skills': ['subtraction'],
+        'points': 20,
+        'explanation':
+            'Drag the number 1 to the blank. Three minus two equals one.',
+        'hint': '3 take away 2 leaves how many? Drag the answer.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Subtract Equations'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Subtract Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP K/1',
+          'learningObjective': 'Subtract single-digit numbers',
+          'prerequisiteSkills': ['counting'],
+          'followUpSkills': ['subtraction-facts'],
+        },
+      },
+      // Subtract Equations: Simple Subtraction 3
+      {
+        'id': 'math_junior_sub_006_simple_subtraction_3',
+        'title': 'Subtract Equations: Simple Subtraction 3',
+        'type': 'drag-drop',
+        'prompt': '9 - 7 = _',
+        'options': ['3', '5', '2'],
+        'correctAnswer': '2',
+        'skills': ['subtraction'],
+        'points': 20,
+        'explanation':
+            'Drag the number 2 to the blank. Nine minus seven equals two.',
+        'hint': 'Start at 9 and count back 7. Drag the number you land on.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Subtract Equations'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Subtract Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP K/1',
+          'learningObjective': 'Subtract single-digit numbers',
+          'prerequisiteSkills': ['counting'],
+          'followUpSkills': ['subtraction-facts'],
+        },
+      },
+      // Subtract Equations: Simple Subtraction 4
+      {
+        'id': 'math_junior_sub_007_simple_subtraction_4',
+        'title': 'Subtract Equations: Simple Subtraction 4',
+        'type': 'drag-drop',
+        'prompt': '8 - 4 = _',
+        'options': ['9', '4', '7'],
+        'correctAnswer': '4',
+        'skills': ['subtraction', 'doubles'],
+        'points': 20,
+        'explanation':
+            'Drag the number 4 to the blank. Eight minus four equals four. This is a doubles fact!',
+        'hint': 'What is half of 8? Drag the answer.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Subtract Equations'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Subtract Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP K/1',
+          'learningObjective': 'Subtract single-digit numbers',
+          'prerequisiteSkills': ['counting'],
+          'followUpSkills': ['doubles-facts'],
+        },
+      },
+      // Subtract Equations: Simple Subtraction (Vertical)
+      {
+        'id': 'math_junior_sub_008_simple_subtraction_vertical',
+        'title': 'Subtract Equations: Simple Subtraction (Vertical)',
+        'type': 'drag-drop',
+        'prompt': '10 - 6 = _',
+        'options': ['5', '4', '6'],
+        'correctAnswer': '4',
+        'skills': ['subtraction', 'make-ten'],
+        'points': 20,
+        'explanation':
+            'Drag the number 4 to the box. Ten minus six equals four.',
+        'hint': 'If 6 + 4 = 10, then 10 - 6 = ?',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Subtract Equations'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Subtract Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP K/1',
+          'learningObjective': 'Subtract from 10',
+          'prerequisiteSkills': ['make-ten'],
+          'followUpSkills': ['subtraction-facts'],
+        },
+      },
+      // Subtract Equations: Missing Subtrahend (Vertical)
+      {
+        'id': 'math_junior_sub_009_missing_subtrahend_vertical',
+        'title': 'Subtract Equations: Missing Subtrahend (Vertical)',
+        'type': 'drag-drop',
+        'prompt': '4 - _ = 2',
+        'options': ['2', '5', '6'],
+        'correctAnswer': '2',
+        'skills': ['subtraction', 'missing-subtrahend', 'doubles'],
+        'points': 20,
+        'explanation':
+            'Drag the number 2 to the box. Four minus two equals two.',
+        'hint': '4 take away what number leaves 2? Drag it to the box.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Subtract Equations'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Subtract Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP K/1',
+          'learningObjective':
+              'Find missing subtrahend in subtraction equations',
+          'prerequisiteSkills': ['basic-subtraction'],
+          'followUpSkills': ['doubles-facts'],
+        },
+      },
+      // Subtract Equations: Missing Minuend (Vertical)
+      {
+        'id': 'math_junior_sub_010_missing_minuend_vertical',
+        'title': 'Subtract Equations: Missing Minuend (Vertical)',
+        'type': 'drag-drop',
+        'prompt': '_ - 3 = 4',
+        'options': ['7', '6', '5'],
+        'correctAnswer': '7',
+        'skills': ['subtraction', 'missing-minuend'],
+        'points': 25,
+        'explanation':
+            'Drag the number 7 to the box. Seven minus three equals four.',
+        'hint':
+            'What number, when you take 3 away, leaves 4? (Hint: 3 + 4 = ?)',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Subtract Equations'],
+        'difficultyLevel': 'medium',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Subtract Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP 1/2',
+          'learningObjective': 'Find missing minuend in subtraction equations',
+          'prerequisiteSkills': ['basic-subtraction'],
+          'followUpSkills': ['complex-equations'],
+        },
+      },
+      // Subtract 10-20: Simple Subtraction
+      {
+        'id': 'math_junior_sub_011_subtract_10_20_simple',
+        'title': 'Subtract 10-20: Simple Subtraction',
+        'type': 'drag-drop',
+        'prompt': '11 - 2 = _',
+        'options': ['11', '9', '8'],
+        'correctAnswer': '9',
+        'skills': ['subtraction', 'subtract-from-20'],
+        'points': 20,
+        'explanation':
+            'Drag the number 9 to the blank. Eleven minus two equals nine.',
+        'hint': 'Start at 11 and count back 2. Drag the answer.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Subtract 10-20'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Subtract 10-20',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP 1/2',
+          'learningObjective': 'Subtract from numbers within 20',
+          'prerequisiteSkills': ['basic-subtraction'],
+          'followUpSkills': ['subtraction-to-20'],
+        },
+      },
+      // Subtract 10-20: Missing Subtrahend
+      {
+        'id': 'math_junior_sub_012_subtract_10_20_missing',
+        'title': 'Subtract 10-20: Missing Subtrahend',
+        'type': 'drag-drop',
+        'prompt': '13 - _ = 9',
+        'options': ['4', '5', '2'],
+        'correctAnswer': '4',
+        'skills': ['subtraction', 'missing-subtrahend', 'subtract-from-20'],
+        'points': 25,
+        'explanation':
+            'Drag the number 4 to the blank. Thirteen minus four equals nine.',
+        'hint':
+            'Start at 13 and count back to 9. How many steps? Drag that number.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Subtract 10-20'],
+        'difficultyLevel': 'medium',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Subtract 10-20',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP 1/2',
+          'learningObjective': 'Find missing subtrahend within 20',
+          'prerequisiteSkills': ['subtraction-to-20'],
+          'followUpSkills': ['complex-equations'],
+        },
+      },
+    ];
+  }
+
+  /// Update existing math questions
+  Future<void> updateMathQuestions() async {
+    try {
+      debugPrint('🔄 Starting Math questions update...');
+
+      final questionsToUpdate = _createUpdatedMathQuestions();
+
+      final batch = _firestore.batch();
+      int count = 0;
+
+      for (final question in questionsToUpdate) {
+        final templateId = question['id'] as String;
+        final docRef = _firestore.collection(collectionName).doc(templateId);
+
+        // Get existing document to preserve createdAt
+        final docSnapshot = await docRef.get();
+
+        // Remove id from data (it's the document ID)
+        final updateData = Map<String, dynamic>.from(question);
+        updateData.remove('id');
+
+        // Preserve createdAt if it exists
+        if (docSnapshot.exists) {
+          final existingData = docSnapshot.data();
+          if (existingData != null && existingData.containsKey('createdAt')) {
+            updateData['createdAt'] = existingData['createdAt'];
+          }
+        }
+
+        // Always update updatedAt
+        updateData['updatedAt'] = FieldValue.serverTimestamp();
+
+        // Update or create the document
+        batch.set(docRef, updateData, SetOptions(merge: true));
+        count++;
+      }
+
+      await batch.commit();
+      debugPrint('✅ Successfully updated $count Math question templates!');
+    } catch (e) {
+      debugPrint('❌ Error updating Math questions: $e');
+      rethrow;
+    }
+  }
+
+  /// Create updated math questions from the provided JSON data
+  List<Map<String, dynamic>> _createUpdatedMathQuestions() {
+    return [
+      // Skip Counting by 2s
+      {
+        'id': 'math_junior_013_patterns_skip_counting',
+        'title': 'Skip Counting by 2s',
+        'type': 'drag-drop',
+        'prompt': 'What comes next in the pattern? 2, 4, 6, 8, _',
+        'options': ['9', '10', '11'],
+        'correctAnswer': '10',
+        'skills': ['skip-counting', 'number-patterns'],
+        'points': 20,
+        'explanation':
+            'We are counting by 2s, so 8 + 2 = 10. Drag the 10 to the blank.',
+        'hint': 'Add 2 to the last number and drag the answer to the blank.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Add Equations'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Add Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP 1/2',
+          'learningObjective': 'Continue number patterns by skip counting',
+          'prerequisiteSkills': ['counting-by-2s'],
+          'followUpSkills': ['complex-patterns'],
+        },
+      },
+      // Skip Counting by 5s
+      {
+        'id': 'math_junior_014_patterns_skip_counting_5s',
+        'title': 'Skip Counting by 5s',
+        'type': 'drag-drop',
+        'prompt': 'What comes next? 5, 10, 15, 20, _',
+        'options': ['22', '25', '30'],
+        'correctAnswer': '25',
+        'skills': ['skip-counting', 'multiplication'],
+        'points': 25,
+        'explanation':
+            'We are counting by 5s, so 20 + 5 = 25. Drag the 25 to the blank.',
+        'hint': 'Add 5 to the last number and drag the answer to the blank.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Add Equations'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Add Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP 1/2',
+          'learningObjective':
+              'Continue number patterns by skip counting by 5s',
+          'prerequisiteSkills': ['counting-by-5s'],
+          'followUpSkills': ['multiplication-facts'],
+        },
+      },
+      // Missing Numbers in Sequence
+      {
+        'id': 'math_junior_015_patterns_missing_numbers',
+        'title': 'Missing Numbers in Sequence',
+        'type': 'drag-drop',
+        'prompt': 'Fill in the missing number: 12, 13, _, 15, 16',
+        'options': ['11', '14', '17'],
+        'correctAnswer': '14',
+        'skills': ['counting', 'number-sequence'],
+        'points': 15,
+        'explanation':
+            'The numbers are counting up by 1, so 13 + 1 = 14. Drag the 14 to the blank.',
+        'hint': 'Count up by 1 from 13 and drag the missing number.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Add Equations'],
+        'difficultyLevel': 'easy',
+        'estimatedTimeSeconds': 60,
+        'recommendedGameType': 'Add Equations',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP K/1',
+          'learningObjective': 'Identify missing numbers in sequences',
+          'prerequisiteSkills': ['counting'],
+          'followUpSkills': ['number-patterns'],
+        },
+      },
+      // Counting On Strategy
+      {
+        'id': 'math_junior_016_mental_strategies_counting_on',
+        'title': 'Counting On Strategy',
+        'type': 'drag-drop',
+        'prompt': 'Use counting on: 9 + 6 = _',
+        'options': ['14', '15', '16'],
+        'correctAnswer': '15',
+        'skills': ['addition', 'mental-math', 'counting-on'],
+        'points': 25,
+        'explanation':
+            'Start with the bigger number 9 and count on 6: 10, 11, 12, 13, 14, 15. Drag 15 to the blank.',
+        'hint': 'Start with 9 and count forward 6. Drag the final number.',
+        'ageGroups': ['junior'],
+        'subjects': ['math'],
+        'gameTypes': ['Add 10-20'],
+        'difficultyLevel': 'medium',
+        'estimatedTimeSeconds': 120,
+        'recommendedGameType': 'Add 10-20',
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'metadata': {
+          'citation': 'PYP 1/2',
+          'learningObjective': 'Use counting on strategy for addition',
+          'prerequisiteSkills': ['basic-addition'],
+          'followUpSkills': ['mental-math-strategies'],
+        },
+      },
+    ];
+  }
 }

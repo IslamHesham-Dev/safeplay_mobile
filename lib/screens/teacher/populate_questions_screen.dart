@@ -241,6 +241,94 @@ class _PopulateQuestionsScreenState extends State<PopulateQuestionsScreen> {
     }
   }
 
+  Future<void> _populateAddEquationsQuestions() async {
+    setState(() {
+      _populating = true;
+      _status = 'Starting Add Equations questions population...';
+      _questionsAdded = 0;
+    });
+
+    try {
+      await _populator.populateAddEquationsQuestions();
+
+      setState(() {
+        _status = '✅ Successfully populated Add Equations questions!';
+        _questionsAdded = 24;
+        _populating = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Successfully added $_questionsAdded Add Equations question templates!'),
+            backgroundColor: SafePlayColors.success,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _status = '❌ Error: $e';
+        _populating = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error populating Add Equations questions: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateMathQuestions() async {
+    setState(() {
+      _populating = true;
+      _status = 'Updating Math questions...';
+      _questionsAdded = 0;
+    });
+
+    try {
+      await _populator.updateMathQuestions();
+
+      setState(() {
+        _status = '✅ Successfully updated Math questions!';
+        _questionsAdded = 4;
+        _populating = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Successfully updated $_questionsAdded Math question templates!'),
+            backgroundColor: SafePlayColors.success,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _status = '❌ Error: $e';
+        _populating = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating Math questions: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -436,6 +524,76 @@ class _PopulateQuestionsScreenState extends State<PopulateQuestionsScreen> {
                           backgroundColor: SafePlayColors.brandTeal500,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed:
+                            _populating ? null : _populateAddEquationsQuestions,
+                        icon: _populating
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
+                                ),
+                              )
+                            : const Icon(Icons.add_circle_outline),
+                        label: Text(
+                          _populating
+                              ? 'Populating...'
+                              : 'Populate Add Equations Questions (24)',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _populating ? null : _updateMathQuestions,
+                        icon: _populating
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      SafePlayColors.brandTeal500),
+                                ),
+                              )
+                            : const Icon(Icons.update),
+                        label: const Text(
+                          'Update Math Questions (4)',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: SafePlayColors.brandTeal500,
+                          side: const BorderSide(
+                              color: SafePlayColors.brandTeal500, width: 2),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),

@@ -1622,6 +1622,40 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
                             ],
                           ),
                         ),
+
+                      // Game name tag (for Add Equations templates)
+                      // Only show if not already a FishTank Game
+                      if (!_isFishTankQuizTemplate(template.id) &&
+                          _isAddEquationsTemplate(template.id)) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.games,
+                                size: 12,
+                                color: Colors.orange,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Add Equations',
+                                style: TextStyle(
+                                  color: Colors.orange,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
                   ),
 
@@ -1719,6 +1753,25 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
       'math_junior_012_comparing_numbers',
     ];
     return fishTankQuizTemplates.contains(templateId);
+  }
+
+  /// Check if template is an Add Equations template
+  /// Returns true if the template is for Add Equations game, but NOT if it's already a FishTank Game
+  bool _isAddEquationsTemplate(String templateId) {
+    // New Add Equations questions (24 questions)
+    if (templateId.startsWith('math_junior_add_') ||
+        templateId.startsWith('math_junior_sub_')) {
+      return true;
+    }
+
+    // Updated questions that are now Add Equations
+    const addEquationsTemplates = [
+      'math_junior_013_patterns_skip_counting',
+      'math_junior_014_patterns_skip_counting_5s',
+      'math_junior_015_patterns_missing_numbers',
+      'math_junior_016_mental_strategies_counting_on',
+    ];
+    return addEquationsTemplates.contains(templateId);
   }
 
   /// Build template icon (similar to junior cards)
