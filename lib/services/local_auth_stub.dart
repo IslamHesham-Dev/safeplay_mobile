@@ -21,4 +21,3 @@ class AuthenticationOptions {
     required this.biometricOnly,
   });
 }
-

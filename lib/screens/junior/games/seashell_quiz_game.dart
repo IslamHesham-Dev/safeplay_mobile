@@ -170,12 +170,12 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
       // Submit answer after delay
       Future.delayed(const Duration(milliseconds: 2500), () {
         if (mounted) {
-        widget.onAnswerSubmitted(
-          questionId: widget.question.id,
-          userAnswer: option,
-          isCorrect: true,
-          pointsEarned: _earnedPoints,
-        );
+          widget.onAnswerSubmitted(
+            questionId: widget.question.id,
+            userAnswer: option,
+            isCorrect: true,
+            pointsEarned: _earnedPoints,
+          );
           if (widget.onComplete != null) {
             widget.onComplete!();
           }
@@ -410,37 +410,37 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
                 ),
                 const SizedBox(height: 16),
                 // Question text - large and clear
-          Padding(
+                Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Container(
+                  child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
                       vertical: 20,
                     ),
-              decoration: BoxDecoration(
+                    decoration: BoxDecoration(
                       color: Colors.white.withAlpha(242), // 0.95 alpha
-                borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(24),
                       border: Border.all(
                         color: const Color(
                             0xFF0F3057), // Same color as question text
                         width: 2,
                       ),
                       boxShadow: JuniorTheme.shadowHeavy,
-              ),
-              child: Text(
-                prompt,
-                textAlign: TextAlign.center,
+                    ),
+                    child: Text(
+                      prompt,
+                      textAlign: TextAlign.center,
                       style: JuniorTheme.headingMedium.copyWith(
-                  color: const Color(0xFF0F3057),
-                  fontWeight: FontWeight.w700,
+                        color: const Color(0xFF0F3057),
+                        fontWeight: FontWeight.w700,
                         fontSize: 28,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ),
                 // Hint display - below question
                 if (_showHint && widget.question.hint != null) ...[
-          const SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Container(
@@ -489,24 +489,24 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
                   child: Text(
                     'Tap the seashell with correct answer',
                     textAlign: TextAlign.center,
-            style: JuniorTheme.bodyMedium.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
+                    style: JuniorTheme.bodyMedium.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
                       fontSize: 22,
                     ),
-            ),
-          ),
-          const SizedBox(height: 24),
+                  ),
+                ),
+                const SizedBox(height: 24),
 
                 // Answer buttons (Seashells) - 2x2 grid
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: GridView.builder(
                       key: _gridKey, // Assign the key here
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
+                        crossAxisCount: 2,
                         crossAxisSpacing: 20,
                         mainAxisSpacing: 20,
                         childAspectRatio:
@@ -532,9 +532,9 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
                           tooltip: _tooltipController,
                         );
                       },
-              ),
-            ),
-          ),
+                    ),
+                  ),
+                ),
 
                 // Smaller scuba character
                 Padding(
@@ -550,45 +550,45 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
                         child: child,
                       );
                     },
-      child: ScaleTransition(
+                    child: ScaleTransition(
                       scale: Tween<double>(begin: 1.0, end: 1.15).animate(
-          CurvedAnimation(
-            parent: _celebrationController,
-            curve: Curves.elasticOut,
-          ),
-        ),
-        child: Column(
+                        CurvedAnimation(
+                          parent: _celebrationController,
+                          curve: Curves.elasticOut,
+                        ),
+                      ),
+                      child: Column(
                         mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
+                        children: [
+                          Container(
                             padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
+                            decoration: BoxDecoration(
                               color: Colors.white.withAlpha(64), // 0.25 alpha
-                shape: BoxShape.circle,
+                              shape: BoxShape.circle,
                               border:
                                   Border.all(color: Colors.white38, width: 2),
-              ),
-              child: const Icon(
-                Icons.scuba_diving,
+                            ),
+                            child: const Icon(
+                              Icons.scuba_diving,
                               size: 32,
-                color: Colors.white,
-              ),
-            ),
+                              color: Colors.white,
+                            ),
+                          ),
                           const SizedBox(height: 8),
-            Container(
+                          Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 6),
-              decoration: BoxDecoration(
+                            decoration: BoxDecoration(
                               color: Colors.white.withAlpha(51), // 0.2 alpha
                               borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
+                            ),
+                            child: Text(
                               _answerLocked
                                   ? '+$_earnedPoints XP!'
                                   : 'Earn +$_earnedPoints XP',
                               style: JuniorTheme.bodySmall.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
                                 fontSize: 14,
                               ),
                             ),
@@ -636,7 +636,7 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
                 ),
               ),
             ),
-          ],
+        ],
       ),
     );
   }
@@ -682,9 +682,9 @@ class _SeashellButton extends StatelessWidget {
             child: child,
           );
         },
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
             // Seashell shape
             GestureDetector(
               onTap: onTap,
@@ -692,7 +692,7 @@ class _SeashellButton extends StatelessWidget {
                 clipper: _SeashellClipper(),
                 child: Container(
                   decoration: BoxDecoration(
-                  color: isSelected
+                    color: isSelected
                         ? const Color(0xFFFFD6A5) // Light peach
                         : const Color(0xFFFFD6A5),
                     boxShadow: [
@@ -739,9 +739,9 @@ class _SeashellButton extends StatelessWidget {
                           top: isMultiLine ? 8 : 16, // Shift up if multi-line
                           bottom: isMultiLine ? 12 : 16,
                         ),
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
+                        child: Text(
+                          label,
+                          textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 18, // Original font size
                             color: Color(0xFF5A3E1B), // Dark brown
@@ -782,7 +782,7 @@ class _SeashellButton extends StatelessWidget {
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
@@ -791,20 +791,20 @@ class _SeashellButton extends StatelessWidget {
 
             // Success indicator
             if (isSelected)
-                ScaleTransition(
-                  scale: Tween<double>(begin: 0.2, end: 1.0).animate(
-                    CurvedAnimation(
-                      parent: celebration,
-                      curve: const Interval(0.2, 1.0, curve: Curves.elasticOut),
-                    ),
-                  ),
-                  child: const Icon(
-                  Icons.check_circle,
-                  color: Color(0xFFFFB703),
-                    size: 42,
+              ScaleTransition(
+                scale: Tween<double>(begin: 0.2, end: 1.0).animate(
+                  CurvedAnimation(
+                    parent: celebration,
+                    curve: const Interval(0.2, 1.0, curve: Curves.elasticOut),
                   ),
                 ),
-            ],
+                child: const Icon(
+                  Icons.check_circle,
+                  color: Color(0xFFFFB703),
+                  size: 42,
+                ),
+              ),
+          ],
         ),
       ),
     );

@@ -20,4 +20,3 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "Deployment failed!" -ForegroundColor Red
 }
 
-

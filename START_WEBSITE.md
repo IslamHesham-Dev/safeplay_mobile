@@ -43,4 +43,3 @@ Then manually open: **http://localhost:8080**
 - If port 8080 is busy, use a different port (e.g., 8081, 8082)
 - Make sure you have Python installed (comes with most systems)
 
-
