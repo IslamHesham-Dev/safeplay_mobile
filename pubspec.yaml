@@ -95,3 +95,5 @@ flutter:
     - assets/images/avatars/
     - assets/audio/narration/
     - assets/audio/phonics/
+    - assets/audio/first.mp3
+    - assets/audio/third.mp3

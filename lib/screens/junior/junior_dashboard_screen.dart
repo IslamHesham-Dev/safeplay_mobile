@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/user_profile.dart';
 import '../../models/user_type.dart';
@@ -50,6 +51,9 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   int _currentBottomNavIndex = 0; // Home is active by default
   bool _showCelebration = false;
 
+  // Audio player for background music
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
   String _sanitizeGender(String? gender) {
     if (gender == null) return 'female';
     final normalized = gender.toLowerCase();
@@ -71,11 +75,41 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     );
     _loadDashboardData();
     _animationController.forward();
+    // Start background music
+    _playBackgroundMusic();
+  }
+
+  Future<void> _playBackgroundMusic() async {
+    try {
+      await _audioPlayer.setReleaseMode(ReleaseMode.loop);
+      await _audioPlayer.setVolume(0.7); // Set volume to 70%
+      await _audioPlayer.play(AssetSource('audio/third.mp3'));
+      debugPrint('✅ Background music started: third.mp3');
+
+      // Verify player state after a short delay
+      Future.delayed(const Duration(milliseconds: 500), () async {
+        final state = _audioPlayer.state;
+        debugPrint('📊 Audio player state: $state');
+      });
+    } catch (e) {
+      debugPrint('❌ Error playing background music: $e');
+      debugPrint('Stack trace: ${StackTrace.current}');
+    }
+  }
+
+  Future<void> _stopBackgroundMusic() async {
+    try {
+      await _audioPlayer.stop();
+    } catch (e) {
+      debugPrint('Error stopping background music: $e');
+    }
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _stopBackgroundMusic();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -582,54 +616,8 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   }
 
   Widget _buildAchievementsScreen() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(JuniorTheme.spacingLarge),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'My Achievements',
-              style: JuniorTheme.headingLarge,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: JuniorTheme.spacingLarge),
-
-            // Achievement badges
-            _buildAchievementBadges(),
-
-            const SizedBox(height: JuniorTheme.spacingLarge),
-
-            // Stats summary
-            _buildStatsSummary(),
-
-            const SizedBox(height: JuniorTheme.spacingLarge),
-
-            // Developer export button (temporary)
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const QuestionTemplateExporter(),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.download),
-              label: const Text('Export Questions to JSON'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: JuniorTheme.primaryGreen,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: JuniorTheme.spacingMedium,
-                  vertical: JuniorTheme.spacingSmall,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    // Empty notification/achievements page
+    return const SizedBox.shrink();
   }
 
   Widget _buildAchievementBadges() {
@@ -988,64 +976,8 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   }
 
   Widget _buildRewardsScreen() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(JuniorTheme.spacingLarge),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Rewards & Achievements',
-              style: JuniorTheme.headingLarge,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: JuniorTheme.spacingLarge),
-
-            // XP Progress
-            if (_childProgress != null)
-              JuniorXPProgressBar(
-                currentXP: _childProgress!.earnedPoints,
-                maxXP: 1000, // Example max XP
-                label: 'Your Progress',
-              ),
-
-            const SizedBox(height: JuniorTheme.spacingLarge),
-
-            // Placeholder for achievements
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(JuniorTheme.spacingLarge),
-              decoration: BoxDecoration(
-                color: JuniorTheme.backgroundCard,
-                borderRadius: BorderRadius.circular(JuniorTheme.radiusLarge),
-                boxShadow: JuniorTheme.shadowMedium,
-              ),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.emoji_events,
-                    size: 48.0,
-                    color: JuniorTheme.accentGold,
-                  ),
-                  const SizedBox(height: JuniorTheme.spacingMedium),
-                  Text(
-                    'Achievements Coming Soon!',
-                    style: JuniorTheme.headingSmall,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: JuniorTheme.spacingSmall),
-                  Text(
-                    'Keep learning to unlock amazing rewards!',
-                    style: JuniorTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    // Empty rewards page
+    return const SizedBox.shrink();
   }
 
   void _handleBottomNavTap(int index) {
