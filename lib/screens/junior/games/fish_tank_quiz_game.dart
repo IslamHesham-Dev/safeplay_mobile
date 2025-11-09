@@ -219,12 +219,12 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
           setState(() {
             _showGreatJob = false;
           });
-          widget.onAnswerSubmitted(
-            questionId: widget.question.id,
-            userAnswer: option,
-            isCorrect: true,
-            pointsEarned: _earnedPoints,
-          );
+        widget.onAnswerSubmitted(
+          questionId: widget.question.id,
+          userAnswer: option,
+          isCorrect: true,
+          pointsEarned: _earnedPoints,
+        );
           // Call onComplete if provided (for final question)
           widget.onComplete?.call();
         }
@@ -308,22 +308,22 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
               alignment: Alignment.bottomCenter,
               errorBuilder: (context, error, stackTrace) {
                 // Fallback to gradient if image fails to load
-                return Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF0F4471), Color(0xFF0E99B7)],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                  ),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF0F4471), Color(0xFF0E99B7)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
                 );
               },
             ),
           ),
           SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
                 // Top bar with back button, coins, and time
                 Padding(
                   padding:
@@ -494,8 +494,8 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
                     ),
                   ),
                 ],
-                const SizedBox(height: 16),
-                Expanded(
+          const SizedBox(height: 16),
+          Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       _calculateFishPositions(
@@ -513,15 +513,15 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
                               left: position.dx,
                               top: position.dy,
                               child: _FishOption(
-                                label: option,
-                                onTap: () => _handleTap(option),
-                                isCorrect: _selectedOption == option,
+                        label: option,
+                        onTap: () => _handleTap(option),
+                        isCorrect: _selectedOption == option,
                                 isDisabled: _disabledFish.contains(option) &&
                                     !_answerLocked,
-                                flip: _fishFlipController,
-                                shake: _shakeController,
-                                isShaking: _shakingOption == option,
-                              ),
+                        flip: _fishFlipController,
+                        shake: _shakeController,
+                        isShaking: _shakingOption == option,
+                      ),
                             );
                           }),
                           // Tooltip for wrong answer
@@ -568,11 +568,11 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
                         ],
                       );
                     },
-                  ),
-                ),
-                _buildMascotRow(),
-              ],
             ),
+          ),
+          _buildMascotRow(),
+        ],
+      ),
           ),
           // "Great job!" overlay
           if (_showGreatJob)
@@ -590,9 +590,9 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 32, vertical: 24),
-                      decoration: BoxDecoration(
+            decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.3),
@@ -600,16 +600,16 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
                             spreadRadius: 5,
                           ),
                         ],
-                      ),
-                      child: Text(
+            ),
+            child: Text(
                         'Great job!',
                         style: JuniorTheme.headingLarge.copyWith(
                           color: JuniorTheme.primaryGreen,
                           fontWeight: FontWeight.bold,
                           fontSize: 32,
-                        ),
-                      ),
-                    ),
+              ),
+            ),
+          ),
                   ),
                 ),
               ),
@@ -634,49 +634,49 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
         },
         child: ScaleTransition(
           scale: Tween<double>(begin: 1.0, end: 1.15).animate(
-            CurvedAnimation(
+                    CurvedAnimation(
               parent: _celebrationController,
-              curve: Curves.elasticOut,
-            ),
-          ),
+                      curve: Curves.elasticOut,
+                    ),
+                  ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
+                    decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.25),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white38, width: 2),
-                ),
-                child: const Icon(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white38, width: 2),
+                    ),
+                    child: const Icon(
                   Icons.scuba_diving,
                   size: 32,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  _answerLocked
-                      ? '+$_earnedPoints XP!'
-                      : 'Earn +$_earnedPoints XP',
-                  style: JuniorTheme.bodySmall.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                      color: Colors.white,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Container(
+                  padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    _answerLocked
+                        ? '+$_earnedPoints XP!'
+                        : 'Earn +$_earnedPoints XP',
+                  style: JuniorTheme.bodySmall.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
       ),
     );
   }

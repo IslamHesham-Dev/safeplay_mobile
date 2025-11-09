@@ -245,21 +245,21 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: Column(
-        children: [
+          children: [
           // Custom Header with Teacher Info - extends to top
-          _buildCustomHeader(),
+            _buildCustomHeader(),
 
-          // Stats Overview Cards (only on Dashboard)
-          if (_currentIndex == 0) _buildStatsOverview(),
+            // Stats Overview Cards (only on Dashboard)
+            if (_currentIndex == 0) _buildStatsOverview(),
 
           // Main Content with SafeArea
-          Expanded(
+            Expanded(
             child: SafeArea(
               top: false,
               child: _buildCurrentPage(),
             ),
-          ),
-        ],
+            ),
+          ],
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
@@ -456,16 +456,16 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
                 ),
               ),
               // Action buttons
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.logout, color: Colors.white),
-                  onPressed: () => context.read<AuthProvider>().signOut(),
-                  tooltip: 'Sign Out',
-                ),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.logout, color: Colors.white),
+                      onPressed: () => context.read<AuthProvider>().signOut(),
+                      tooltip: 'Sign Out',
+                    ),
               ),
             ],
           ),
@@ -611,80 +611,80 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
       onRefresh: _loadDashboardData,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Quick Actions Section
-            Container(
-              margin: const EdgeInsets.only(bottom: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.flash_on,
-                        color: SafePlayColors.brandTeal500,
-                        size: 24,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Quick Actions Section
+          Container(
+            margin: const EdgeInsets.only(bottom: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.flash_on,
+                      color: SafePlayColors.brandTeal500,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Quick Actions',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Quick Actions',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildActionCard(
+                        'Create New Activity',
+                        'Build activities from templates',
+                        Icons.add_circle_outline,
+                        () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const ActivityCreationWizardScreen(),
+                            ),
+                          ).then((_) {
+                            // Refresh data when returning
+                            _loadDashboardData();
+                          });
+                        },
+                        gradient: LinearGradient(
+                          colors: [
+                            SafePlayColors.brandTeal500,
+                            SafePlayColors.brandTeal500.withOpacity(0.8)
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildActionCard(
-                          'Create New Activity',
-                          'Build activities from templates',
-                          Icons.add_circle_outline,
-                          () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const ActivityCreationWizardScreen(),
-                              ),
-                            ).then((_) {
-                              // Refresh data when returning
-                              _loadDashboardData();
-                            });
-                          },
-                          gradient: LinearGradient(
-                            colors: [
-                              SafePlayColors.brandTeal500,
-                              SafePlayColors.brandTeal500.withOpacity(0.8)
-                            ],
-                          ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildActionCard(
+                        'Browse Templates',
+                        'Explore question templates',
+                        Icons.library_books_outlined,
+                        () => setState(() => _currentIndex = 3),
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.purple,
+                            Colors.purple.withOpacity(0.8)
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildActionCard(
-                          'Browse Templates',
-                          'Explore question templates',
-                          Icons.library_books_outlined,
-                          () => setState(() => _currentIndex = 3),
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.purple,
-                              Colors.purple.withOpacity(0.8)
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
                     child: _buildActionCard(
@@ -703,78 +703,78 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
                           _loadDashboardData();
                         });
                       },
-                      gradient: LinearGradient(
+                  gradient: LinearGradient(
                         colors: [Colors.orange, Colors.orange.withOpacity(0.8)],
                       ),
-                    ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ),
 
-            // Recent Activities Section
-            Container(
-              margin: const EdgeInsets.only(bottom: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.history,
-                        color: SafePlayColors.brandTeal500,
-                        size: 24,
+          // Recent Activities Section
+          Container(
+            margin: const EdgeInsets.only(bottom: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.history,
+                      color: SafePlayColors.brandTeal500,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Recent Activities',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Recent Activities',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                   Builder(
                     builder: (context) {
                       final recentActivities = _recentPublishedActivities();
                       if (recentActivities.isEmpty) {
                         return Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(32),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[50],
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey[200]!),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(32),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.assignment_outlined,
+                          size: 48,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No activities created yet',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
                           ),
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.assignment_outlined,
-                                size: 48,
-                                color: Colors.grey[400],
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'No activities created yet',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey[600],
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Start by creating your first activity!',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[500],
-                                ),
-                              ),
-                            ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Start by creating your first activity!',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[500],
                           ),
+                        ),
+                      ],
+                    ),
                         );
                       }
                       return Column(
@@ -784,10 +784,10 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
                       );
                     },
                   ),
-                ],
-              ),
+              ],
             ),
-          ],
+          ),
+        ],
         ),
       ),
     );
@@ -883,38 +883,38 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         height: 180,
-        decoration: BoxDecoration(
+      decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
+        boxShadow: [
+          BoxShadow(
               color: Colors.black.withOpacity(0.08),
               blurRadius: 12,
               offset: const Offset(0, 4),
-            ),
-          ],
-        ),
+          ),
+        ],
+      ),
         child: Stack(
-          children: [
+              children: [
             Positioned(
               left: 20,
               top: 20,
               right: 120,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    activity.title,
-                    style: const TextStyle(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        activity.title,
+                        style: const TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 22,
-                      fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.bold,
                       color: textColor,
                       height: 1.2,
-                    ),
+                        ),
                     maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                   const SizedBox(height: 8),
                   Text(
                     activity.description,
@@ -932,13 +932,13 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
                           horizontal: 8,
                           vertical: 4,
                         ),
-                        decoration: BoxDecoration(
+                            decoration: BoxDecoration(
                           color: subjectColor.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -974,21 +974,21 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
                                   ? Colors.orange
                                   : Colors.purple)
                               .withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
                           activity.ageGroup == AgeGroup.junior
                               ? 'Junior'
                               : 'Bright',
-                          style: TextStyle(
+                              style: TextStyle(
                             color: activity.ageGroup == AgeGroup.junior
                                 ? Colors.orange
                                 : Colors.purple,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -1000,20 +1000,20 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
                         color: textColor.withOpacity(0.6),
                       ),
                       const SizedBox(width: 4),
-                      Text(
+                          Text(
                         '${activity.points} points',
-                        style: TextStyle(
+                            style: TextStyle(
                           fontFamily: 'Nunito',
                           fontSize: 13,
-                          fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w500,
                           color: textColor.withOpacity(0.6),
-                        ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
+                ),
             Positioned(
               right: -10,
               bottom: -10,
@@ -1023,32 +1023,32 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
               top: 12,
               right: 12,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
                   color: isPublished
                       ? SafePlayColors.success.withOpacity(0.9)
                       : Colors.orange.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
                       isPublished ? Icons.check_circle : Icons.edit_outlined,
                       size: 14,
                       color: Colors.white,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
+          ),
+          const SizedBox(width: 4),
+          Text(
                       isPublished ? 'Published' : 'Draft',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
               ),
             ),
           ],
@@ -1122,16 +1122,16 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
     return TeacherActivitiesManagementView(
       embedded: true,
       onCreateActivity: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
+            Navigator.push(
+              context,
+              MaterialPageRoute(
             builder: (context) => const ActivityCreationWizardScreen(),
-          ),
+              ),
         ).then((_) {
           // Refresh data when returning
           _loadDashboardData();
         });
-      },
+          },
     );
   }
 
@@ -1170,7 +1170,7 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
         Expanded(
           child: RefreshIndicator(
             onRefresh: _loadDashboardData,
-            child: _buildTemplatesContent(),
+          child: _buildTemplatesContent(),
           ),
         ),
       ],
@@ -1466,36 +1466,36 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
                         Builder(
                           builder: (context) {
                             final subject = template.subjects.first;
-                            final color = _getSubjectColor(subject);
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: color.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(8),
+                        final color = _getSubjectColor(subject);
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _getSubjectIcon(subject),
+                                size: 12,
+                                color: color,
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    _getSubjectIcon(subject),
-                                    size: 12,
-                                    color: color,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    subject == ActivitySubject.reading
-                                        ? 'English'
-                                        : subject.displayName,
-                                    style: TextStyle(
-                                      color: color,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
+                              const SizedBox(width: 4),
+                              Text(
+                                subject == ActivitySubject.reading
+                                    ? 'English'
+                                    : subject.displayName,
+                                style: TextStyle(
+                                  color: color,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                            );
+                            ],
+                          ),
+                        );
                           },
                         ),
                         const SizedBox(width: 6),

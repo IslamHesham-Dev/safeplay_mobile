@@ -462,7 +462,7 @@ class _PopulateQuestionsScreenState extends State<PopulateQuestionsScreen> {
                         Icon(Icons.book, color: Colors.blue, size: 24),
                         const SizedBox(width: 12),
                         const Text(
-                          'English Questions',
+              'English Questions',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -1026,3 +1026,835 @@ class _PopulateQuestionsScreenState extends State<PopulateQuestionsScreen> {
     );
   }
 }
+
+
+
+            const SizedBox(height: 24),
+
+
+
+            // Science Questions Section
+
+            _buildSubjectCard(
+
+              'Science Questions',
+
+              Icons.science,
+
+              Colors.green,
+
+              8, // Junior
+
+              8, // Bright
+
+              16, // Total
+
+              _populateScienceQuestions,
+
+            ),
+
+
+
+            const SizedBox(height: 24),
+
+
+
+            // Break Activities Section
+
+            Card(
+
+              color: Colors.purple.withValues(alpha: 0.05),
+
+              child: Padding(
+
+                padding: const EdgeInsets.all(20),
+
+                child: Column(
+
+                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                  children: [
+
+                    Row(
+
+                      children: [
+
+                        Icon(Icons.self_improvement,
+
+                            color: Colors.purple, size: 24),
+
+                        const SizedBox(width: 12),
+
+                        const Text(
+
+                          'Break Activities & Mindful Games',
+
+                          style: TextStyle(
+
+                            fontSize: 18,
+
+                            fontWeight: FontWeight.bold,
+
+                          ),
+
+                        ),
+
+                      ],
+
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    const Text(
+
+                      'Populate mindful and fun break activities:',
+
+                      style: TextStyle(fontSize: 14),
+
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    Container(
+
+                      padding: const EdgeInsets.all(12),
+
+                      decoration: BoxDecoration(
+
+                        color: Colors.white,
+
+                        borderRadius: BorderRadius.circular(8),
+
+                        border: Border.all(color: Colors.grey[300]!),
+
+                      ),
+
+                      child: Column(
+
+                        children: [
+
+                          _buildQuestionCountRow('Junior (6-8)', 10,
+
+                              color: Colors.purple),
+
+                          const Divider(height: 16),
+
+                          _buildQuestionCountRow('Bright (9-12)', 12,
+
+                              color: Colors.purple),
+
+                          const Divider(height: 16),
+
+                          _buildQuestionCountRow('Total', 22,
+
+                              isTotal: true, color: Colors.purple),
+
+                        ],
+
+                      ),
+
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    Container(
+
+                      padding: const EdgeInsets.all(12),
+
+                      decoration: BoxDecoration(
+
+                        color: Colors.purple.withValues(alpha: 0.1),
+
+                        borderRadius: BorderRadius.circular(8),
+
+                        border: Border.all(color: Colors.purple, width: 1),
+
+                      ),
+
+                      child: Column(
+
+                        crossAxisAlignment: CrossAxisAlignment.start,
+
+                        children: [
+
+                          Row(
+
+                            children: [
+
+                              Icon(Icons.info_outline,
+
+                                  color: Colors.purple, size: 18),
+
+                              const SizedBox(width: 8),
+
+                              Text(
+
+                                'Break Activities Include:',
+
+                                style: TextStyle(
+
+                                  fontSize: 13,
+
+                                  fontWeight: FontWeight.bold,
+
+                                  color: Colors.purple,
+
+                                ),
+
+                              ),
+
+                            ],
+
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          ...[
+
+                            'Breathing exercises',
+
+                            'Coloring & creative activities',
+
+                            'Yoga & movement',
+
+                            'Mindfulness & meditation',
+
+                            'Emotional awareness games',
+
+                            'Music & rhythm',
+
+                            'Puzzles & challenges',
+
+                            'Gratitude exercises'
+
+                          ].map((item) => Padding(
+
+                                padding:
+
+                                    const EdgeInsets.only(bottom: 4, left: 8),
+
+                                child: Text(
+
+                                  '• $item',
+
+                                  style: TextStyle(
+
+                                    fontSize: 12,
+
+                                    color: Colors.grey[700],
+
+                                  ),
+
+                                ),
+
+                              )),
+
+                        ],
+
+                      ),
+
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    if (_status != null && _status!.contains('Break')) ...[
+
+                      Container(
+
+                        padding: const EdgeInsets.all(12),
+
+                        decoration: BoxDecoration(
+
+                          color: _status!.startsWith('✅')
+
+                              ? SafePlayColors.success.withValues(alpha: 0.1)
+
+                              : _status!.startsWith('❌')
+
+                                  ? Colors.red.withValues(alpha: 0.1)
+
+                                  : Colors.blue.withValues(alpha: 0.1),
+
+                          borderRadius: BorderRadius.circular(8),
+
+                          border: Border.all(
+
+                            color: _status!.startsWith('✅')
+
+                                ? SafePlayColors.success
+
+                                : _status!.startsWith('❌')
+
+                                    ? Colors.red
+
+                                    : Colors.blue,
+
+                            width: 1,
+
+                          ),
+
+                        ),
+
+                        child: Row(
+
+                          children: [
+
+                            Expanded(
+
+                              child: Text(
+
+                                _status!,
+
+                                style: TextStyle(
+
+                                  fontSize: 13,
+
+                                  color: _status!.startsWith('✅')
+
+                                      ? SafePlayColors.success
+
+                                      : _status!.startsWith('❌')
+
+                                          ? Colors.red
+
+                                          : Colors.blue,
+
+                                  fontWeight: FontWeight.w500,
+
+                                ),
+
+                              ),
+
+                            ),
+
+                          ],
+
+                        ),
+
+                      ),
+
+                      const SizedBox(height: 16),
+
+                    ],
+
+                    SizedBox(
+
+                      width: double.infinity,
+
+                      child: ElevatedButton.icon(
+
+                        onPressed:
+
+                            _populating ? null : _populateBreakActivities,
+
+                        icon: _populating
+
+                            ? const SizedBox(
+
+                                width: 20,
+
+                                height: 20,
+
+                                child: CircularProgressIndicator(
+
+                                  strokeWidth: 2,
+
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+
+                                      Colors.white),
+
+                                ),
+
+                              )
+
+                            : const Icon(Icons.self_improvement),
+
+                        label: Text(
+
+                          _populating
+
+                              ? 'Populating...'
+
+                              : 'Populate Break Activities',
+
+                          style: const TextStyle(
+
+                            fontSize: 16,
+
+                            fontWeight: FontWeight.bold,
+
+                          ),
+
+                        ),
+
+                        style: ElevatedButton.styleFrom(
+
+                          backgroundColor: Colors.purple,
+
+                          foregroundColor: Colors.white,
+
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+
+                          shape: RoundedRectangleBorder(
+
+                            borderRadius: BorderRadius.circular(12),
+
+                          ),
+
+                        ),
+
+                      ),
+
+                    ),
+
+                  ],
+
+                ),
+
+              ),
+
+            ),
+
+
+
+            const SizedBox(height: 24),
+
+
+
+            // Information Card
+
+            Card(
+
+              child: Padding(
+
+                padding: const EdgeInsets.all(16),
+
+                child: Column(
+
+                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                  children: [
+
+                    Row(
+
+                      children: [
+
+                        Icon(
+
+                          Icons.lightbulb_outline,
+
+                          color: Colors.amber[700],
+
+                          size: 20,
+
+                        ),
+
+                        const SizedBox(width: 8),
+
+                        Text(
+
+                          'Important Notes',
+
+                          style: TextStyle(
+
+                            fontSize: 14,
+
+                            fontWeight: FontWeight.bold,
+
+                            color: Colors.grey[800],
+
+                          ),
+
+                        ),
+
+                      ],
+
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    Text(
+
+                      '• Templates will be created with proper game type mappings\n'
+
+                      '• Each question includes points, difficulty, and skills\n'
+
+                      '• Questions are optimized for Junior vs Bright age groups\n'
+
+                      '• All templates will be marked as active (isActive: true)\n'
+
+                      '• You can disable templates later from the Templates tab',
+
+                      style: TextStyle(
+
+                        fontSize: 12,
+
+                        color: Colors.grey[600],
+
+                        height: 1.6,
+
+                      ),
+
+                    ),
+
+                  ],
+
+                ),
+
+              ),
+
+            ),
+
+          ],
+
+        ),
+
+      ),
+
+    );
+
+  }
+
+
+
+  Widget _buildQuestionCountRow(String label, int count,
+
+      {bool isTotal = false, Color? color}) {
+
+    final displayColor = color ?? SafePlayColors.brandTeal500;
+
+    return Row(
+
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+      children: [
+
+        Text(
+
+          label,
+
+          style: TextStyle(
+
+            fontSize: isTotal ? 16 : 14,
+
+            fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
+
+            color: Colors.grey[800],
+
+          ),
+
+        ),
+
+        Container(
+
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+
+          decoration: BoxDecoration(
+
+            color: isTotal
+
+                ? displayColor.withValues(alpha: 0.1)
+
+                : Colors.grey[100],
+
+            borderRadius: BorderRadius.circular(16),
+
+          ),
+
+          child: Text(
+
+            '$count questions',
+
+            style: TextStyle(
+
+              fontSize: isTotal ? 14 : 12,
+
+              fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
+
+              color: isTotal ? displayColor : Colors.grey[700],
+
+            ),
+
+          ),
+
+        ),
+
+      ],
+
+    );
+
+  }
+
+
+
+  Widget _buildSubjectCard(
+
+    String title,
+
+    IconData icon,
+
+    Color color,
+
+    int juniorCount,
+
+    int brightCount,
+
+    int totalCount,
+
+    Future<void> Function() onPopulate,
+
+  ) {
+
+    return Card(
+
+      color: color.withValues(alpha: 0.05),
+
+      child: Padding(
+
+        padding: const EdgeInsets.all(20),
+
+        child: Column(
+
+          crossAxisAlignment: CrossAxisAlignment.start,
+
+          children: [
+
+            Row(
+
+              children: [
+
+                Icon(icon, color: color, size: 24),
+
+                const SizedBox(width: 12),
+
+                Text(
+
+                  title,
+
+                  style: const TextStyle(
+
+                    fontSize: 18,
+
+                    fontWeight: FontWeight.bold,
+
+                  ),
+
+                ),
+
+              ],
+
+            ),
+
+            const SizedBox(height: 12),
+
+            Text(
+
+              'Populate $title templates:',
+
+              style: const TextStyle(fontSize: 14),
+
+            ),
+
+            const SizedBox(height: 8),
+
+            Container(
+
+              padding: const EdgeInsets.all(12),
+
+              decoration: BoxDecoration(
+
+                color: Colors.white,
+
+                borderRadius: BorderRadius.circular(8),
+
+                border: Border.all(color: Colors.grey[300]!),
+
+              ),
+
+              child: Column(
+
+                children: [
+
+                  _buildQuestionCountRow('Junior (6-8)', juniorCount,
+
+                      color: color),
+
+                  const Divider(height: 16),
+
+                  _buildQuestionCountRow('Bright (9-12)', brightCount,
+
+                      color: color),
+
+                  const Divider(height: 16),
+
+                  _buildQuestionCountRow('Total', totalCount,
+
+                      isTotal: true, color: color),
+
+                ],
+
+              ),
+
+            ),
+
+            const SizedBox(height: 16),
+
+            if (_status != null &&
+
+                _status!.contains(title.split(' ').first)) ...[
+
+              Container(
+
+                padding: const EdgeInsets.all(12),
+
+                decoration: BoxDecoration(
+
+                  color: _status!.startsWith('✅')
+
+                      ? SafePlayColors.success.withValues(alpha: 0.1)
+
+                      : _status!.startsWith('❌')
+
+                          ? Colors.red.withValues(alpha: 0.1)
+
+                          : Colors.blue.withValues(alpha: 0.1),
+
+                  borderRadius: BorderRadius.circular(8),
+
+                  border: Border.all(
+
+                    color: _status!.startsWith('✅')
+
+                        ? SafePlayColors.success
+
+                        : _status!.startsWith('❌')
+
+                            ? Colors.red
+
+                            : Colors.blue,
+
+                    width: 1,
+
+                  ),
+
+                ),
+
+                child: Row(
+
+                  children: [
+
+                    Expanded(
+
+                      child: Text(
+
+                        _status!,
+
+                        style: TextStyle(
+
+                          fontSize: 13,
+
+                          color: _status!.startsWith('✅')
+
+                              ? SafePlayColors.success
+
+                              : _status!.startsWith('❌')
+
+                                  ? Colors.red
+
+                                  : Colors.blue,
+
+                          fontWeight: FontWeight.w500,
+
+                        ),
+
+                      ),
+
+                    ),
+
+                  ],
+
+                ),
+
+              ),
+
+              const SizedBox(height: 16),
+
+            ],
+
+            SizedBox(
+
+              width: double.infinity,
+
+              child: ElevatedButton.icon(
+
+                onPressed: _populating ? null : onPopulate,
+
+                icon: _populating
+
+                    ? const SizedBox(
+
+                        width: 20,
+
+                        height: 20,
+
+                        child: CircularProgressIndicator(
+
+                          strokeWidth: 2,
+
+                          valueColor:
+
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+
+                        ),
+
+                      )
+
+                    : const Icon(Icons.cloud_upload),
+
+                label: Text(
+
+                  _populating ? 'Populating...' : 'Populate $title',
+
+                  style: const TextStyle(
+
+                    fontSize: 16,
+
+                    fontWeight: FontWeight.bold,
+
+                  ),
+
+                ),
+
+                style: ElevatedButton.styleFrom(
+
+                  backgroundColor: color,
+
+                  foregroundColor: Colors.white,
+
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+
+                  shape: RoundedRectangleBorder(
+
+                    borderRadius: BorderRadius.circular(12),
+
+                  ),
+
+                ),
+
+              ),
+
+            ),
+
+          ],
+
+        ),
+
+      ),
+
+    );
+
+  }
+
+}
+
+
