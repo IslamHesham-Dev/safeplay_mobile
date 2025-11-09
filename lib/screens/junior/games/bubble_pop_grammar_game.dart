@@ -6,6 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 
 import '../../../design_system/junior_theme.dart';
 import '../../../models/activity.dart';
+import '../../../widgets/floating_bubbles.dart';
 
 class BubblePopGrammarGame extends StatefulWidget {
   final ActivityQuestion question;
@@ -285,6 +286,14 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
       ),
       child: Stack(
         children: [
+          // Floating bubbles effect
+          const FloatingBubbles(
+            bubbleCount: 20,
+            minSize: 6.0,
+            maxSize: 18.0,
+            bubbleColor: Colors.white,
+            opacity: 0.4,
+          ),
           // Underwater background effects
           Positioned.fill(
             child: CustomPaint(

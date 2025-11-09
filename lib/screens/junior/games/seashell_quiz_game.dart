@@ -6,6 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 
 import '../../../design_system/junior_theme.dart';
 import '../../../models/activity.dart';
+import '../../../widgets/floating_bubbles.dart';
 
 class SeashellQuizGame extends StatefulWidget {
   final ActivityQuestion question;
@@ -296,6 +297,14 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
       ),
       child: Stack(
         children: [
+          // Floating bubbles effect
+          const FloatingBubbles(
+            bubbleCount: 22,
+            minSize: 7.0,
+            maxSize: 20.0,
+            bubbleColor: Colors.white,
+            opacity: 0.4,
+          ),
           // Background image in foreground - positioned lower
           Positioned(
             left: 0,

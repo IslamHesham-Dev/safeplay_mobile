@@ -6,6 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 
 import '../../../design_system/junior_theme.dart';
 import '../../../models/activity.dart';
+import '../../../widgets/floating_bubbles.dart';
 
 class FishTankQuizGame extends StatefulWidget {
   final ActivityQuestion question;
@@ -313,6 +314,14 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
       ),
       child: Stack(
         children: [
+          // Floating bubbles effect
+          const FloatingBubbles(
+            bubbleCount: 18,
+            minSize: 5.0,
+            maxSize: 16.0,
+            bubbleColor: Colors.white,
+            opacity: 0.35,
+          ),
           // Background image
           Positioned.fill(
             child: Image.asset(
