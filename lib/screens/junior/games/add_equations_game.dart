@@ -175,6 +175,10 @@ class _AddEquationsGameState extends State<AddEquationsGame>
       vsync: this,
       duration: const Duration(milliseconds: 1000),
     );
+
+    // Configure sound player to not interfere with background music
+    _soundPlayer.setPlayerMode(PlayerMode.lowLatency);
+
     _dragController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 200),
@@ -350,6 +354,10 @@ class _AddEquationsGameState extends State<AddEquationsGame>
         _tooltipNumber = number;
         _disabledNumbers.add(number);
         _isHovering = false;
+        // Automatically show hint on wrong answer
+        if (widget.question.hint != null && widget.question.hint!.isNotEmpty) {
+          _showHint = true;
+        }
       });
       _shakeController.forward(from: 0).then((_) {
         if (mounted) {

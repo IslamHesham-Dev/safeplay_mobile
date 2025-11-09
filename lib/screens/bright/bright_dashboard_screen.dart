@@ -83,6 +83,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
 
   Future<void> _playBackgroundMusic() async {
     try {
+      // Configure background music player to use media player mode for proper looping
+      await _audioPlayer.setPlayerMode(PlayerMode.mediaPlayer);
       await _audioPlayer.setReleaseMode(ReleaseMode.loop);
       await _audioPlayer.setVolume(0.7); // Set volume to 70%
       await _audioPlayer.play(AssetSource('audio/third.mp3'));
@@ -99,20 +101,22 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     }
   }
 
+  Future<void> _playClickSound() async {
+    try {
+      // Configure click sound player to not interfere with background music
+      await _clickSoundPlayer.setPlayerMode(PlayerMode.lowLatency);
+      await _clickSoundPlayer
+          .play(AssetSource('audio/sound effects/sound effects/click.mp3'));
+    } catch (e) {
+      debugPrint('Error playing click sound: $e');
+    }
+  }
+
   Future<void> _stopBackgroundMusic() async {
     try {
       await _audioPlayer.stop();
     } catch (e) {
       debugPrint('Error stopping background music: $e');
-    }
-  }
-
-  Future<void> _playClickSound() async {
-    try {
-      await _clickSoundPlayer
-          .play(AssetSource('audio/sound effects/sound effects/click.mp3'));
-    } catch (e) {
-      debugPrint('Error playing click sound: $e');
     }
   }
 

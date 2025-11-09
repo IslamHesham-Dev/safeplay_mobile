@@ -87,6 +87,9 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
       duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
 
+    // Configure sound player to not interfere with background music
+    _soundPlayer.setPlayerMode(PlayerMode.lowLatency);
+
     _resetQuestion();
   }
 
@@ -203,6 +206,10 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
         _shakingOption = option;
         _tooltipOption = option;
         _disabledOptions.add(option);
+        // Automatically show hint on wrong answer
+        if (widget.question.hint != null && widget.question.hint!.isNotEmpty) {
+          _showHint = true;
+        }
       });
       _shakeController.forward(from: 0).then((_) {
         if (mounted) {
@@ -297,15 +304,7 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
       ),
       child: Stack(
         children: [
-          // Floating bubbles effect
-          const FloatingBubbles(
-            bubbleCount: 22,
-            minSize: 7.0,
-            maxSize: 20.0,
-            bubbleColor: Colors.white,
-            opacity: 0.4,
-          ),
-          // Background image in foreground - positioned lower
+          // Background image - first layer (behind everything)
           Positioned(
             left: 0,
             right: 0,
@@ -326,6 +325,15 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
               },
             ),
           ),
+          // Floating bubbles effect - second layer (on top of background, under UI)
+          const FloatingBubbles(
+            bubbleCount: 22,
+            minSize: 7.0,
+            maxSize: 20.0,
+            bubbleColor: Colors.white,
+            opacity: 0.4,
+          ),
+          // UI elements - top layer (on top of bubbles)
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

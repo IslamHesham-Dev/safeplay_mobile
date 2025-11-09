@@ -95,6 +95,9 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
       duration: const Duration(milliseconds: 1000),
     );
 
+    // Configure sound player to not interfere with background music
+    _soundPlayer.setPlayerMode(PlayerMode.lowLatency);
+
     _resetQuestion();
   }
 
@@ -202,6 +205,10 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
       setState(() {
         _shakingOption = option;
         _tooltipOption = option;
+        // Automatically show hint on wrong answer
+        if (widget.question.hint != null && widget.question.hint!.isNotEmpty) {
+          _showHint = true;
+        }
       });
       _shakeController.forward(from: 0.0);
       _tooltipController.forward(from: 0.0).then((_) {

@@ -96,6 +96,10 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
+
+    // Configure sound player to not interfere with background music
+    _soundPlayer.setPlayerMode(PlayerMode.lowLatency);
+
     _resetQuestion();
     // Initialize fixed positions - will be set when build is called with screen size
   }
@@ -250,6 +254,10 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
         _disabledFish.add(option);
         _shakingOption = option;
         _tooltipOption = option;
+        // Automatically show hint on wrong answer
+        if (widget.question.hint != null && widget.question.hint!.isNotEmpty) {
+          _showHint = true;
+        }
       });
       _shakeController.forward(from: 0);
       _tooltipController.forward(from: 0.0).then((_) {

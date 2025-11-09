@@ -69,6 +69,10 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
       (sum, question) => sum + question.points,
     );
     _sessionStartTime = DateTime.now();
+
+    // Configure sound player to not interfere with background music
+    _soundPlayer.setPlayerMode(PlayerMode.lowLatency);
+
     _startSession();
   }
 

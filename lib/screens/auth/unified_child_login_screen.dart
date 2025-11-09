@@ -80,6 +80,8 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
     try {
       // Only play when showing the "Who's here?" page (no child selected)
       if (_selectedChildId == null) {
+        // Configure background music player to use media player mode for proper looping
+        await _audioPlayer.setPlayerMode(PlayerMode.mediaPlayer);
         await _audioPlayer.setReleaseMode(ReleaseMode.loop);
         await _audioPlayer.setVolume(0.7); // Set volume to 70%
         await _audioPlayer.play(AssetSource('audio/first.mp3'));
