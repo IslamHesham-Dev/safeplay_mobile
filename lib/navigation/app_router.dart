@@ -5,7 +5,7 @@ import '../providers/auth_provider.dart';
 import '../screens/auth/child_selector_screen.dart';
 import '../screens/auth/unified_child_login_screen.dart';
 import '../screens/auth/forgot_password_screen.dart';
-import '../screens/auth/login_screen.dart';
+import '../screens/auth/safeplay_portal_login.dart';
 import '../screens/auth/parent_login_screen.dart';
 import '../screens/auth/parent_signup_screen.dart';
 import '../screens/auth/email_verification_screen.dart';
@@ -50,7 +50,7 @@ class AppRouter {
           ),
           GoRoute(
             path: RouteNames.login,
-            builder: (context, state) => const LoginScreen(),
+            builder: (context, state) => const SafePlayPortalLoginScreen(),
           ),
           GoRoute(
             path: RouteNames.parentLogin,

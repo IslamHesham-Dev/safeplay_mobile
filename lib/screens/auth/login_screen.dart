@@ -14,7 +14,6 @@ class LoginScreen extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Logo
@@ -32,7 +31,10 @@ class LoginScreen extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 24),
+
+              // Push the cards further down the screen for better spacing
+              const Spacer(flex: 7),
 
               // Parent Login Button
               ElevatedButton(
@@ -140,6 +142,9 @@ class LoginScreen extends StatelessWidget {
                   ),
                 ],
               ),
+
+              // Smaller spacer beneath the cards/sign ups
+              const Spacer(flex: 2),
             ],
           ),
         ),
