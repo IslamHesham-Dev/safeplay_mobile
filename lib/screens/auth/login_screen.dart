@@ -33,8 +33,8 @@ class LoginScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              // Push the cards further down the screen for better spacing
-              const Spacer(flex: 7),
+              // Push the cards down but keep buttons visible on shorter screens
+              const Spacer(flex: 5),
 
               // Parent Login Button
               ElevatedButton(
@@ -144,7 +144,7 @@ class LoginScreen extends StatelessWidget {
               ),
 
               // Smaller spacer beneath the cards/sign ups
-              const Spacer(flex: 2),
+              const Spacer(flex: 1),
             ],
           ),
         ),

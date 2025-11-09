@@ -16,7 +16,7 @@ import '../../design_system/colors.dart';
 import 'activity_builder_screen.dart';
 import 'activity_creation_wizard_screen.dart';
 import 'teacher_activities_management_screen.dart';
-import 'populate_questions_screen.dart';
+// Populate Questions screen import removed - button removed from UI (logic code kept in PopulateQuestionsScreen)
 
 class EnhancedTeacherDashboard extends StatefulWidget {
   const EnhancedTeacherDashboard({super.key});
@@ -684,30 +684,7 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: _buildActionCard(
-                      'Populate Questions',
-                      'Setup question templates in database',
-                      Icons.cloud_upload,
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const PopulateQuestionsScreen(),
-                          ),
-                        ).then((_) {
-                          // Refresh data when returning
-                          _loadDashboardData();
-                        });
-                      },
-                      gradient: LinearGradient(
-                        colors: [Colors.orange, Colors.orange.withOpacity(0.8)],
-                      ),
-                    ),
-                  ),
+                  // Populate Questions button removed from UI (logic code kept in PopulateQuestionsScreen)
                 ],
               ),
             ),

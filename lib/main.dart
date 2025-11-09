@@ -16,7 +16,8 @@ import 'services/offline_storage_service.dart';
 import 'services/sync_service.dart';
 import 'services/notification_service.dart';
 import 'services/auth_service.dart';
-import 'services/database_initializer.dart';
+// Database initialization removed - it requires admin permissions and should be run manually
+// import 'services/database_initializer.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,11 +40,12 @@ Future<void> _initializeFirebase() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    // Initialize database with curriculum templates
-    debugPrint('🚀 Initializing Safeplay Database...');
-    final dbInitializer = DatabaseInitializer();
-    await dbInitializer.initializeDatabase();
-    debugPrint('✅ Database initialization complete!');
+    // Database initialization removed - it requires admin permissions
+    // and causes permission errors on app startup for regular users.
+    // Database seeding should be done manually by admins or through a separate script.
+    // If needed, uncomment and run only for admin/teacher accounts:
+    // final dbInitializer = DatabaseInitializer();
+    // await dbInitializer.initializeDatabase();
   } catch (error, stackTrace) {
     debugPrint('Firebase initialization error: $error');
     debugPrintStack(stackTrace: stackTrace);

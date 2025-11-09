@@ -89,28 +89,7 @@ class _SplashScreenState extends State<SplashScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // SafePlay Logo (placeholder)
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 20,
-                        spreadRadius: 5,
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    Icons.security,
-                    size: 60,
-                    color: SafePlayColors.brandTeal500,
-                  ),
-                ),
-                const SizedBox(height: 24),
+                // Shield icon removed
                 Text(
                   'SafePlay Portal',
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(

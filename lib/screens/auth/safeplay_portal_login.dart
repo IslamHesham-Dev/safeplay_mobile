@@ -131,8 +131,8 @@ class _SafePlayPortalLoginScreenState extends State<SafePlayPortalLoginScreen> {
               ),
             ),
           ),
-          // Fixed spacing instead of Expanded to control position better
-          const SizedBox(height: 60), // Increased spacing to move tiles down
+          // Spacer to add breathing room while keeping tiles near mid-screen
+          SizedBox(height: isNarrow ? 64.0 : 96.0),
           // Login Cards - positioned from bottom
           _buildLoginCard(
             context: context,
@@ -169,11 +169,11 @@ class _SafePlayPortalLoginScreenState extends State<SafePlayPortalLoginScreen> {
             isNarrow: isNarrow,
             heroTag: 'teacher_login',
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
           // Footer Section - positioned from bottom, always visible
           _buildFooter(context),
-          // Bottom padding to ensure footer and sign-up buttons are visible
-          const SizedBox(height: 8),
+          // Bottom padding to ensure footer and sign-up buttons are visible at bottom
+          const SizedBox(height: 16),
         ],
       ),
     );
