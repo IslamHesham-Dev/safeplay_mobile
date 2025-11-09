@@ -87,6 +87,7 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
       duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
     _resetQuestion();
+    // Initialize fixed positions - will be set when build is called with screen size
   }
 
   @override
@@ -108,7 +109,6 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
     _showGreatJob = false;
     _showHint = false;
     _disabledFish.clear();
-    _fishPositions.clear();
 
     _celebrationController.reset();
     _shakeController.reset();
@@ -249,48 +249,49 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
     }
   }
 
-  void _calculateFishPositions(Size screenSize) {
-    if (_fishPositions.isNotEmpty) return; // Already calculated
+  void _calculateFishPositions(Size areaSize) {
+    _fishPositions.clear();
 
-    final fishWidth = 150.0;
-    final fishHeight = 85.0;
-    final spacing = 16.0;
-    final screenWidth = screenSize.width;
+    const fishWidth = 150.0;
+    const fishHeight = 85.0;
+    const spacing = 16.0;
+    const verticalSpacing = spacing + 20;
+    const horizontalOffset = 10.0; // Reintroduce slight right shift
+    const verticalOffset = 20.0; // Push the grid slightly downward
 
-    // Calculate how many fish per row (2 max for better spacing)
-    final fishPerRow = math.min(2, _options.length);
+    final maxPerRow = math.min(2, _options.length);
+    final totalRows = (_options.length / maxPerRow).ceil();
+    final totalHeight =
+        (totalRows * fishHeight) + ((totalRows - 1) * verticalSpacing);
+    final startY =
+        math.max(0, (areaSize.height - totalHeight) / 2 + verticalOffset);
 
-    // Calculate spacing between fish
-    final totalFishWidth =
-        (fishPerRow * fishWidth) + ((fishPerRow - 1) * spacing);
-    // Center on x-axis
-    final startX = (screenWidth - totalFishWidth) / 2;
-    // Move up a little bit - start from 28% down instead of 35%
-    final startY = screenSize.height * 0.28;
+    var optionIndex = 0;
+    var currentRow = 0;
 
-    for (int i = 0; i < _options.length; i++) {
-      final row = i ~/ fishPerRow;
-      final col = i % fishPerRow;
+    while (optionIndex < _options.length) {
+      final remaining = _options.length - optionIndex;
+      final fishThisRow = math.min(maxPerRow, remaining);
+      final rowTotalWidth =
+          (fishThisRow * fishWidth) + ((fishThisRow - 1) * spacing);
+      final rowStartX =
+          (areaSize.width - rowTotalWidth) / 2 + horizontalOffset;
 
-      // Center each row on x-axis
-      final x = startX + (col * (fishWidth + spacing));
-      final y = startY + (row * (fishHeight + spacing + 20));
-
-      _fishPositions[_options[i]] = Offset(x, y);
+      for (int col = 0; col < fishThisRow; col++) {
+        final x = rowStartX + (col * (fishWidth + spacing));
+        final y = startY + (currentRow * (fishHeight + verticalSpacing));
+        _fishPositions[_options[optionIndex]] = Offset(x, y);
+        optionIndex += 1;
+      }
+      currentRow += 1;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final screenSize = mediaQuery.size;
-
     final prompt = widget.question.question.isNotEmpty
         ? widget.question.question
         : 'Tap the correct answer!';
-
-    // Calculate fish positions
-    _calculateFishPositions(screenSize);
 
     return Container(
       decoration: const BoxDecoration(
@@ -495,69 +496,78 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
                 ],
                 const SizedBox(height: 16),
                 Expanded(
-                  child: Stack(
-                    children: [
-                      // Fish options
-                      ..._options.map((option) {
-                        final position = _fishPositions[option];
-                        if (position == null) return const SizedBox.shrink();
-                        return Positioned(
-                          left: position.dx,
-                          top: position.dy,
-                          child: _FishOption(
-                            label: option,
-                            onTap: () => _handleTap(option),
-                            isCorrect: _selectedOption == option,
-                            isDisabled: _disabledFish.contains(option) &&
-                                !_answerLocked,
-                            flip: _fishFlipController,
-                            shake: _shakeController,
-                            isShaking: _shakingOption == option,
-                          ),
-                        );
-                      }),
-                      // Tooltip for wrong answer
-                      if (_tooltipOption != null)
-                        Positioned(
-                          left: _fishPositions[_tooltipOption]?.dx ?? 0,
-                          top: (_fishPositions[_tooltipOption]?.dy ?? 0) - 40,
-                          child: AnimatedBuilder(
-                            animation: _tooltipController,
-                            builder: (context, child) {
-                              return Opacity(
-                                opacity: _tooltipController.value < 0.5
-                                    ? _tooltipController.value * 2
-                                    : 1.0 -
-                                        ((_tooltipController.value - 0.5) * 2),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red.shade700,
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color:
-                                            Colors.black.withValues(alpha: 0.3),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 4),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      _calculateFishPositions(
+                        Size(constraints.maxWidth, constraints.maxHeight),
+                      );
+                      return Stack(
+                        children: [
+                          // Fish options
+                          ..._options.map((option) {
+                            final position = _fishPositions[option];
+                            if (position == null) {
+                              return const SizedBox.shrink();
+                            }
+                            return Positioned(
+                              left: position.dx,
+                              top: position.dy,
+                              child: _FishOption(
+                                label: option,
+                                onTap: () => _handleTap(option),
+                                isCorrect: _selectedOption == option,
+                                isDisabled: _disabledFish.contains(option) &&
+                                    !_answerLocked,
+                                flip: _fishFlipController,
+                                shake: _shakeController,
+                                isShaking: _shakingOption == option,
+                              ),
+                            );
+                          }),
+                          // Tooltip for wrong answer
+                          if (_tooltipOption != null)
+                            Positioned(
+                              left: _fishPositions[_tooltipOption]?.dx ?? 0,
+                              top: (_fishPositions[_tooltipOption]?.dy ?? 0) - 40,
+                              child: AnimatedBuilder(
+                                animation: _tooltipController,
+                                builder: (context, child) {
+                                  return Opacity(
+                                    opacity: _tooltipController.value < 0.5
+                                        ? _tooltipController.value * 2
+                                        : 1.0 -
+                                            ((_tooltipController.value - 0.5) * 2),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red.shade700,
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black
+                                                .withValues(alpha: 0.3),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                                  child: Text(
-                                    'Try again!',
-                                    style: JuniorTheme.bodySmall.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
+                                      child: Text(
+                                        'Try again!',
+                                        style: JuniorTheme.bodySmall.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                    ],
+                                  );
+                                },
+                              ),
+                            ),
+                        ],
+                      );
+                    },
                   ),
                 ),
                 _buildMascotRow(),
