@@ -16,12 +16,16 @@ import 'services/offline_storage_service.dart';
 import 'services/sync_service.dart';
 import 'services/notification_service.dart';
 import 'services/auth_service.dart';
+import 'package:safeplay_mobile/services/session_coin_service.dart';
 // Database initialization removed - it requires admin permissions and should be run manually
 // import 'services/database_initializer.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await _initializeFirebase();
+
+  // Reset session coins on app start (coins are session-only, not persisted)
+  SessionCoinService().reset();
 
   // Set preferred orientations (not applicable on web)
   if (!kIsWeb) {

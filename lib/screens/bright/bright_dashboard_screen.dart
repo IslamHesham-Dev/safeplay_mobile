@@ -15,8 +15,11 @@ import '../../widgets/junior/junior_task_card.dart';
 import '../../widgets/junior/junior_progress_bar.dart';
 import '../../widgets/junior/junior_bottom_navigation.dart';
 import '../../widgets/junior/junior_confetti.dart';
+import '../../widgets/junior/junior_coin_animation.dart';
 import '../../widgets/question_template_exporter.dart';
 import '../../services/junior_game_launcher.dart';
+import 'package:safeplay_mobile/services/session_coin_service.dart';
+import 'dart:math' as math;
 import '../junior/games/number_hunt_games.dart';
 import '../junior/games/koala_jumps_games.dart';
 import '../junior/games/pattern_wizard_games.dart';
@@ -55,14 +58,9 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   final AudioPlayer _audioPlayer = AudioPlayer();
   // Audio player for click sounds
   final AudioPlayer _clickSoundPlayer = AudioPlayer();
-
-  String _sanitizeGender(String? gender) {
-    if (gender == null) return 'female';
-    final normalized = gender.toLowerCase();
-    if (normalized == 'male' || normalized == 'boy') return 'male';
-    if (normalized == 'female' || normalized == 'girl') return 'female';
-    return 'female';
-  }
+  // Session coin service
+  final SessionCoinService _sessionCoinService = SessionCoinService();
+  bool _showCoinAnimation = false;
 
   @override
   void initState() {
@@ -79,6 +77,49 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     _animationController.forward();
     // Start background music
     _playBackgroundMusic();
+    // Check for pending coins and show animation
+    _checkPendingCoins();
+    // Listen to coin service changes
+    _sessionCoinService.addListener(_onCoinsChanged);
+  }
+
+  void _onCoinsChanged() {
+    if (mounted) {
+      setState(() {
+        // Force rebuild when coins change
+      });
+      _checkPendingCoins();
+    }
+  }
+
+  String _sanitizeGender(String? gender) {
+    if (gender == null) return 'female';
+    final normalized = gender.toLowerCase();
+    if (normalized == 'male' || normalized == 'boy') return 'male';
+    if (normalized == 'female' || normalized == 'girl') return 'female';
+    return 'female';
+  }
+
+  void _checkPendingCoins() {
+    // Check if there are pending coins from last activity
+    final pendingCoins = _sessionCoinService.pendingCoins;
+    if (pendingCoins > 0) {
+      setState(() {
+        _showCoinAnimation = true;
+      });
+      // Clear pending coins after animation
+      Future.delayed(const Duration(milliseconds: 2500), () {
+        if (mounted) {
+          setState(() {
+            _showCoinAnimation = false;
+          });
+          _sessionCoinService.clearPendingCoins();
+        }
+      });
+    } else {
+      // Even if no pending coins, force rebuild to show updated total
+      setState(() {});
+    }
   }
 
   Future<void> _playBackgroundMusic() async {
@@ -121,7 +162,17 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Check for pending coins when returning to dashboard and force rebuild
+    _checkPendingCoins();
+    // Force rebuild to update coin display
+    setState(() {});
+  }
+
+  @override
   void dispose() {
+    _sessionCoinService.removeListener(_onCoinsChanged);
     _animationController.dispose();
     _stopBackgroundMusic();
     _audioPlayer.dispose();
@@ -257,6 +308,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
+    final sessionCoins = context.watch<AuthProvider>().childSessionCoins;
     return Scaffold(
       backgroundColor: JuniorTheme.backgroundLight,
       body: Stack(
@@ -324,21 +376,49 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                           alignment: Alignment.topCenter,
                           clipBehavior: Clip.none,
                           children: [
-                            Text(
-                              '${_childProgress?.earnedPoints ?? 0}',
-                              textAlign: TextAlign.center,
-                              style: JuniorTheme.headingLarge.copyWith(
-                                color: JuniorTheme.textPrimary,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 52,
-                                shadows: [
-                                  Shadow(
-                                    color: Colors.white.withOpacity(0.5),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 1),
-                                  ),
-                                ],
-                              ),
+                            // Session coins display
+                            AnimatedBuilder(
+                              animation:
+                                  Listenable.merge([_sessionCoinService]),
+                              builder: (context, child) {
+                                return Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Text(
+                                      '$sessionCoins',
+                                      textAlign: TextAlign.center,
+                                      style: JuniorTheme.headingLarge.copyWith(
+                                        color: JuniorTheme.textPrimary,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 52,
+                                        shadows: [
+                                          Shadow(
+                                            color:
+                                                Colors.white.withOpacity(0.5),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    // Coin animation overlay
+                                    if (_showCoinAnimation)
+                                      Positioned.fill(
+                                        child: IgnorePointer(
+                                          child: FloatingCoinsAnimation(
+                                            coinCount: math.min(
+                                                _sessionCoinService
+                                                    .pendingCoins,
+                                                10),
+                                            duration: const Duration(
+                                                milliseconds: 2000),
+                                            onComplete: () {},
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                );
+                              },
                             ),
                             Positioned(
                               top: 54, // lowered a bit more for extra spacing
