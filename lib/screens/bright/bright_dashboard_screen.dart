@@ -320,59 +320,67 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                       const SizedBox(height: 2),
                       Transform.translate(
                         offset: const Offset(0, -20),
-                        child: Stack(
-                          alignment: Alignment.topCenter,
-                          clipBehavior: Clip.none,
-                          children: [
-                            Text(
-                              '${_childProgress?.earnedPoints ?? 0}',
-                              textAlign: TextAlign.center,
-                              style: JuniorTheme.headingLarge.copyWith(
-                                color: JuniorTheme.textPrimary,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 52,
-                                shadows: [
-                                  Shadow(
-                                    color: Colors.white.withOpacity(0.5),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 1),
+                        child: Builder(
+                          builder: (context) {
+                            // Watch AuthProvider for real-time coin updates
+                            final sessionCoins =
+                                context.watch<AuthProvider>().childSessionCoins;
+                            return Stack(
+                              alignment: Alignment.topCenter,
+                              clipBehavior: Clip.none,
+                              children: [
+                                Text(
+                                  '$sessionCoins',
+                                  textAlign: TextAlign.center,
+                                  style: JuniorTheme.headingLarge.copyWith(
+                                    color: JuniorTheme.textPrimary,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 52,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.white.withOpacity(0.5),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 1),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            ),
-                            Positioned(
-                              top: 54, // lowered a bit more for extra spacing
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.monetization_on,
-                                    color: JuniorTheme.accentGold,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'coins collected',
-                                    textAlign: TextAlign.center,
-                                    style: JuniorTheme.bodySmall.copyWith(
-                                      color: JuniorTheme.textPrimary,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                      shadows: [
-                                        Shadow(
-                                          color: Colors.white
-                                              .withValues(alpha: 0.4),
-                                          blurRadius: 3,
-                                          offset: const Offset(0, 1),
+                                ),
+                                Positioned(
+                                  top:
+                                      54, // lowered a bit more for extra spacing
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.monetization_on,
+                                        color: JuniorTheme.accentGold,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'coins collected',
+                                        textAlign: TextAlign.center,
+                                        style: JuniorTheme.bodySmall.copyWith(
+                                          color: JuniorTheme.textPrimary,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                          shadows: [
+                                            Shadow(
+                                              color: Colors.white
+                                                  .withValues(alpha: 0.4),
+                                              blurRadius: 3,
+                                              offset: const Offset(0, 1),
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            ),
-                          ],
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                     ],

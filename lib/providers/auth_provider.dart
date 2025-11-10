@@ -24,6 +24,7 @@ class AuthProvider extends ChangeNotifier {
   ChildProfile? _currentChild;
   bool _isLoading = false;
   String? _error;
+  int _childSessionCoins = 0; // Session-based coins (not persisted)
 
   // Getters
   UserProfile? get currentUser => _currentUser;
@@ -37,6 +38,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated =>
       hasParentSession || hasChildSession || hasTeacherSession;
   bool get isChildAuthenticated => hasChildSession;
+  int get childSessionCoins => _childSessionCoins;
 
   /// Initialize auth state from storage
   Future<void> _init() async {
@@ -253,6 +255,7 @@ class AuthProvider extends ChangeNotifier {
       _currentChild = child;
       if (child != null) {
         _currentUser = null;
+        _childSessionCoins = 0; // Reset coins on child login
         await _clearPersistedUser();
         await _persistCurrentChild(child);
         notifyListeners();
@@ -287,6 +290,7 @@ class AuthProvider extends ChangeNotifier {
       _currentChild = child;
       if (child != null) {
         _currentUser = null;
+        _childSessionCoins = 0; // Reset coins on child login
         await _clearPersistedUser();
         await _persistCurrentChild(child);
         notifyListeners();
@@ -473,6 +477,7 @@ class AuthProvider extends ChangeNotifier {
     bool persist = true,
   }) async {
     _currentChild = child;
+    _childSessionCoins = 0; // Reset coins when switching child
     if (persist) {
       await _persistCurrentChild(child);
     }
@@ -497,6 +502,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> setDemoChild(ChildProfile child) async {
     _currentChild = child;
     _currentUser = null;
+    _childSessionCoins = 0; // Reset coins on demo child
     await _clearPersistedUser();
     await _persistCurrentChild(child);
     notifyListeners();
@@ -562,5 +568,20 @@ class AuthProvider extends ChangeNotifier {
   /// Clear error message
   void _clearError() {
     _error = null;
+  }
+
+  /// Add coins to child session (session-only, not persisted)
+  void addChildCoins(int coins) {
+    _childSessionCoins += coins;
+    debugPrint(
+        '💰 AuthProvider: Added $coins coins. Total: $_childSessionCoins');
+    notifyListeners();
+  }
+
+  /// Reset child session coins (called on app start or logout)
+  void resetChildSessionCoins() {
+    _childSessionCoins = 0;
+    debugPrint('💰 AuthProvider: Reset child session coins to 0');
+    notifyListeners();
   }
 }

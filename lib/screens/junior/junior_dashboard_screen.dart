@@ -477,6 +477,8 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
 
   Widget _buildAvatarSection() {
     final gender = _sanitizeGender(_currentChild?.gender);
+    // Watch AuthProvider for real-time coin updates
+    final sessionCoins = context.watch<AuthProvider>().childSessionCoins;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(JuniorTheme.spacingLarge),
@@ -496,9 +498,9 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
 
           const SizedBox(height: JuniorTheme.spacingMedium),
 
-          // Points display - large number
+          // Points display - large number (session coins)
           Text(
-            '${_childProgress?.earnedPoints ?? 0}',
+            '$sessionCoins',
             style: JuniorTheme.headingLarge.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.bold,
