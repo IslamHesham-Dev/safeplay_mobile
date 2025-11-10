@@ -157,11 +157,6 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
       if (isCorrect) {
         _score += pointsEarned;
         _totalCorrectAnswers++;
-        // Update coins in AuthProvider immediately when a correct answer is given
-        final authProvider = context.read<AuthProvider>();
-        authProvider.addChildCoins(pointsEarned);
-        debugPrint(
-            '💰 Game: Added $pointsEarned coins. Total session coins: ${authProvider.childSessionCoins}');
       }
     });
 
