@@ -11,7 +11,6 @@ import '../../../models/lesson.dart';
 import '../../../widgets/junior/junior_confetti.dart';
 import '../../../widgets/junior/junior_coin_animation.dart';
 import '../../../services/junior_activity_progress_service.dart';
-import 'package:safeplay_mobile/services/session_coin_service.dart';
 import '../../../providers/auth_provider.dart';
 
 import 'number_grid_race_game.dart';
@@ -56,7 +55,6 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
   String? _sessionId;
   final JuniorActivityProgressService _progressService =
       JuniorActivityProgressService();
-  final SessionCoinService _sessionCoinService = SessionCoinService();
   List<GameResponse> _allResponses = [];
   DateTime _sessionStartTime = DateTime.now();
   int _totalCorrectAnswers = 0;
@@ -248,32 +246,45 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
   }
 
   void _showSuccessFeedback(int pointsEarned) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      barrierColor: Colors.transparent,
-      builder: (context) => Stack(
-        children: [
-          FloatingCoinsAnimation(
-            coinCount: math.min(pointsEarned, 10),
-            duration: const Duration(milliseconds: 2000),
-            onComplete: () {},
-          ),
-          JuniorCelebrationOverlay(
-            isVisible: true,
-            message: 'Great Job! 🌟',
-            subMessage: 'You earned coins! 💰',
-            points: pointsEarned,
-            onDismiss: () {
-              Navigator.of(context).pop();
-              Future.delayed(const Duration(milliseconds: 300), () {
-                _nextQuestion();
-              });
-            },
-          ),
-        ],
-      ),
-    );
+    // For bubble pop grammar, seashell quiz, fish tank quiz, and add equations games, coin animation is handled in the game widget itself
+    // So we skip the dialog animation here to avoid duplicate animations
+    if (widget.gameType == GameType.bubblePopGrammar ||
+        widget.gameType == GameType.seashellQuiz ||
+        widget.gameType == GameType.fishTankQuiz ||
+        widget.gameType == GameType.addEquations) {
+      // No message needed - coin animation handles the feedback
+      return;
+    } else {
+      // For other games, show the full celebration dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        barrierColor: Colors.transparent,
+        builder: (context) => Stack(
+          children: [
+            // Floating coins effect
+            FloatingCoinsAnimation(
+              coinCount: math.min(pointsEarned, 10),
+              duration: const Duration(milliseconds: 2000),
+              onComplete: () {},
+            ),
+            // Celebration overlay
+            JuniorCelebrationOverlay(
+              isVisible: true,
+              message: 'Great Job! 🌟',
+              subMessage: 'You earned coins! 💰',
+              points: pointsEarned,
+              onDismiss: () {
+                Navigator.of(context).pop();
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  _nextQuestion();
+                });
+              },
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   void _showTryAgainFeedback() {
@@ -300,14 +311,6 @@ class _JuniorGamePlayerScreenState extends State<JuniorGamePlayerScreen>
   }
 
   void _showCompletionCelebration() {
-    // Add coins to session storage immediately when completion dialog appears
-    _sessionCoinService.addCoins(_score);
-    if (mounted) {
-      context.read<AuthProvider>().addChildSessionCoins(_score);
-    }
-    debugPrint(
-        '💰 Added $_score coins to session (total: ${_sessionCoinService.sessionCoins})');
-
     // Play activity completed sound
     _playSound('audio/sound effects/sound effects/activity completed.wav');
     showDialog(

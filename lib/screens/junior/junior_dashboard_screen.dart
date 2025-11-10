@@ -16,13 +16,10 @@ import '../../widgets/junior/junior_task_card.dart';
 import '../../widgets/junior/junior_progress_bar.dart';
 import '../../widgets/junior/junior_bottom_navigation.dart';
 import '../../widgets/junior/junior_confetti.dart';
-import '../../widgets/junior/junior_coin_animation.dart';
 import '../../widgets/question_template_exporter.dart';
-import 'dart:math' as math;
 import '../../services/junior_games_service.dart';
 import '../../services/junior_game_launcher.dart';
 import '../../services/simple_template_service.dart';
-import 'package:safeplay_mobile/services/session_coin_service.dart';
 import '../../navigation/route_names.dart';
 import 'games/number_hunt_games.dart';
 import 'games/koala_jumps_games.dart';
@@ -41,7 +38,7 @@ class JuniorDashboardScreen extends StatefulWidget {
 }
 
 class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
-    with TickerProviderStateMixin, WidgetsBindingObserver {
+    with TickerProviderStateMixin {
   // Services removed for mock data demonstration
   late final AnimationController _animationController;
   late final Animation<double> _fadeAnimation;
@@ -63,9 +60,14 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   final AudioPlayer _audioPlayer = AudioPlayer();
   // Audio player for click sounds
   final AudioPlayer _clickSoundPlayer = AudioPlayer();
-  // Session coin service
-  final SessionCoinService _sessionCoinService = SessionCoinService();
-  bool _showCoinAnimation = false;
+
+  String _sanitizeGender(String? gender) {
+    if (gender == null) return 'female';
+    final normalized = gender.toLowerCase();
+    if (normalized == 'male' || normalized == 'boy') return 'male';
+    if (normalized == 'female' || normalized == 'girl') return 'female';
+    return 'female';
+  }
 
   @override
   void initState() {
@@ -82,69 +84,6 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     _animationController.forward();
     // Start background music
     _playBackgroundMusic();
-    // Check for pending coins and show animation
-    _checkPendingCoins();
-    // Listen to coin service changes
-    _sessionCoinService.addListener(_onCoinsChanged);
-    // Listen to app lifecycle changes
-    WidgetsBinding.instance.addObserver(this);
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed) {
-      // When app resumes, check for pending coins
-      debugPrint('💰 Dashboard: App resumed, checking coins');
-      _checkPendingCoins();
-      setState(() {});
-    }
-  }
-
-  void _onCoinsChanged() {
-    debugPrint(
-        '💰 Dashboard: Coins changed! Total: ${_sessionCoinService.sessionCoins}, Pending: ${_sessionCoinService.pendingCoins}');
-    if (mounted) {
-      setState(() {
-        // Force rebuild when coins change
-      });
-      _checkPendingCoins();
-    } else {
-      debugPrint('⚠️ Dashboard: Widget not mounted, cannot update');
-    }
-  }
-
-  String _sanitizeGender(String? gender) {
-    if (gender == null) return 'female';
-    final normalized = gender.toLowerCase();
-    if (normalized == 'male' || normalized == 'boy') return 'male';
-    if (normalized == 'female' || normalized == 'girl') return 'female';
-    return 'female';
-  }
-
-  void _checkPendingCoins() {
-    // Check if there are pending coins from last activity
-    final pendingCoins = _sessionCoinService.pendingCoins;
-    final totalCoins = _sessionCoinService.sessionCoins;
-    debugPrint(
-        '💰 Dashboard: Checking coins - Total: $totalCoins, Pending: $pendingCoins');
-    if (pendingCoins > 0) {
-      setState(() {
-        _showCoinAnimation = true;
-      });
-      // Clear pending coins after animation
-      Future.delayed(const Duration(milliseconds: 2500), () {
-        if (mounted) {
-          setState(() {
-            _showCoinAnimation = false;
-          });
-          _sessionCoinService.clearPendingCoins();
-        }
-      });
-    } else {
-      // Even if no pending coins, force rebuild to show updated total
-      setState(() {});
-    }
   }
 
   Future<void> _playBackgroundMusic() async {
@@ -187,18 +126,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Check for pending coins when returning to dashboard and force rebuild
-    _checkPendingCoins();
-    // Force rebuild to update coin display
-    setState(() {});
-  }
-
-  @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _sessionCoinService.removeListener(_onCoinsChanged);
     _animationController.dispose();
     _stopBackgroundMusic();
     _audioPlayer.dispose();
@@ -548,7 +476,6 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   }
 
   Widget _buildAvatarSection() {
-    final sessionCoins = context.watch<AuthProvider>().childSessionCoins;
     final gender = _sanitizeGender(_currentChild?.gender);
     return Container(
       width: double.infinity,
@@ -569,36 +496,14 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
 
           const SizedBox(height: JuniorTheme.spacingMedium),
 
-          // Points display - large number (session coins)
-          AnimatedBuilder(
-            animation: Listenable.merge([_sessionCoinService]),
-            builder: (context, child) {
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  Text(
-                    '$sessionCoins',
-                    style: JuniorTheme.headingLarge.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 48,
-                    ),
-                  ),
-                  // Coin animation overlay
-                  if (_showCoinAnimation)
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        child: FloatingCoinsAnimation(
-                          coinCount:
-                              math.min(_sessionCoinService.pendingCoins, 10),
-                          duration: const Duration(milliseconds: 2000),
-                          onComplete: () {},
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
+          // Points display - large number
+          Text(
+            '${_childProgress?.earnedPoints ?? 0}',
+            style: JuniorTheme.headingLarge.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 48,
+            ),
           ),
 
           const SizedBox(height: JuniorTheme.spacingXSmall),

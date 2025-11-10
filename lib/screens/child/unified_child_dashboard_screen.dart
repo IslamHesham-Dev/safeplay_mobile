@@ -1,19 +1,15 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/activity_service.dart';
 import '../../services/child_submission_service.dart';
-import 'package:safeplay_mobile/services/session_coin_service.dart';
 import '../../models/game_activity.dart';
 import '../../models/user_profile.dart';
 import '../../models/user_type.dart';
 import '../../design_system/colors.dart';
 import '../../widgets/games/junior_games.dart';
 import '../../widgets/games/bright_games.dart';
-import '../../widgets/junior/junior_coin_animation.dart';
 import '../junior/junior_dashboard_screen.dart';
 
 class UnifiedChildDashboardScreen extends StatefulWidget {
@@ -25,8 +21,7 @@ class UnifiedChildDashboardScreen extends StatefulWidget {
 }
 
 class _UnifiedChildDashboardScreenState
-    extends State<UnifiedChildDashboardScreen>
-    with TickerProviderStateMixin, WidgetsBindingObserver {
+    extends State<UnifiedChildDashboardScreen> with TickerProviderStateMixin {
   late final ActivityService _activityService;
   late final ChildSubmissionService _submissionService;
   late final AnimationController _animationController;
@@ -38,8 +33,6 @@ class _UnifiedChildDashboardScreenState
   ChildProfile? _currentChild;
   bool _loading = false;
   String? _error;
-  final SessionCoinService _sessionCoinService = SessionCoinService();
-  bool _showCoinAnimation = false;
 
   @override
   void initState() {
@@ -55,25 +48,12 @@ class _UnifiedChildDashboardScreenState
     );
     _loadDashboardData();
     _animationController.forward();
-    _sessionCoinService.addListener(_onCoinsChanged);
-    WidgetsBinding.instance.addObserver(this);
-    _checkPendingCoins();
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _sessionCoinService.removeListener(_onCoinsChanged);
     _animationController.dispose();
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.resumed) {
-      _checkPendingCoins();
-    }
   }
 
   Future<void> _loadDashboardData() async {
@@ -132,30 +112,6 @@ class _UnifiedChildDashboardScreenState
       setState(() => _error = e.toString());
     } finally {
       setState(() => _loading = false);
-    }
-  }
-
-  void _onCoinsChanged() {
-    if (!mounted) return;
-    setState(() {});
-    _checkPendingCoins();
-  }
-
-  void _checkPendingCoins() {
-    final pendingCoins = _sessionCoinService.pendingCoins;
-    if (pendingCoins > 0) {
-      setState(() {
-        _showCoinAnimation = true;
-      });
-      Future.delayed(const Duration(milliseconds: 2500), () {
-        if (!mounted) return;
-        setState(() {
-          _showCoinAnimation = false;
-        });
-        _sessionCoinService.clearPendingCoins();
-      });
-    } else {
-      setState(() {});
     }
   }
 
@@ -258,7 +214,6 @@ class _UnifiedChildDashboardScreenState
   }
 
   Widget _buildHeader() {
-    final sessionCoins = context.watch<AuthProvider>().childSessionCoins;
     final isJunior = _currentChild?.ageGroup == AgeGroup.junior;
     final primaryColor =
         isJunior ? SafePlayColors.juniorPurple : SafePlayColors.brightIndigo;
@@ -292,181 +247,155 @@ class _UnifiedChildDashboardScreenState
               ],
             ),
           ),
-          child: AnimatedBuilder(
-            animation: _sessionCoinService,
-            builder: (context, _) {
-              final totalCoins = sessionCoins;
-              final pendingCoins = _sessionCoinService.pendingCoins;
-              return Stack(
-                children: [
-                  // Decorative background elements
-                  Positioned(
-                    top: 20,
-                    right: 20,
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.1),
+          child: Stack(
+            children: [
+              // Decorative background elements
+              Positioned(
+                top: 20,
+                right: 20,
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 60,
+                right: 60,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.15),
+                  ),
+                ),
+              ),
+              // Main content
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Welcome message
+                    Text(
+                      'Welcome back,',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
-                  ),
-                  Positioned(
-                    top: 60,
-                    right: 60,
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.15),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_currentChild?.name ?? 'Explorer'}!',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                  if (_showCoinAnimation && pendingCoins > 0)
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        child: Align(
-                          alignment: Alignment.topCenter,
-                          child: SizedBox(
-                            height: 140,
-                            child: FloatingCoinsAnimation(
-                              coinCount: math.min(
-                                math.max(pendingCoins, 1),
-                                10,
-                              ),
-                            ),
-                          ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        isJunior ? '🌟 Junior Explorer' : '🚀 Bright Mind',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                  // Main content
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 16),
+                    // Gamification elements
+                    Row(
                       children: [
-                        // Welcome message
-                        Text(
-                          'Welcome back,',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${_currentChild?.name ?? 'Explorer'}!',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                              horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
+                            color: SafePlayColors.brandOrange500,
                             borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: SafePlayColors.brandOrange500
+                                    .withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          child: Text(
-                            isJunior ? '🌟 Junior Explorer' : '🚀 Bright Mind',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.stars,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '1,250 XP',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        // Gamification elements
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: SafePlayColors.brandOrange500,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: SafePlayColors.brandOrange500
-                                        .withValues(alpha: 0.3),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: SafePlayColors.brandTeal500,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: SafePlayColors.brandTeal500
+                                    .withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.stars,
-                                    color: Colors.white,
-                                    size: 16,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '$totalCoins Coins',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.emoji_events,
+                                color: Colors.white,
+                                size: 16,
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: SafePlayColors.brandTeal500,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: SafePlayColors.brandTeal500
-                                        .withValues(alpha: 0.3),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
+                              const SizedBox(width: 4),
+                              Text(
+                                'Level 5',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.emoji_events,
-                                    color: Colors.white,
-                                    size: 16,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    pendingCoins > 0
-                                        ? '+$pendingCoins incoming'
-                                        : 'Keep exploring!',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                ],
-              );
-            },
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),

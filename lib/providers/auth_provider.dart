@@ -24,7 +24,6 @@ class AuthProvider extends ChangeNotifier {
   ChildProfile? _currentChild;
   bool _isLoading = false;
   String? _error;
-  int _childSessionCoins = 0;
 
   // Getters
   UserProfile? get currentUser => _currentUser;
@@ -38,7 +37,6 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated =>
       hasParentSession || hasChildSession || hasTeacherSession;
   bool get isChildAuthenticated => hasChildSession;
-  int get childSessionCoins => _childSessionCoins;
 
   /// Initialize auth state from storage
   Future<void> _init() async {
@@ -107,7 +105,6 @@ class AuthProvider extends ChangeNotifier {
         }
       }
 
-      _childSessionCoins = 0;
       print(
           '🔐 AuthProvider: Initialization complete - hasParent: $hasParentSession, hasChild: $hasChildSession');
     } catch (error, stackTrace) {
@@ -128,10 +125,9 @@ class AuthProvider extends ChangeNotifier {
     try {
       final user = await _authService.signInWithEmail(email, password);
       print('dY"? AuthProvider: Got user from service: ${user?.name}');
-        _currentUser = user;
-        if (user != null) {
-          _currentChild = null;
-          _childSessionCoins = 0;
+      _currentUser = user;
+      if (user != null) {
+        _currentChild = null;
         print('AuthProvider: notifying listeners of parent session');
         notifyListeners();
 
@@ -442,7 +438,6 @@ class AuthProvider extends ChangeNotifier {
       await _authService.signOut();
       _currentUser = null;
       _currentChild = null;
-      _childSessionCoins = 0;
       await _clearPersistedUser();
       await _clearPersistedChild();
       notifyListeners();
@@ -478,7 +473,6 @@ class AuthProvider extends ChangeNotifier {
     bool persist = true,
   }) async {
     _currentChild = child;
-    _childSessionCoins = 0;
     if (persist) {
       await _persistCurrentChild(child);
     }
@@ -503,7 +497,6 @@ class AuthProvider extends ChangeNotifier {
   Future<void> setDemoChild(ChildProfile child) async {
     _currentChild = child;
     _currentUser = null;
-    _childSessionCoins = 0;
     await _clearPersistedUser();
     await _persistCurrentChild(child);
     notifyListeners();
@@ -569,16 +562,5 @@ class AuthProvider extends ChangeNotifier {
   /// Clear error message
   void _clearError() {
     _error = null;
-  }
-
-  void addChildSessionCoins(int coins) {
-    if (coins <= 0) return;
-    _childSessionCoins += coins;
-    notifyListeners();
-  }
-
-  void resetChildSessionCoins() {
-    _childSessionCoins = 0;
-    notifyListeners();
   }
 }
