@@ -59,26 +59,24 @@ class _SafePlayPortalLoginScreenState extends State<SafePlayPortalLoginScreen> {
               ),
             ),
           ),
-          // Scrollable content
+          // Content - no scrolling, fits on screen
           SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final screenHeight = MediaQuery.of(context).size.height -
                     MediaQuery.of(context).padding.top -
                     MediaQuery.of(context).padding.bottom;
-                return SingleChildScrollView(
-                  child: SizedBox(
-                    height: screenHeight,
-                    child: isTablet
-                        ? Center(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 600),
-                              child: _buildContent(
-                                  context, isNarrow, screenHeight),
-                            ),
-                          )
-                        : _buildContent(context, isNarrow, screenHeight),
-                  ),
+                return SizedBox(
+                  height: screenHeight,
+                  child: isTablet
+                      ? Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 600),
+                            child:
+                                _buildContent(context, isNarrow, screenHeight),
+                          ),
+                        )
+                      : _buildContent(context, isNarrow, screenHeight),
                 );
               },
             ),
@@ -90,6 +88,49 @@ class _SafePlayPortalLoginScreenState extends State<SafePlayPortalLoginScreen> {
 
   Widget _buildContent(
       BuildContext context, bool isNarrow, double screenHeight) {
+    // Calculate responsive spacing based on screen height
+    // On smaller screens, reduce top padding significantly
+    final topPadding = screenHeight < 700
+        ? screenHeight * 0.08 // 8% of screen height on small screens
+        : screenHeight < 900
+            ? screenHeight * 0.10 // 10% on medium screens
+            : screenHeight * 0.12; // 12% on large screens
+
+    // Calculate approximate content heights
+    final titleHeight = (isNarrow ? 32.0 : 38.0) * 1.2; // fontSize * lineHeight
+    final subtitleHeight = 15.0 * 1.4;
+    final cardHeight = 150.0;
+    final cardSpacing = isNarrow ? 16.0 : 18.0;
+    final footerHeight = 60.0; // Approximate footer height
+    final bottomPadding = MediaQuery.of(context).padding.bottom > 0
+        ? MediaQuery.of(context).padding.bottom + 16
+        : 32.0;
+
+    // Calculate total fixed content height
+    final totalFixedHeight = topPadding +
+        titleHeight +
+        8 + // spacing between title and subtitle
+        subtitleHeight +
+        (cardHeight * 3) + // 3 cards
+        (cardSpacing * 2) + // 2 spacings between cards
+        footerHeight +
+        bottomPadding;
+
+    // Calculate available space for flexible spacing
+    final availableSpace = screenHeight - totalFixedHeight;
+    // Use minimum spacing between tiles and footer, but ensure it's visible
+    final minSpacingBetweenTilesAndFooter = 40.0;
+    final spacingBetweenTitleAndTiles =
+        availableSpace > minSpacingBetweenTilesAndFooter * 2
+            ? (availableSpace - minSpacingBetweenTilesAndFooter) *
+                0.4 // 40% for top spacing
+            : availableSpace * 0.3; // On very small screens, use less
+    final spacingBetweenTilesAndFooter = availableSpace >
+            minSpacingBetweenTilesAndFooter * 2
+        ? (availableSpace - minSpacingBetweenTilesAndFooter) *
+            0.6 // 60% for bottom spacing
+        : availableSpace * 0.7; // On very small screens, use more for bottom
+
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: isNarrow ? 16.0 : 24.0,
@@ -97,8 +138,9 @@ class _SafePlayPortalLoginScreenState extends State<SafePlayPortalLoginScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Top padding - simulating shield icon space
-          const SizedBox(height: 100), // Increased to simulate shield icon
+          // Top padding - responsive based on screen height
+          SizedBox(
+              height: topPadding.clamp(40.0, 120.0)), // Clamp between 40-120px
           // Title - larger and moved downwards
           Semantics(
             label: 'SafePlay Portal',
@@ -131,8 +173,8 @@ class _SafePlayPortalLoginScreenState extends State<SafePlayPortalLoginScreen> {
               ),
             ),
           ),
-          // Spacer to add breathing room while keeping tiles near mid-screen
-          SizedBox(height: isNarrow ? 64.0 : 96.0),
+          // Responsive spacing between title and tiles
+          SizedBox(height: spacingBetweenTitleAndTiles.clamp(20.0, 100.0)),
           // Login Cards - positioned from bottom
           _buildLoginCard(
             context: context,
@@ -145,7 +187,7 @@ class _SafePlayPortalLoginScreenState extends State<SafePlayPortalLoginScreen> {
             isNarrow: isNarrow,
             heroTag: 'child_login',
           ),
-          SizedBox(height: isNarrow ? 16.0 : 18.0),
+          SizedBox(height: cardSpacing),
           _buildLoginCard(
             context: context,
             stripeColor: SafePlayColors.brandTeal500, // Match title color
@@ -157,7 +199,7 @@ class _SafePlayPortalLoginScreenState extends State<SafePlayPortalLoginScreen> {
             isNarrow: isNarrow,
             heroTag: 'parent_login',
           ),
-          SizedBox(height: isNarrow ? 16.0 : 18.0),
+          SizedBox(height: cardSpacing),
           _buildLoginCard(
             context: context,
             stripeColor: const Color(0xFF7E57C2), // Purple
@@ -169,11 +211,14 @@ class _SafePlayPortalLoginScreenState extends State<SafePlayPortalLoginScreen> {
             isNarrow: isNarrow,
             heroTag: 'teacher_login',
           ),
-          const SizedBox(height: 20),
+          // Responsive spacing between tiles and footer - ensures visibility on all devices
+          SizedBox(
+              height: spacingBetweenTilesAndFooter.clamp(
+                  minSpacingBetweenTilesAndFooter, 200.0)),
           // Footer Section - positioned from bottom, always visible
           _buildFooter(context),
           // Bottom padding to ensure footer and sign-up buttons are visible at bottom
-          const SizedBox(height: 16),
+          SizedBox(height: bottomPadding),
         ],
       ),
     );
