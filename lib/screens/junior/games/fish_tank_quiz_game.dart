@@ -322,15 +322,7 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
       ),
       child: Stack(
         children: [
-          // Floating bubbles effect
-          const FloatingBubbles(
-            bubbleCount: 18,
-            minSize: 5.0,
-            maxSize: 16.0,
-            bubbleColor: Colors.white,
-            opacity: 0.35,
-          ),
-          // Background image
+          // Background image - first layer (behind everything)
           Positioned.fill(
             child: Image.asset(
               'assets/images/Fishtank.JPG',
@@ -350,6 +342,15 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
               },
             ),
           ),
+          // Floating bubbles effect - second layer (on top of background, under UI)
+          const FloatingBubbles(
+            bubbleCount: 18,
+            minSize: 5.0,
+            maxSize: 16.0,
+            bubbleColor: Colors.white,
+            opacity: 0.35,
+          ),
+          // UI elements - top layer (on top of bubbles)
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
