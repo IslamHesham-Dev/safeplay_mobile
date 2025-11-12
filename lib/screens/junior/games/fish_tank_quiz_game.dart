@@ -602,7 +602,30 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
                     },
                   ),
                 ),
-                _buildMascotRow(),
+                // XP text at bottom - centered like Add Equations game
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        _answerLocked
+                            ? '+$_earnedPoints XP!'
+                            : 'Earn +$_earnedPoints XP',
+                        style: JuniorTheme.bodySmall.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -647,68 +670,6 @@ class _FishTankQuizGameState extends State<FishTankQuizGame>
               ),
             ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildMascotRow() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: AnimatedBuilder(
-        animation: _scubaBobController,
-        builder: (context, child) {
-          final bobOffset =
-              math.sin(_scubaBobController.value * math.pi * 2) * 3.0;
-          return Transform.translate(
-            offset: Offset(0.0, bobOffset),
-            child: child,
-          );
-        },
-        child: ScaleTransition(
-          scale: Tween<double>(begin: 1.0, end: 1.15).animate(
-            CurvedAnimation(
-              parent: _celebrationController,
-              curve: Curves.elasticOut,
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white38, width: 2),
-                ),
-                child: const Icon(
-                  Icons.scuba_diving,
-                  size: 32,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  _answerLocked
-                      ? '+$_earnedPoints XP!'
-                      : 'Earn +$_earnedPoints XP',
-                  style: JuniorTheme.bodySmall.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
