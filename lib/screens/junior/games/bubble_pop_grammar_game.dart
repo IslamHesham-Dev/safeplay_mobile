@@ -268,15 +268,9 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
 
   @override
   Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final screenSize = mediaQuery.size;
-
     final prompt = widget.question.question.isNotEmpty
         ? widget.question.question
         : 'Tap the correct word part!';
-
-    // Calculate bubble positions to prevent overlap
-    _calculateBubblePositions(screenSize);
 
     return Container(
       decoration: BoxDecoration(
@@ -506,36 +500,43 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
                 const SizedBox(height: 24),
                 // Bubbles area - circular bubbles in grid layout
                 Expanded(
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      ..._options.map((option) {
-                        final position =
-                            _bubblePositions[option] ?? Offset.zero;
-                        return Positioned(
-                          left: position.dx,
-                          top: position.dy,
-                          child: _BubbleWidget(
-                            label: option,
-                            floatController: _floatController,
-                            celebrationController: _celebrationController,
-                            shakeController: _shakeController,
-                            isCollected:
-                                _answerLocked && _selectedOption == option,
-                            isShaking: _shakingOption == option,
-                            onTap: () => _onBubbleTap(option),
-                          ),
-                        );
-                      }),
-                      // Tooltip for wrong answer
-                      if (_tooltipOption != null)
-                        _WrongAnswerTooltip(
-                          option: _tooltipOption!,
-                          position:
-                              _bubblePositions[_tooltipOption!] ?? Offset.zero,
-                          animation: _tooltipController,
-                        ),
-                    ],
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      _calculateBubblePositions(
+                        Size(constraints.maxWidth, constraints.maxHeight),
+                      );
+                      return Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          ..._options.map((option) {
+                            final position =
+                                _bubblePositions[option] ?? Offset.zero;
+                            return Positioned(
+                              left: position.dx,
+                              top: position.dy,
+                              child: _BubbleWidget(
+                                label: option,
+                                floatController: _floatController,
+                                celebrationController: _celebrationController,
+                                shakeController: _shakeController,
+                                isCollected:
+                                    _answerLocked && _selectedOption == option,
+                                isShaking: _shakingOption == option,
+                                onTap: () => _onBubbleTap(option),
+                              ),
+                            );
+                          }),
+                          // Tooltip for wrong answer
+                          if (_tooltipOption != null)
+                            _WrongAnswerTooltip(
+                              option: _tooltipOption!,
+                              position: _bubblePositions[_tooltipOption!] ??
+                                  Offset.zero,
+                              animation: _tooltipController,
+                            ),
+                        ],
+                      );
+                    },
                   ),
                 ),
                 // XP text at bottom - centered like Add Equations game
@@ -598,30 +599,40 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
     );
   }
 
-  void _calculateBubblePositions(Size screenSize) {
-    if (_bubblePositions.isNotEmpty) return; // Already calculated
+  void _calculateBubblePositions(Size areaSize) {
+    _bubblePositions.clear();
 
-    final bubbleSize = 120.0;
-    final spacing = 20.0;
-    final screenWidth = screenSize.width;
+    const bubbleSize = 120.0;
+    const spacing = 20.0;
+    const verticalSpacing = spacing + 20;
+    const horizontalOffset = 0.0;
+    const verticalOffset = 0.0; // Center vertically like fishtank
 
-    // Calculate how many bubbles per row (3 max)
+    // Calculate how many bubbles per row (3 max, but can be 2 like fishtank)
     final bubblesPerRow = math.min(3, _options.length);
+    final totalRows = (_options.length / bubblesPerRow).ceil();
+    final totalHeight =
+        (totalRows * bubbleSize) + ((totalRows - 1) * verticalSpacing);
+    final startY =
+        math.max(0, (areaSize.height - totalHeight) / 2 + verticalOffset);
 
-    // Calculate spacing between bubbles
-    final totalBubbleWidth =
-        (bubblesPerRow * bubbleSize) + ((bubblesPerRow - 1) * spacing);
-    final startX = (screenWidth - totalBubbleWidth) / 2;
-    final startY = screenSize.height * 0.25; // Start from 25% down
+    var optionIndex = 0;
+    var currentRow = 0;
 
-    for (int i = 0; i < _options.length; i++) {
-      final row = i ~/ bubblesPerRow;
-      final col = i % bubblesPerRow;
+    while (optionIndex < _options.length) {
+      final remaining = _options.length - optionIndex;
+      final bubblesThisRow = math.min(bubblesPerRow, remaining);
+      final rowTotalWidth =
+          (bubblesThisRow * bubbleSize) + ((bubblesThisRow - 1) * spacing);
+      final rowStartX = (areaSize.width - rowTotalWidth) / 2 + horizontalOffset;
 
-      final x = startX + (col * (bubbleSize + spacing));
-      final y = startY + (row * (bubbleSize + spacing + 20));
-
-      _bubblePositions[_options[i]] = Offset(x, y);
+      for (int col = 0; col < bubblesThisRow; col++) {
+        final x = rowStartX + (col * (bubbleSize + spacing));
+        final y = startY + (currentRow * (bubbleSize + verticalSpacing));
+        _bubblePositions[_options[optionIndex]] = Offset(x, y);
+        optionIndex += 1;
+      }
+      currentRow += 1;
     }
   }
 }
