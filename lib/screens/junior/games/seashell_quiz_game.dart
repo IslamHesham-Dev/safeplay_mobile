@@ -541,7 +541,7 @@ class _SeashellQuizGameState extends State<SeashellQuizGame>
                         crossAxisSpacing: 20,
                         mainAxisSpacing: 20,
                         childAspectRatio:
-                            1.1, // Aspect ratio might need tweaking
+                            0.9, // Smaller ratio = taller cells = bigger images
                       ),
                       itemCount: _options.length,
                       itemBuilder: (context, index) {
@@ -676,73 +676,39 @@ class _SeashellButton extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Seashell shape
+            // Seashell image - bigger, no color effects
             GestureDetector(
               onTap: onTap,
-              child: ClipPath(
-                clipper: _SeashellClipper(),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? const Color(0xFFFFD6A5) // Light peach
-                        : const Color(0xFFFFD6A5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFFFB703) // Darker shadow
-                            .withAlpha(102), // 0.4 alpha
-                        offset: const Offset(0, 3),
-                        blurRadius: 6,
-                        spreadRadius: 1,
+              child: Image.asset(
+                'assets/seashell_image.png',
+                fit: BoxFit.contain,
+                width: double.infinity,
+                height: double.infinity,
+                errorBuilder: (context, error, stackTrace) {
+                  // Fallback to empty container if image fails to load
+                  return const SizedBox.shrink();
+                },
+              ),
+            ),
+            // Text on top of the image
+            Positioned.fill(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0, vertical: 8.0),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 100),
+                    child: Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        color: Colors.black, // Black text
+                        fontWeight: FontWeight.w900, // Extra bold
                       ),
-                    ],
-                  ),
-                  alignment: Alignment.center,
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      // Check if text will wrap to multiple lines
-                      final textPainter = TextPainter(
-                        text: TextSpan(
-                          text: label,
-                          style: const TextStyle(
-                            fontSize: 18, // Original font size
-                            color: Color(0xFF5A3E1B), // Dark brown
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        textDirection: TextDirection.ltr,
-                        maxLines: 2,
-                      );
-                      textPainter.layout(
-                          maxWidth: constraints.maxWidth -
-                              40); // Reduced width to keep text within seashell shape
-                      final isMultiLine = textPainter.didExceedMaxLines ||
-                          textPainter.height >
-                              textPainter.preferredLineHeight * 1.2;
-
-                      return Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal:
-                              16, // Increased horizontal padding to constrain text width
-                          vertical: isMultiLine
-                              ? 4
-                              : 8, // Less top padding if multi-line
-                        ).copyWith(
-                          top: isMultiLine ? 8 : 16, // Shift up if multi-line
-                          bottom: isMultiLine ? 12 : 16,
-                        ),
-                        child: Text(
-                          label,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 18, // Original font size
-                            color: Color(0xFF5A3E1B), // Dark brown
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      );
-                    },
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
               ),
@@ -800,44 +766,6 @@ class _SeashellButton extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Custom clipper for seashell shape (as seen in image)
-class _SeashellClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final double w = size.width;
-    final double h = size.height;
-    final Path path = Path();
-
-    // Start slightly below top-left
-    path.moveTo(w * 0.10, h * 0.28);
-
-    // ---- Top curve (smooth oval dome) ----
-    path.cubicTo(
-      w * 0.28, -h * 0.05, // first control point (raises the middle)
-      w * 0.72, -h * 0.05, // second control point (keeps the curve symmetrical)
-      w * 0.90, h * 0.28, // end point (top-right shoulder)
-    );
-
-    // ---- Right side down to bottom tip ----
-    path.quadraticBezierTo(
-      w * 0.96, h * 0.60, // smooth downward curve
-      w * 0.5, h, // bottom tip
-    );
-
-    // ---- Left side back up to start ----
-    path.quadraticBezierTo(
-      w * 0.04, h * 0.60, // mirror of right side
-      w * 0.10, h * 0.28, // close to starting point
-    );
-
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
 
 /// Coin fly animation overlay (reused from bubble game)

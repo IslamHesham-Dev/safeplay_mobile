@@ -41,7 +41,6 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
   late final AnimationController _scubaBobController;
   late final AnimationController _tooltipController;
   final AudioPlayer _soundPlayer = AudioPlayer();
-  final Map<String, Offset> _bubblePositions = {};
   String? _selectedOption;
   String? _shakingOption;
   String? _tooltipOption;
@@ -120,7 +119,6 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
     _tooltipOption = null;
     _showGreatJob = false;
     _showHint = false;
-    _bubblePositions.clear();
 
     _celebrationController.reset();
     _shakeController.reset();
@@ -230,14 +228,14 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
   }
 
   void _launchCoinFlyAnimation(String tappedOption) {
-    final bubblePosition = _bubblePositions[tappedOption];
-    if (bubblePosition == null || widget.coinCounterKey == null) return;
+    if (widget.coinCounterKey == null) return;
 
-    // Get bubble center in global coordinates
-    final renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null) return;
-    final bubbleGlobalCenter = renderBox.localToGlobal(
-      bubblePosition + const Offset(60, 60), // bubble center (120/2)
+    // For GridView, we'll use the center of the screen as start position
+    // since we don't have individual bubble positions anymore
+    final screenSize = MediaQuery.of(context).size;
+    final bubbleGlobalCenter = Offset(
+      screenSize.width / 2,
+      screenSize.height / 2,
     );
 
     // Get coin counter center in global coordinates
@@ -498,45 +496,73 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
                   ),
                 ),
                 const SizedBox(height: 24),
-                // Bubbles area - circular bubbles in grid layout
+                // Bubbles area - 2x2 grid layout like Seashell game
                 Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      _calculateBubblePositions(
-                        Size(constraints.maxWidth, constraints.maxHeight),
-                      );
-                      return Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          ..._options.map((option) {
-                            final position =
-                                _bubblePositions[option] ?? Offset.zero;
-                            return Positioned(
-                              left: position.dx,
-                              top: position.dy,
-                              child: _BubbleWidget(
-                                label: option,
-                                floatController: _floatController,
-                                celebrationController: _celebrationController,
-                                shakeController: _shakeController,
-                                isCollected:
-                                    _answerLocked && _selectedOption == option,
-                                isShaking: _shakingOption == option,
-                                onTap: () => _onBubbleTap(option),
-                              ),
-                            );
-                          }),
-                          // Tooltip for wrong answer
-                          if (_tooltipOption != null)
-                            _WrongAnswerTooltip(
-                              option: _tooltipOption!,
-                              position: _bubblePositions[_tooltipOption!] ??
-                                  Offset.zero,
-                              animation: _tooltipController,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: GridView.builder(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 20,
+                        mainAxisSpacing: 20,
+                        childAspectRatio: 0.9,
+                      ),
+                      itemCount: _options.length,
+                      itemBuilder: (context, index) {
+                        final option = _options[index];
+                        final isSelected = _selectedOption == option;
+                        final isShaking = _shakingOption == option;
+                        final showTooltip = _tooltipOption == option;
+
+                        return Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            _BubbleWidget(
+                              label: option,
+                              floatController: _floatController,
+                              celebrationController: _celebrationController,
+                              shakeController: _shakeController,
+                              isCollected: _answerLocked && isSelected,
+                              isShaking: isShaking,
+                              onTap: () => _onBubbleTap(option),
                             ),
-                        ],
-                      );
-                    },
+                            // Tooltip for wrong answer
+                            if (showTooltip)
+                              Positioned(
+                                top: -40,
+                                child: FadeTransition(
+                                  opacity: _tooltipController,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.shade700,
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black
+                                              .withValues(alpha: 0.3),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Text(
+                                      'Try again!',
+                                      style: JuniorTheme.bodySmall.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
                 // XP text at bottom - centered like Add Equations game
@@ -597,43 +623,6 @@ class _BubblePopGrammarGameState extends State<BubblePopGrammarGame>
         ],
       ),
     );
-  }
-
-  void _calculateBubblePositions(Size areaSize) {
-    _bubblePositions.clear();
-
-    const bubbleSize = 120.0;
-    const spacing = 20.0;
-    const verticalSpacing = spacing + 20;
-    const horizontalOffset = 0.0;
-    const verticalOffset = 0.0; // Center vertically like fishtank
-
-    // Calculate how many bubbles per row (3 max, but can be 2 like fishtank)
-    final bubblesPerRow = math.min(3, _options.length);
-    final totalRows = (_options.length / bubblesPerRow).ceil();
-    final totalHeight =
-        (totalRows * bubbleSize) + ((totalRows - 1) * verticalSpacing);
-    final startY =
-        math.max(0, (areaSize.height - totalHeight) / 2 + verticalOffset);
-
-    var optionIndex = 0;
-    var currentRow = 0;
-
-    while (optionIndex < _options.length) {
-      final remaining = _options.length - optionIndex;
-      final bubblesThisRow = math.min(bubblesPerRow, remaining);
-      final rowTotalWidth =
-          (bubblesThisRow * bubbleSize) + ((bubblesThisRow - 1) * spacing);
-      final rowStartX = (areaSize.width - rowTotalWidth) / 2 + horizontalOffset;
-
-      for (int col = 0; col < bubblesThisRow; col++) {
-        final x = rowStartX + (col * (bubbleSize + spacing));
-        final y = startY + (currentRow * (bubbleSize + verticalSpacing));
-        _bubblePositions[_options[optionIndex]] = Offset(x, y);
-        optionIndex += 1;
-      }
-      currentRow += 1;
-    }
   }
 }
 
@@ -716,51 +705,6 @@ class _BubbleWidget extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _WrongAnswerTooltip extends StatelessWidget {
-  final String option;
-  final Offset position;
-  final Animation<double> animation;
-
-  const _WrongAnswerTooltip({
-    required this.option,
-    required this.position,
-    required this.animation,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      left: position.dx + 40,
-      top: position.dy - 30,
-      child: FadeTransition(
-        opacity: animation,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.red.shade600,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0.0, 4.0),
-              ),
-            ],
-          ),
-          child: Text(
-            'Try again!',
-            style: JuniorTheme.bodySmall.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
             ),
           ),
         ),
