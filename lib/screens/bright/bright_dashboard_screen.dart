@@ -28,6 +28,10 @@ import '../../models/book.dart';
 import '../../services/book_service.dart';
 import '../../widgets/book_card.dart';
 import '../child/book_reader_screen.dart';
+import '../../models/simulation.dart' as sim;
+import '../../services/simulation_service.dart';
+import '../../widgets/bright/simulation_card.dart';
+import 'simulation_detail_screen.dart';
 import 'package:go_router/go_router.dart';
 
 /// Bright (9-12) dashboard screen that reuses the junior UI for consistency
@@ -54,6 +58,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   String? _error;
   List<Book> _books = [];
   final BookService _bookService = BookService();
+  List<sim.Simulation> _simulations = [];
+  final SimulationService _simulationService = SimulationService();
   int _currentBottomNavIndex = 0; // Home is active by default
   bool _showCelebration = false;
 
@@ -83,6 +89,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     );
     _loadDashboardData();
     _loadBooks();
+    _loadSimulations();
     _animationController.forward();
     // Start background music
     _playBackgroundMusic();
@@ -606,6 +613,20 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     }
   }
 
+  Future<void> _loadSimulations() async {
+    try {
+      final simulations =
+          await _simulationService.getSimulations(ageGroup: 'bright');
+      if (mounted) {
+        setState(() {
+          _simulations = simulations;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading simulations: $e');
+    }
+  }
+
   Widget _buildBooksSection() {
     final childName = _currentChild?.name ?? 'Student';
 
@@ -1126,6 +1147,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildTodaysTasksSection(),
             const SizedBox(height: JuniorTheme.spacingLarge),
+            _buildSimulationsSection(),
+            const SizedBox(height: JuniorTheme.spacingLarge),
             _buildBooksSection(),
           ],
         );
@@ -1140,10 +1163,127 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildTodaysTasksSection(),
             const SizedBox(height: JuniorTheme.spacingLarge),
+            _buildSimulationsSection(),
+            const SizedBox(height: JuniorTheme.spacingLarge),
             _buildBooksSection(),
           ],
         );
     }
+  }
+
+  Widget _buildSimulationsSection() {
+    final childName = _currentChild?.name ?? 'Student';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Interactive Simulations',
+              style: JuniorTheme.headingMedium,
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: JuniorTheme.primaryBlue.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: JuniorTheme.primaryBlue.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.science,
+                    size: 14,
+                    color: JuniorTheme.primaryBlue,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'PhET',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: JuniorTheme.primaryBlue,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: JuniorTheme.spacingSmall),
+        Text(
+          'Explore science concepts through interactive experiments',
+          style: JuniorTheme.bodySmall.copyWith(
+            color: JuniorTheme.textSecondary,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: JuniorTheme.spacingMedium),
+        if (_simulations.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(JuniorTheme.spacingLarge),
+            decoration: BoxDecoration(
+              color: JuniorTheme.backgroundCard,
+              borderRadius: BorderRadius.circular(JuniorTheme.radiusLarge),
+              boxShadow: JuniorTheme.shadowMedium,
+            ),
+            child: Center(
+              child: Text(
+                'Loading simulations...',
+                style: JuniorTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          )
+        else
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 0.75,
+            ),
+            itemCount: _simulations.length,
+            itemBuilder: (context, index) {
+              final simulation = _simulations[index];
+              final colors = [
+                const Color(0xFF5B9BD5), // Blue
+                const Color(0xFFFDB462), // Orange
+                JuniorTheme.primaryGreen,
+                JuniorTheme.primaryPurple,
+              ];
+              final color = colors[index % colors.length];
+
+              return Semantics(
+                label: 'Simulation: ${simulation.title}',
+                child: SimulationCard(
+                  simulation: simulation,
+                  color: color,
+                  onTap: () {
+                    _playClickSound();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => SimulationDetailScreen(
+                          simulation: simulation,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+      ],
+    );
   }
 
   Lesson _lessonFromActivity(Activity activity) {
