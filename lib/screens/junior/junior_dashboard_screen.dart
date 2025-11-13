@@ -27,6 +27,10 @@ import 'games/pattern_wizard_games.dart';
 import 'games/math_adventures_games.dart';
 import 'games/reading_adventures_games.dart';
 import 'games/science_adventures_games.dart';
+import '../../models/book.dart';
+import '../../services/book_service.dart';
+import '../../widgets/book_card.dart';
+import '../child/book_reader_screen.dart';
 import 'package:go_router/go_router.dart';
 
 /// Junior (6-8) specific dashboard screen with age-appropriate UI
@@ -55,6 +59,8 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   String? _error;
   int _currentBottomNavIndex = 0; // Home is active by default
   bool _showCelebration = false;
+  List<Book> _books = [];
+  final BookService _bookService = BookService();
 
   // Audio player for background music
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -81,6 +87,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
           parent: _animationController, curve: JuniorTheme.smoothCurve),
     );
     _loadDashboardData();
+    _loadBooks();
     _animationController.forward();
     // Start background music
     _playBackgroundMusic();
@@ -560,6 +567,76 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
           _buildNoTasksMessage()
         else
           _buildTasksList(),
+      ],
+    );
+  }
+
+  Future<void> _loadBooks() async {
+    try {
+      final books = await _bookService.getBooks();
+      if (mounted) {
+        setState(() {
+          _books = books;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading books: $e');
+    }
+  }
+
+  Widget _buildBooksSection() {
+    final childName = _currentChild?.name ?? 'Student';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$childName\'s Library',
+          style: JuniorTheme.headingMedium,
+        ),
+        const SizedBox(height: JuniorTheme.spacingMedium),
+        if (_books.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(JuniorTheme.spacingLarge),
+            decoration: BoxDecoration(
+              color: JuniorTheme.backgroundCard,
+              borderRadius: BorderRadius.circular(JuniorTheme.radiusLarge),
+              boxShadow: JuniorTheme.shadowMedium,
+            ),
+            child: Center(
+              child: Text(
+                'Loading books...',
+                style: JuniorTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          )
+        else
+          SizedBox(
+            height: 220,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              itemCount: _books.length,
+              itemBuilder: (context, index) {
+                final book = _books[index];
+                return Semantics(
+                  label: 'Book: ${book.title}',
+                  child: BookCard(
+                    book: book,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => BookReaderScreen(book: book),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
       ],
     );
   }
@@ -1131,6 +1208,8 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
             _buildDailyTasksProgress(),
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildTodaysTasksSection(),
+            const SizedBox(height: JuniorTheme.spacingLarge),
+            _buildBooksSection(),
           ],
         );
       case 1: // Notifications - Show Achievements
@@ -1143,6 +1222,8 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
             _buildDailyTasksProgress(),
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildTodaysTasksSection(),
+            const SizedBox(height: JuniorTheme.spacingLarge),
+            _buildBooksSection(),
           ],
         );
     }

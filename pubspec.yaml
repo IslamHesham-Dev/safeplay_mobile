@@ -61,6 +61,10 @@ dependencies:
   flutter_tts: ^4.0.2
   audioplayers: ^6.0.0
   
+  # PDF
+  flutter_pdfview: ^1.3.2
+  cached_network_image: ^3.3.1
+  
   # Utilities
   intl: ^0.20.2
   uuid: ^4.3.3
@@ -104,3 +108,4 @@ flutter:
     - assets/audio/sound effects/sound effects/back to dashboard.wav
     - assets/audio/sound effects/sound effects/click.mp3
     - assets/audio/sound effects/sound effects/correct question.wav
+    - assets/books/
