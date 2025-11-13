@@ -49,7 +49,12 @@ class _BookCardState extends State<BookCard> {
                       ? Image.asset(
                           widget.book.thumbnailPath!,
                           fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
                           errorBuilder: (context, error, stackTrace) {
+                            debugPrint(
+                                '❌ Image.asset error for "${widget.book.title}": $error');
+                            debugPrint('   Path: ${widget.book.thumbnailPath}');
                             return _buildPlaceholder();
                           },
                         )

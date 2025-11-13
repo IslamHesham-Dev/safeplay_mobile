@@ -109,3 +109,4 @@ flutter:
     - assets/audio/sound effects/sound effects/click.mp3
     - assets/audio/sound effects/sound effects/correct question.wav
     - assets/books/
+    - assets/books/thumbnails/

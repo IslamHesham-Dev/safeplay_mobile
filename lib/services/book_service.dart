@@ -36,12 +36,6 @@ class BookService {
       ),
       Book(
         id: '4',
-        title: 'Tarzan',
-        pdfPath: 'assets/books/Tarzan (Disney Walt) (Z-Library).pdf',
-        // No thumbnail available
-      ),
-      Book(
-        id: '6',
         title: 'The Ant and the Grasshopper',
         pdfPath:
             'assets/books/The Ant and the Grasshopper (Melissa Rothman) (Z-Library).pdf',
@@ -49,7 +43,7 @@ class BookService {
             'assets/books/thumbnails/The Ant and The Grasshopper.PNG',
       ),
       Book(
-        id: '7',
+        id: '5',
         title: 'The Lion King',
         pdfPath: 'assets/books/The Lion King (.) (Z-Library).pdf',
         thumbnailPath: 'assets/books/thumbnails/The Lion King.PNG',
