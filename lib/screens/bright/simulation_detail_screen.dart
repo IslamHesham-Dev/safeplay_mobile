@@ -87,22 +87,16 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
   }
 
   Widget _buildTopPreviewSection() {
+    final screenHeight = MediaQuery.of(context).size.height;
     return Container(
-      height: 240,
-      margin: const EdgeInsets.all(16),
+      height: screenHeight * 0.5, // Take half the screen
+      margin: const EdgeInsets.all(0), // Remove margin to fill space
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(0),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(0),
         child: Stack(
           children: [
             // WebView preview
@@ -201,23 +195,8 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
           // Yellow warning section
           _buildWarningSection(),
 
-          // Bottom spacing
-          const SizedBox(height: 20),
-
-          // Start Simulation button
+          // Start Simulation button section with blue background
           _buildStartButton(),
-
-          // Help us improve text
-          const SizedBox(height: 16),
-          Text(
-            '💬 Help us improve',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
-          ),
-
-          const SizedBox(height: 32),
         ],
       ),
     );
@@ -230,63 +209,77 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
       decoration: const BoxDecoration(
         color: Color(0xFF5B9BD5), // Blue
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
+          topLeft: Radius.circular(0), // Straight corners
+          topRight: Radius.circular(0), // Straight corners
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(
-              widget.simulation.title,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                fontFamily: 'Nunito',
+          // First row: Title only
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.simulation.title,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontFamily: 'Nunito',
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-          const SizedBox(width: 16),
-          // Time badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              '${widget.simulation.estimatedMinutes} mins',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
+          const SizedBox(height: 12),
+          // Second row: Tags aligned to the right
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              // Time badge
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${widget.simulation.estimatedMinutes} mins',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Difficulty badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFFB4D47E), // Light green
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              widget.simulation.difficulty,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
+              const SizedBox(width: 8),
+              // Difficulty badge
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFB4D47E), // Light green
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  widget.simulation.difficulty,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Heart icon
-          const Icon(
-            Icons.favorite_border,
-            color: Colors.white,
-            size: 24,
+              const SizedBox(width: 8),
+              // Heart icon
+              const Icon(
+                Icons.favorite_border,
+                color: Colors.white,
+                size: 24,
+              ),
+            ],
           ),
         ],
       ),
@@ -314,7 +307,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
               const Text(
                 'Topics',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1565C0),
                   fontFamily: 'Nunito',
@@ -353,7 +346,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                 child: Text(
                   topic,
                   style: const TextStyle(
-                    fontSize: 15,
+                    fontSize: 17,
                     fontWeight: FontWeight.w600,
                     color: Colors.black87,
                   ),
@@ -387,7 +380,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
               const Text(
                 'Learning Goals',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                   fontFamily: 'Nunito',
@@ -436,7 +429,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                     child: Text(
                       goal,
                       style: const TextStyle(
-                        fontSize: 15,
+                        fontSize: 17,
                         color: Colors.white,
                         height: 1.5,
                       ),
@@ -472,7 +465,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
               Text(
                 'Scientific Explanation',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1565C0),
                   fontFamily: 'Nunito',
@@ -484,7 +477,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
           Text(
             widget.simulation.scientificExplanation,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 17,
               color: Colors.black.withOpacity(0.8),
               height: 1.6,
             ),
@@ -515,7 +508,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
               Text(
                 'Warning',
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                   fontFamily: 'Nunito',
@@ -527,7 +520,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
           Text(
             widget.simulation.warning,
             style: const TextStyle(
-              fontSize: 15,
+              fontSize: 17,
               color: Colors.white,
               height: 1.6,
             ),
@@ -540,51 +533,86 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
   Widget _buildStartButton() {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF5B9BD5), Color(0xFF4A8CC5)],
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF5B9BD5),
+            const Color(0xFF4A8CC5),
+          ],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF5B9BD5).withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: _enterFullscreen,
-          borderRadius: BorderRadius.circular(30),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.check_circle,
-                  color: Colors.white,
-                  size: 24,
-                ),
-                SizedBox(width: 12),
-                Text(
-                  'Start Simulation',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    fontFamily: 'Nunito',
-                  ),
+      child: Column(
+        children: [
+          // Custom curved top edge using ClipPath
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 32),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _enterFullscreen,
+                borderRadius: BorderRadius.circular(30),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 18, horizontal: 32),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        color: Color(0xFF5B9BD5),
+                        size: 26,
+                      ),
+                      SizedBox(width: 12),
+                      Text(
+                        'Start Simulation',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                          fontFamily: 'Nunito',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.chat_bubble_outline,
+                color: Colors.white.withOpacity(0.8),
+                size: 16,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Help us improve',
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.white.withOpacity(0.9),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

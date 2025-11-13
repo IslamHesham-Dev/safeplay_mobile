@@ -1219,9 +1219,10 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
         const SizedBox(height: JuniorTheme.spacingSmall),
         Text(
           'Explore science concepts through interactive experiments',
-          style: JuniorTheme.bodySmall.copyWith(
+          style: JuniorTheme.bodyLarge.copyWith(
             color: JuniorTheme.textSecondary,
-            fontSize: 14,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: JuniorTheme.spacingMedium),
