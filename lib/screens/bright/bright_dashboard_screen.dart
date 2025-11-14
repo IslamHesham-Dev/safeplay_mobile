@@ -58,7 +58,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   String? _error;
   List<Book> _books = [];
   final BookService _bookService = BookService();
-  List<sim.Simulation> _simulations = [];
+  List<sim.Simulation> _scienceSimulations = [];
+  List<sim.Simulation> _mathSimulations = [];
   final SimulationService _simulationService = SimulationService();
   int _currentBottomNavIndex = 0; // Home is active by default
   bool _showCelebration = false;
@@ -89,7 +90,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     );
     _loadDashboardData();
     _loadBooks();
-    _loadSimulations();
+    _loadScienceSimulations();
+    _loadMathSimulations();
     _animationController.forward();
     // Start background music
     _playBackgroundMusic();
@@ -613,17 +615,31 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     }
   }
 
-  Future<void> _loadSimulations() async {
+  Future<void> _loadScienceSimulations() async {
     try {
-      final simulations =
-          await _simulationService.getSimulations(ageGroup: 'bright');
+      final simulations = await _simulationService.getSimulations(
+          ageGroup: 'bright', subject: 'science');
       if (mounted) {
         setState(() {
-          _simulations = simulations;
+          _scienceSimulations = simulations;
         });
       }
     } catch (e) {
-      debugPrint('Error loading simulations: $e');
+      debugPrint('Error loading science simulations: $e');
+    }
+  }
+
+  Future<void> _loadMathSimulations() async {
+    try {
+      final simulations = await _simulationService.getSimulations(
+          ageGroup: 'bright', subject: 'math');
+      if (mounted) {
+        setState(() {
+          _mathSimulations = simulations;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading math simulations: $e');
     }
   }
 
@@ -1147,7 +1163,9 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildTodaysTasksSection(),
             const SizedBox(height: JuniorTheme.spacingLarge),
-            _buildSimulationsSection(),
+            _buildScienceSimulationsSection(),
+            const SizedBox(height: JuniorTheme.spacingLarge),
+            _buildMathSimulationsSection(),
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildBooksSection(),
           ],
@@ -1163,7 +1181,9 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildTodaysTasksSection(),
             const SizedBox(height: JuniorTheme.spacingLarge),
-            _buildSimulationsSection(),
+            _buildScienceSimulationsSection(),
+            const SizedBox(height: JuniorTheme.spacingLarge),
+            _buildMathSimulationsSection(),
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildBooksSection(),
           ],
@@ -1171,50 +1191,13 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     }
   }
 
-  Widget _buildSimulationsSection() {
-    final childName = _currentChild?.name ?? 'Student';
-
+  Widget _buildScienceSimulationsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text(
-              'Interactive Simulations',
-              style: JuniorTheme.headingMedium,
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: JuniorTheme.primaryBlue.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: JuniorTheme.primaryBlue.withOpacity(0.3),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.science,
-                    size: 14,
-                    color: JuniorTheme.primaryBlue,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'PhET',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: JuniorTheme.primaryBlue,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        Text(
+          'Science Simulations',
+          style: JuniorTheme.headingMedium,
         ),
         const SizedBox(height: JuniorTheme.spacingSmall),
         Text(
@@ -1226,7 +1209,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
           ),
         ),
         const SizedBox(height: JuniorTheme.spacingMedium),
-        if (_simulations.isEmpty)
+        if (_scienceSimulations.isEmpty)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(JuniorTheme.spacingLarge),
@@ -1253,14 +1236,93 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
               mainAxisSpacing: 16,
               childAspectRatio: 0.75,
             ),
-            itemCount: _simulations.length,
+            itemCount: _scienceSimulations.length,
             itemBuilder: (context, index) {
-              final simulation = _simulations[index];
+              final simulation = _scienceSimulations[index];
               final colors = [
                 const Color(0xFF5B9BD5), // Blue
                 const Color(0xFFFDB462), // Orange
                 JuniorTheme.primaryGreen,
                 JuniorTheme.primaryPurple,
+              ];
+              final color = colors[index % colors.length];
+
+              return Semantics(
+                label: 'Simulation: ${simulation.title}',
+                child: SimulationCard(
+                  simulation: simulation,
+                  color: color,
+                  onTap: () {
+                    _playClickSound();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => SimulationDetailScreen(
+                          simulation: simulation,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _buildMathSimulationsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Math Simulations',
+          style: JuniorTheme.headingMedium,
+        ),
+        const SizedBox(height: JuniorTheme.spacingSmall),
+        Text(
+          'Master math concepts through interactive visualizations',
+          style: JuniorTheme.bodyLarge.copyWith(
+            color: JuniorTheme.textSecondary,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: JuniorTheme.spacingMedium),
+        if (_mathSimulations.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(JuniorTheme.spacingLarge),
+            decoration: BoxDecoration(
+              color: JuniorTheme.backgroundCard,
+              borderRadius: BorderRadius.circular(JuniorTheme.radiusLarge),
+              boxShadow: JuniorTheme.shadowMedium,
+            ),
+            child: Center(
+              child: Text(
+                'Loading simulations...',
+                style: JuniorTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          )
+        else
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 0.75,
+            ),
+            itemCount: _mathSimulations.length,
+            itemBuilder: (context, index) {
+              final simulation = _mathSimulations[index];
+              final colors = [
+                JuniorTheme.primaryOrange,
+                JuniorTheme.primaryPurple,
+                const Color(0xFF5B9BD5), // Blue
+                JuniorTheme.primaryGreen,
               ];
               final color = colors[index % colors.length];
 
