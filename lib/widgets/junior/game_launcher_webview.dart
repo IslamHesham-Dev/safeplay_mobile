@@ -75,20 +75,6 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
     });
   }
 
-  function stripDetails(source) {
-    if (!source) return null;
-    const clone = source.cloneNode(true);
-    clone.querySelectorAll('ruffle-embed, object, script, iframe, form, ins, .adsbygoogle, table[width="160"], #cse-search-box, #cookieconsent\\:desc, .cc-window').forEach(function (node) {
-      node.remove();
-    });
-    clone.querySelectorAll('p').forEach(function (paragraph) {
-      if (!paragraph.textContent.trim()) {
-        paragraph.remove();
-      }
-    });
-    return clone;
-  }
-
   function removeSiteChrome() {
     ['.cc-window', '.cc-compliance', '.adsbygoogle', 'ins.adsbygoogle', '#cse-search-box', 'form[action*="cse"]', '#PING_IFRAME_FORM_DETECTION'].forEach(function (selector) {
       document.querySelectorAll(selector).forEach(function (node) {
@@ -113,8 +99,6 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
       }
 
       const rootGameNode = ruffle.closest('object') || ruffle;
-      const infoSource = document.querySelector('td.style1');
-      const clonedDetails = stripDetails(infoSource);
 
       const gameWrapper = document.createElement('div');
       gameWrapper.id = '__app_game_wrapper';
@@ -154,21 +138,6 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
         innerCanvas.style.touchAction = 'none';
       }
 
-      const detailsWrapper = document.createElement('div');
-      detailsWrapper.id = '__app_details_wrapper';
-      Object.assign(detailsWrapper.style, {
-        flex: '1 1 auto',
-        overflow: 'auto',
-        padding: '20px',
-        boxSizing: 'border-box',
-        fontFamily: 'Nunito, Arial, sans-serif',
-        background: '#f7fbff',
-      });
-
-      if (clonedDetails) {
-        detailsWrapper.appendChild(clonedDetails);
-      }
-
       document.documentElement.style.height = '100%';
       document.body.innerHTML = '';
       Object.assign(document.body.style, {
@@ -180,7 +149,6 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
       });
 
       document.body.appendChild(gameWrapper);
-      document.body.appendChild(detailsWrapper);
 
       attachPlayHooks(rootGameNode);
       removeSiteChrome();
