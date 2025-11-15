@@ -114,30 +114,13 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
         boxSizing: 'border-box',
         padding: '0',
         margin: '0',
-        flex: '1 1 auto',
-        position: 'relative'
-      });
-
-      const stage = document.createElement('div');
-      Object.assign(stage.style, {
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        margin: '0 auto',
-        padding: '0',
-        position: 'relative',
-        flex: '1 1 auto'
       });
 
       try {
-        stage.appendChild(rootGameNode);
+        gameWrapper.appendChild(rootGameNode);
       } catch (err) {
         console.warn('Failed to move game node', err);
-        stage.appendChild(rootGameNode);
       }
-      gameWrapper.appendChild(stage);
 
       try {
         rootGameNode.style.width = '100%';
@@ -145,28 +128,14 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
         rootGameNode.style.maxWidth = '100%';
         rootGameNode.style.maxHeight = '100%';
         rootGameNode.style.display = 'block';
-        rootGameNode.style.margin = '0 auto';
       } catch (err) {}
 
       const innerCanvas = rootGameNode.querySelector && rootGameNode.querySelector('canvas');
       if (innerCanvas) {
         innerCanvas.style.width = '100%';
         innerCanvas.style.height = '100%';
-        innerCanvas.style.maxWidth = '100%';
-        innerCanvas.style.maxHeight = '100%';
         innerCanvas.style.objectFit = 'contain';
         innerCanvas.style.touchAction = 'none';
-        innerCanvas.style.display = 'block';
-        innerCanvas.style.margin = '0 auto';
-      }
-
-      if (rootGameNode.shadowRoot) {
-        const shadowContainer = rootGameNode.shadowRoot.querySelector('#container');
-        if (shadowContainer) {
-          shadowContainer.style.display = 'flex';
-          shadowContainer.style.alignItems = 'center';
-          shadowContainer.style.justifyContent = 'center';
-        }
       }
 
       document.documentElement.style.height = '100%';
@@ -174,12 +143,9 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
       Object.assign(document.body.style, {
         margin: '0',
         height: '100%',
-        minHeight: '100vh',
-        width: '100vw',
-        background: '#000',
+        background: '#f0f6ff',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'stretch',
       });
 
       document.body.appendChild(gameWrapper);
@@ -212,37 +178,24 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
 ''';
 
   bool _isLoading = true;
-  int _loadingVersion = 0;
 
   void _setLoading(bool loading) {
-    if (loading) {
-      _loadingVersion++;
-      if (!_isLoading) {
-        setState(() => _isLoading = true);
-      }
-      widget.onLoadingChanged?.call(true);
-      return;
-    }
-    final version = ++_loadingVersion;
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted || version != _loadingVersion) return;
-      if (_isLoading) {
-        setState(() => _isLoading = false);
-      }
-      widget.onLoadingChanged?.call(false);
-    });
+    if (_isLoading == loading) return;
+    setState(() => _isLoading = loading);
+    widget.onLoadingChanged?.call(loading);
   }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox.expand(
-      child: DecoratedBox(
-        decoration: const BoxDecoration(color: Colors.black),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            InAppWebView(
-              key: ValueKey('junior-game-${widget.gameUrl}'),
+    return Container(
+      color: Colors.black,
+      constraints: BoxConstraints(
+        minHeight: widget.isFullscreen ? 0 : widget.previewHeight,
+      ),
+      child: Stack(
+        children: [
+          InAppWebView(
+            key: ValueKey('junior-game-${widget.gameUrl}'),
             initialUrlRequest: URLRequest(url: WebUri(widget.gameUrl)),
             initialSettings: InAppWebViewSettings(
               javaScriptEnabled: true,
@@ -300,13 +253,12 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
                 action: PermissionResponseAction.GRANT,
               );
             },
+          ),
+          if (_isLoading)
+            const Center(
+              child: CircularProgressIndicator(),
             ),
-            if (_isLoading)
-              const Center(
-                child: CircularProgressIndicator(),
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }
