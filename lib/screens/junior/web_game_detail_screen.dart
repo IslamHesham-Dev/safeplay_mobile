@@ -85,7 +85,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
-    final previewHeight = mediaQuery.size.height * 0.42;
+    final previewHeight = mediaQuery.size.height;
     final safeTop = mediaQuery.padding.top;
     final screenHeight = mediaQuery.size.height;
 
@@ -98,35 +98,39 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
         await _exitFullscreenMode();
       },
       child: Scaffold(
-        backgroundColor: JuniorTheme.backgroundLight,
+        backgroundColor: Colors.black,
         body: Stack(
           children: [
             SafeArea(
-              child: Column(
-                children: [
-                  SizedBox(height: previewHeight),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          _buildTitleBar(),
-                          _buildTopicsSection(),
-                          _buildLearningGoalsSection(),
-                          _buildExplanationSection(),
-                          if (widget.game.warning != null) _buildWarningBox(),
-                          _buildStartButton(),
-                          const SizedBox(height: 32),
-                        ],
+              child: Offstage(
+                offstage: true,
+                child: Column(
+                  children: [
+                    SizedBox(height: previewHeight),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            _buildTitleBar(),
+                            _buildTopicsSection(),
+                            _buildLearningGoalsSection(),
+                            _buildExplanationSection(),
+                            if (widget.game.warning != null)
+                              _buildWarningBox(),
+                            _buildStartButton(),
+                            const SizedBox(height: 32),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-            _buildGameOverlay(
-              previewHeight: previewHeight,
-              safeTop: safeTop,
-              screenHeight: screenHeight,
+            Positioned.fill(
+              child: _buildGameOverlay(
+                screenHeight: screenHeight,
+              ),
             ),
             Positioned(
               top: (_isFullscreen ? 16 : safeTop + 16),
@@ -146,31 +150,23 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
   }
 
   Widget _buildGameOverlay({
-    required double previewHeight,
-    required double safeTop,
     required double screenHeight,
   }) {
     final colorValue =
         int.tryParse('FF${widget.game.color}', radix: 16) ?? 0xFF4CAF50;
     final cardColor = Color(colorValue);
 
-    return AnimatedPositioned(
+    return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      top: _isFullscreen ? 0 : safeTop,
-      left: 0,
-      right: 0,
-      height: _isFullscreen ? screenHeight : previewHeight,
-      child: ClipRRect(
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(_isFullscreen ? 0 : 32),
-          bottomRight: Radius.circular(_isFullscreen ? 0 : 32),
-        ),
+      color: Colors.black,
+      child: ClipRect(
         child: Stack(
+          fit: StackFit.expand,
           children: [
             GameLauncherWebView(
               gameUrl: widget.game.websiteUrl,
-              previewHeight: previewHeight,
+              previewHeight: screenHeight,
               isFullscreen: _isFullscreen,
               onControllerReady: (controller) {
                 _webViewController = controller;
