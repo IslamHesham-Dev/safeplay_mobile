@@ -73,8 +73,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
     if (notifyWebView) {
       try {
         await _webViewController?.evaluateJavascript(
-          source:
-              "if(window.__exitFullscreen){window.__exitFullscreen();}",
+          source: "if(window.__exitFullscreen){window.__exitFullscreen();}",
         );
       } catch (_) {
         // Ignore errors when the controller is not ready
@@ -85,7 +84,8 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
-    final previewHeight = mediaQuery.size.height * 0.42;
+    // Use full screen height for the game in both modes
+    final previewHeight = mediaQuery.size.height;
     final safeTop = mediaQuery.padding.top;
     final screenHeight = mediaQuery.size.height;
 
@@ -98,41 +98,29 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
         await _exitFullscreenMode();
       },
       child: Scaffold(
-        backgroundColor: JuniorTheme.backgroundLight,
+        backgroundColor: Colors.black, // Black background for game area
         body: Stack(
           children: [
-            SafeArea(
-              child: Column(
-                children: [
-                  SizedBox(height: previewHeight),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          _buildTitleBar(),
-                          _buildTopicsSection(),
-                          _buildLearningGoalsSection(),
-                          _buildExplanationSection(),
-                          if (widget.game.warning != null) _buildWarningBox(),
-                          _buildStartButton(),
-                          const SizedBox(height: 32),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            // Game takes full screen
             _buildGameOverlay(
               previewHeight: previewHeight,
               safeTop: safeTop,
               screenHeight: screenHeight,
             ),
+            // Back/Exit button
             Positioned(
               top: (_isFullscreen ? 16 : safeTop + 16),
               left: 16,
               child: _buildBackOrExitButton(),
             ),
+            // Start button overlay (only in portrait mode, bottom center)
+            if (!_isFullscreen)
+              Positioned(
+                bottom: 32,
+                left: 24,
+                right: 24,
+                child: _buildStartButton(),
+              ),
           ],
         ),
         floatingActionButton: _isFullscreen
@@ -157,15 +145,12 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      top: _isFullscreen ? 0 : safeTop,
+      top: _isFullscreen ? 0 : 0,
       left: 0,
       right: 0,
-      height: _isFullscreen ? screenHeight : previewHeight,
+      height: screenHeight,
       child: ClipRRect(
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(_isFullscreen ? 0 : 32),
-          bottomRight: Radius.circular(_isFullscreen ? 0 : 32),
-        ),
+        borderRadius: BorderRadius.zero, // Straight corners always
         child: Stack(
           children: [
             GameLauncherWebView(
@@ -176,8 +161,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
                 _webViewController = controller;
               },
               onGamePlay: _enterFullscreenMode,
-              onExitRequested: () =>
-                  _exitFullscreenMode(notifyWebView: false),
+              onExitRequested: () => _exitFullscreenMode(notifyWebView: false),
               onLoadingChanged: (loading) {
                 if (!mounted) return;
                 setState(() => _webViewLoading = loading);

@@ -103,9 +103,13 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
       const gameWrapper = document.createElement('div');
       gameWrapper.id = '__app_game_wrapper';
       Object.assign(gameWrapper.style, {
-        width: '100%',
-        height: '100%',
-        minHeight: '200px',
+        position: 'absolute',
+        top: '0',
+        left: '0',
+        right: '0',
+        bottom: '0',
+        width: '100vw',
+        height: '100vh',
         background: '#000',
         display: 'flex',
         alignItems: 'center',
@@ -127,15 +131,22 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
         rootGameNode.style.height = '100%';
         rootGameNode.style.maxWidth = '100%';
         rootGameNode.style.maxHeight = '100%';
-        rootGameNode.style.display = 'block';
+        rootGameNode.style.display = 'flex';
+        rootGameNode.style.alignItems = 'center';
+        rootGameNode.style.justifyContent = 'center';
+        rootGameNode.style.margin = 'auto';
       } catch (err) {}
 
       const innerCanvas = rootGameNode.querySelector && rootGameNode.querySelector('canvas');
       if (innerCanvas) {
-        innerCanvas.style.width = '100%';
-        innerCanvas.style.height = '100%';
+        innerCanvas.style.width = 'auto';
+        innerCanvas.style.height = 'auto';
+        innerCanvas.style.maxWidth = '100%';
+        innerCanvas.style.maxHeight = '100%';
         innerCanvas.style.objectFit = 'contain';
         innerCanvas.style.touchAction = 'none';
+        innerCanvas.style.display = 'block';
+        innerCanvas.style.margin = 'auto';
       }
 
       document.documentElement.style.height = '100%';
@@ -232,12 +243,15 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
               _setLoading(true);
             },
             onLoadStop: (controller, url) async {
-              await Future.delayed(const Duration(milliseconds: 300));
+              // Wait longer to ensure game is fully loaded (3 seconds)
+              await Future.delayed(const Duration(milliseconds: 3000));
               try {
                 await controller.evaluateJavascript(source: _cleanupScript);
               } catch (e) {
                 debugPrint('Cleanup JS error: $e');
               }
+              // Add another delay after script injection
+              await Future.delayed(const Duration(milliseconds: 1000));
               _setLoading(false);
             },
             onReceivedError: (controller, request, error) {
