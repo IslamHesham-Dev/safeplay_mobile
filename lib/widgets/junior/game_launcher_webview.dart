@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
@@ -209,6 +210,13 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
 
   bool _isLoading = true;
   int _loadingGeneration = 0;
+  Timer? _loadingTimeout;
+
+  @override
+  void dispose() {
+    _loadingTimeout?.cancel();
+    super.dispose();
+  }
 
   void _setLoading(bool loading) {
     if (loading) {
@@ -217,10 +225,20 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
         setState(() => _isLoading = true);
       }
       widget.onLoadingChanged?.call(true);
+      final generation = _loadingGeneration;
+      _loadingTimeout?.cancel();
+      _loadingTimeout = Timer(const Duration(seconds: 20), () {
+        if (!mounted || generation != _loadingGeneration) return;
+        if (_isLoading) {
+          setState(() => _isLoading = false);
+          widget.onLoadingChanged?.call(false);
+        }
+      });
       return;
     }
 
     final generation = ++_loadingGeneration;
+    _loadingTimeout?.cancel();
     Future.delayed(const Duration(seconds: 2), () {
       if (!mounted || generation != _loadingGeneration) {
         return;
@@ -289,6 +307,11 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
               }
               await Future.delayed(const Duration(milliseconds: 1000));
               _setLoading(false);
+            },
+            onProgressChanged: (controller, progress) {
+              if (progress >= 80) {
+                _setLoading(false);
+              }
             },
             onReceivedError: (controller, request, error) {
               debugPrint('WebView error: $error');
