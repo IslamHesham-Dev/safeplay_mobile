@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -18,17 +19,38 @@ class SimulationDetailScreen extends StatefulWidget {
 }
 
 class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
-  static const double _detailTitleFontSize = 32;
-  static const double _detailHeadingFontSize = 26;
-  static const double _detailBodyFontSize = 18;
-  static const double _detailChipFontSize = 18;
-  static const double _detailLabelFontSize = 18;
+  static const double _detailTitleFontSize = 36;
+  static const double _detailHeadingFontSize = 28;
+  static const double _detailBodyFontSize = 20;
+  static const double _detailChipFontSize = 20;
+  static const double _detailLabelFontSize = 20;
   bool _isFullscreen = false;
   final ScrollController _scrollController = ScrollController();
+  bool _showInitialOverlay = false;
+  Timer? _overlayTimer;
+  bool _showPreviewOverlay = true;
+  Timer? _previewOverlayTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startPreviewOverlayTimer();
+  }
+
+  void _startPreviewOverlayTimer() {
+    _previewOverlayTimer?.cancel();
+    setState(() => _showPreviewOverlay = true);
+    _previewOverlayTimer = Timer(const Duration(seconds: 5), () {
+      if (!mounted) return;
+      setState(() => _showPreviewOverlay = false);
+    });
+  }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _overlayTimer?.cancel();
+    _previewOverlayTimer?.cancel();
     // Reset orientation when leaving
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
@@ -38,7 +60,14 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
   }
 
   Future<void> _enterFullscreen() async {
+    _overlayTimer?.cancel();
     setState(() => _isFullscreen = true);
+    setState(() => _showInitialOverlay = true);
+    _overlayTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted) {
+        setState(() => _showInitialOverlay = false);
+      }
+    });
 
     // Set landscape orientation
     await SystemChrome.setPreferredOrientations([
@@ -53,7 +82,10 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
   }
 
   Future<void> _exitFullscreen() async {
+    _overlayTimer?.cancel();
     setState(() => _isFullscreen = false);
+    _showInitialOverlay = false;
+    _startPreviewOverlayTimer();
 
     // Return to portrait
     await SystemChrome.setPreferredOrientations([
@@ -133,6 +165,21 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                   });
                 ''');
               },
+            ),
+            if (_showPreviewOverlay)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: Container(color: Colors.black),
+                ),
+              ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: screenHeight * 0.10,
+              child: IgnorePointer(
+                child: Container(color: Colors.black),
+              ),
             ),
 
             // Back button overlay (top-left)
@@ -459,23 +506,23 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.lightbulb_outline,
                 color: Color(0xFF1565C0),
                 size: 24,
               ),
-              SizedBox(width: 8),
-          Text(
-            'Scientific Explanation',
-            style: TextStyle(
-              fontSize: _detailHeadingFontSize,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1565C0),
-              fontFamily: 'Nunito',
-            ),
-          ),
+              const SizedBox(width: 8),
+              Text(
+                'Scientific Explanation',
+                style: TextStyle(
+                  fontSize: _detailHeadingFontSize,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF1565C0),
+                  fontFamily: 'Nunito',
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -627,40 +674,50 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Fullscreen WebView
-          InAppWebView(
-            initialUrlRequest: URLRequest(
-              url: WebUri(widget.simulation.iframeUrl),
+          Positioned.fill(
+            child: InAppWebView(
+              initialUrlRequest: URLRequest(
+                url: WebUri(widget.simulation.iframeUrl),
+              ),
+              initialSettings: InAppWebViewSettings(
+                javaScriptEnabled: true,
+                mediaPlaybackRequiresUserGesture: false,
+                allowsInlineMediaPlayback: true,
+                useHybridComposition: true,
+                mixedContentMode: MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW,
+                domStorageEnabled: true,
+                databaseEnabled: true,
+                transparentBackground: true,
+              ),
             ),
-            initialSettings: InAppWebViewSettings(
-              javaScriptEnabled: true,
-              mediaPlaybackRequiresUserGesture: false,
-              allowsInlineMediaPlayback: true,
-              useHybridComposition: true,
-              mixedContentMode: MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW,
-              domStorageEnabled: true,
-              databaseEnabled: true,
-            ),
-            onWebViewCreated: (controller) {
-              // Controller created for fullscreen view
-            },
           ),
-
-          // Exit fullscreen button
-          SafeArea(
-            child: Positioned(
-              top: 16,
-              right: 16,
+          if (_showInitialOverlay)
+            Positioned.fill(
+              child: Container(color: Colors.black),
+            ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: MediaQuery.of(context).size.height * 0.08,
+            child: IgnorePointer(
+              child: Container(color: Colors.black),
+            ),
+          ),
+          Positioned(
+            top: 16,
+            left: 16,
+            child: SafeArea(
               child: Material(
-                color: Colors.black.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(20),
+                color: Colors.black.withValues(alpha: 0.6),
+                shape: const CircleBorder(),
                 child: InkWell(
+                  customBorder: const CircleBorder(),
                   onTap: _exitFullscreen,
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    child: const Icon(
-                      Icons.fullscreen_exit,
+                  child: const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: Icon(
+                      Icons.close,
                       color: Colors.white,
                       size: 28,
                     ),

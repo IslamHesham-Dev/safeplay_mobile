@@ -26,7 +26,7 @@ class WebGameCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              cardColor.withOpacity(0.9),
+              cardColor.withValues(alpha: 0.9),
               cardColor,
             ],
           ),
@@ -41,7 +41,7 @@ class WebGameCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(JuniorTheme.radiusLarge),
                 child: CustomPaint(
                   painter:
-                      _PatternPainter(color: Colors.white.withOpacity(0.1)),
+                      _PatternPainter(color: Colors.white.withValues(alpha: 0.1)),
                 ),
               ),
             ),
@@ -57,27 +57,27 @@ class WebGameCard extends StatelessWidget {
                     children: [
                       // Icon
                       Container(
-                        width: 56,
-                        height: 56,
+                        width: 64,
+                        height: 64,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.3),
+                          color: Colors.white.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Center(
                           child: Text(
                             game.iconEmoji,
-                            style: const TextStyle(fontSize: 32),
+                            style: const TextStyle(fontSize: 36),
                           ),
                         ),
                       ),
                       // Duration badge
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
+                          horizontal: 12,
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.3),
+                          color: Colors.white.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -85,14 +85,14 @@ class WebGameCard extends StatelessWidget {
                             const Icon(
                               Icons.access_time,
                               color: Colors.white,
-                              size: 14,
+                              size: 16,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               '${game.estimatedMinutes}m',
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontSize: 12,
+                                fontSize: 14,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -109,11 +109,11 @@ class WebGameCard extends StatelessWidget {
                       game.title,
                       style: JuniorTheme.headingMedium.copyWith(
                         color: Colors.white,
-                        fontSize: 20,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                         shadows: [
                           Shadow(
-                            color: Colors.black.withOpacity(0.2),
+                            color: Colors.black.withValues(alpha: 0.25),
                             blurRadius: 2,
                             offset: const Offset(0, 1),
                           ),
@@ -129,9 +129,9 @@ class WebGameCard extends StatelessWidget {
                     child: Text(
                       game.description,
                       style: JuniorTheme.bodySmall.copyWith(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: 14,
-                        height: 1.3,
+                        color: Colors.white.withValues(alpha: 0.95),
+                        fontSize: 16,
+                        height: 1.35,
                       ),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
@@ -147,7 +147,7 @@ class WebGameCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -159,14 +159,14 @@ class WebGameCard extends StatelessWidget {
                         Icon(
                           Icons.play_arrow,
                           color: cardColor,
-                          size: 20,
+                          size: 24,
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         Text(
                           'Play Game',
                           style: TextStyle(
                             color: cardColor,
-                            fontSize: 16,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

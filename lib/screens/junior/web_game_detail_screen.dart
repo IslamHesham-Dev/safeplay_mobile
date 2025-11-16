@@ -19,11 +19,11 @@ class WebGameDetailScreen extends StatefulWidget {
 }
 
 class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
-  static const double _detailTitleFontSize = 32;
-  static const double _detailHeadingFontSize = 26;
-  static const double _detailBodyFontSize = 18;
-  static const double _detailChipFontSize = 18;
-  static const double _detailLabelFontSize = 18;
+  static const double _detailTitleFontSize = 36;
+  static const double _detailHeadingFontSize = 28;
+  static const double _detailBodyFontSize = 20;
+  static const double _detailChipFontSize = 20;
+  static const double _detailLabelFontSize = 20;
   InAppWebViewController? _webViewController;
   bool _webViewLoading = true;
   bool _isFullscreen = false;
