@@ -1102,44 +1102,39 @@ class WebGameService {
 
   /// Get web games for Bright children (9-12)
   Future<List<WebGame>> _getBrightWebGames({String? subject}) async {
-    final allGames = [
-      const WebGame(
-        id: 'food-chains-bright',
-        title: 'Food Chains Challenge',
-        description:
-            'Investigate ecosystems and rebuild food chains while mastering producer/consumer roles.',
-        websiteUrl:
-            'https://www.sciencekids.co.nz/gamesactivities/foodchains.html',
-        canvasSelector: null,
-        topics: [
-          'Ecosystems',
-          'Food Chains',
-          'Producers',
-          'Consumers',
-          'Decomposers',
-        ],
-        learningGoals: [
-          'Compare how energy flows through different habitats.',
-          'Analyze how removing one organism impacts the whole food chain.',
-          'Classify producers, primary consumers, secondary consumers, and decomposers.',
-        ],
-        explanation:
-            'Bright Mind scientists explore how energy transfers through plants, herbivores, and carnivores. '
-            'Students drag organisms into the correct order, test cause/effect, and justify their chain.',
-        warning:
-            'Requires an internet connection. Works best in fullscreen landscape mode.',
-        estimatedMinutes: 15,
-        difficulty: 'Medium',
-        ageGroup: 'bright',
-        subject: 'science',
-        iconEmoji: '🦊',
-        color: '1E88E5',
-      ),
-    ];
+    final juniorGames = await _getJuniorWebGames(subject: subject);
+    return juniorGames
+        .map(
+          (game) => _cloneGameForAgeGroup(
+            game,
+            idSuffix: 'bright',
+            targetAgeGroup: 'bright',
+          ),
+        )
+        .toList();
+  }
 
-    if (subject != null) {
-      return allGames.where((game) => game.subject == subject).toList();
-    }
-    return allGames;
+  WebGame _cloneGameForAgeGroup(
+    WebGame game, {
+    required String idSuffix,
+    required String targetAgeGroup,
+  }) {
+    return WebGame(
+      id: '${game.id}-$idSuffix',
+      title: game.title,
+      description: game.description,
+      websiteUrl: game.websiteUrl,
+      canvasSelector: game.canvasSelector,
+      topics: List<String>.from(game.topics),
+      learningGoals: List<String>.from(game.learningGoals),
+      explanation: game.explanation,
+      warning: game.warning,
+      estimatedMinutes: game.estimatedMinutes,
+      difficulty: game.difficulty,
+      ageGroup: targetAgeGroup,
+      subject: game.subject,
+      iconEmoji: game.iconEmoji,
+      color: game.color,
+    );
   }
 }

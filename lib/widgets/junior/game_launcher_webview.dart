@@ -194,11 +194,28 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
 ''';
 
   bool _isLoading = true;
+  int _loadingGeneration = 0;
 
   void _setLoading(bool loading) {
-    if (_isLoading == loading) return;
-    setState(() => _isLoading = loading);
-    widget.onLoadingChanged?.call(loading);
+    if (loading) {
+      _loadingGeneration++;
+      if (!_isLoading) {
+        setState(() => _isLoading = true);
+      }
+      widget.onLoadingChanged?.call(true);
+      return;
+    }
+
+    final generation = ++_loadingGeneration;
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted || generation != _loadingGeneration) {
+        return;
+      }
+      if (_isLoading) {
+        setState(() => _isLoading = false);
+      }
+      widget.onLoadingChanged?.call(false);
+    });
   }
 
   @override
@@ -209,6 +226,7 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
         minHeight: widget.isFullscreen ? 0 : widget.previewHeight,
       ),
       child: Stack(
+        fit: StackFit.expand,
         children: [
           InAppWebView(
             key: ValueKey('junior-game-${widget.gameUrl}'),
@@ -248,14 +266,12 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
               _setLoading(true);
             },
             onLoadStop: (controller, url) async {
-              // Wait longer to ensure game is fully loaded (3 seconds)
               await Future.delayed(const Duration(milliseconds: 3000));
               try {
                 await controller.evaluateJavascript(source: _cleanupScript);
               } catch (e) {
                 debugPrint('Cleanup JS error: $e');
               }
-              // Add another delay after script injection
               await Future.delayed(const Duration(milliseconds: 1000));
               _setLoading(false);
             },
@@ -274,8 +290,13 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
             },
           ),
           if (_isLoading)
-            const Center(
-              child: CircularProgressIndicator(),
+            Container(
+              color: Colors.black,
+              child: const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
             ),
         ],
       ),
