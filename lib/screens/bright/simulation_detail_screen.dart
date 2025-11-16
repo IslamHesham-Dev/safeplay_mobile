@@ -18,6 +18,11 @@ class SimulationDetailScreen extends StatefulWidget {
 }
 
 class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
+  static const double _detailTitleFontSize = 32;
+  static const double _detailHeadingFontSize = 26;
+  static const double _detailBodyFontSize = 18;
+  static const double _detailChipFontSize = 18;
+  static const double _detailLabelFontSize = 18;
   bool _isFullscreen = false;
   final ScrollController _scrollController = ScrollController();
 
@@ -135,7 +140,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
               top: 8,
               left: 8,
               child: Material(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(20),
                 child: InkWell(
                   onTap: () => Navigator.of(context).pop(),
@@ -157,7 +162,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
               top: 8,
               right: 8,
               child: Material(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
                   padding: const EdgeInsets.all(8),
@@ -222,8 +227,8 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
               Expanded(
                 child: Text(
                   widget.simulation.title,
-                  style: const TextStyle(
-                    fontSize: 28,
+                  style: TextStyle(
+                    fontSize: _detailTitleFontSize,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                     fontFamily: 'Nunito',
@@ -242,14 +247,14 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   '${widget.simulation.estimatedMinutes} mins',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                  style: TextStyle(
+                    fontSize: _detailLabelFontSize,
+                    fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
                 ),
@@ -265,9 +270,9 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                 ),
                 child: Text(
                   widget.simulation.difficulty,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                  style: TextStyle(
+                    fontSize: _detailLabelFontSize,
+                    fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
                 ),
@@ -304,10 +309,10 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                 size: 24,
               ),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'Topics',
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: _detailHeadingFontSize,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1565C0),
                   fontFamily: 'Nunito',
@@ -318,7 +323,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                 'TIP: Tap to mark ✓',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.black.withOpacity(0.6),
+                  color: Colors.black.withValues(alpha: 0.6),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -337,7 +342,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -345,8 +350,8 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                 ),
                 child: Text(
                   topic,
-                  style: const TextStyle(
-                    fontSize: 17,
+                  style: TextStyle(
+                    fontSize: _detailChipFontSize,
                     fontWeight: FontWeight.w600,
                     color: Colors.black87,
                   ),
@@ -377,10 +382,10 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                 size: 24,
               ),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'Learning Goals',
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: _detailHeadingFontSize,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                   fontFamily: 'Nunito',
@@ -391,7 +396,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                 'TIP: Tap step when done',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -416,8 +421,8 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                     child: Center(
                       child: Text(
                         '${index + 1}',
-                        style: const TextStyle(
-                          fontSize: 16,
+                        style: TextStyle(
+                          fontSize: _detailLabelFontSize,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF5B9BD5),
                         ),
@@ -428,8 +433,8 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                   Expanded(
                     child: Text(
                       goal,
-                      style: const TextStyle(
-                        fontSize: 17,
+                      style: TextStyle(
+                        fontSize: _detailBodyFontSize,
                         color: Colors.white,
                         height: 1.5,
                       ),
@@ -438,7 +443,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );
@@ -462,23 +467,23 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                 size: 24,
               ),
               SizedBox(width: 8),
-              Text(
-                'Scientific Explanation',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1565C0),
-                  fontFamily: 'Nunito',
-                ),
-              ),
+          Text(
+            'Scientific Explanation',
+            style: TextStyle(
+              fontSize: _detailHeadingFontSize,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1565C0),
+              fontFamily: 'Nunito',
+            ),
+          ),
             ],
           ),
           const SizedBox(height: 16),
           Text(
             widget.simulation.scientificExplanation,
             style: TextStyle(
-              fontSize: 17,
-              color: Colors.black.withOpacity(0.8),
+              fontSize: _detailBodyFontSize,
+              color: Colors.black.withValues(alpha: 0.8),
               height: 1.6,
             ),
           ),
@@ -497,18 +502,18 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.warning_amber_rounded,
                 color: Color(0xFFFDB462),
                 size: 24,
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
                 'Warning',
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: _detailHeadingFontSize,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                   fontFamily: 'Nunito',
@@ -519,8 +524,8 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
           const SizedBox(height: 12),
           Text(
             widget.simulation.warning,
-            style: const TextStyle(
-              fontSize: 17,
+            style: TextStyle(
+              fontSize: _detailBodyFontSize,
               color: Colors.white,
               height: 1.6,
             ),
@@ -554,7 +559,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
               borderRadius: BorderRadius.circular(30),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withValues(alpha: 0.15),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -580,7 +585,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                       Text(
                         'Start Simulation',
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: _detailHeadingFontSize,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                           fontFamily: 'Nunito',
@@ -598,7 +603,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
             children: [
               Icon(
                 Icons.chat_bubble_outline,
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
                 size: 16,
               ),
               const SizedBox(width: 8),
@@ -606,7 +611,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                 'Help us improve',
                 style: TextStyle(
                   fontSize: 15,
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -647,7 +652,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
               top: 16,
               right: 16,
               child: Material(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(20),
                 child: InkWell(
                   onTap: _exitFullscreen,

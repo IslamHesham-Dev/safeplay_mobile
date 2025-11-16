@@ -1254,35 +1254,36 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
             ),
           )
         else
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 0.75,
+          SizedBox(
+            height: 320,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              separatorBuilder: (_, __) => const SizedBox(width: 16),
+              itemCount: _webGames.length,
+              itemBuilder: (context, index) {
+                final game = _webGames[index];
+                return SizedBox(
+                  width: 260,
+                  child: Semantics(
+                    label: 'Game: ${game.title}',
+                    child: WebGameCard(
+                      game: game,
+                      onTap: () {
+                        _playClickSound();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => WebGameDetailScreen(
+                              game: game,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                );
+              },
             ),
-            itemCount: _webGames.length,
-            itemBuilder: (context, index) {
-              final game = _webGames[index];
-              return Semantics(
-                label: 'Game: ${game.title}',
-                child: WebGameCard(
-                  game: game,
-                  onTap: () {
-                    _playClickSound();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => WebGameDetailScreen(
-                          game: game,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              );
-            },
           ),
       ],
     );

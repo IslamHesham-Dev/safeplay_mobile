@@ -19,6 +19,11 @@ class WebGameDetailScreen extends StatefulWidget {
 }
 
 class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
+  static const double _detailTitleFontSize = 32;
+  static const double _detailHeadingFontSize = 26;
+  static const double _detailBodyFontSize = 18;
+  static const double _detailChipFontSize = 18;
+  static const double _detailLabelFontSize = 18;
   InAppWebViewController? _webViewController;
   bool _webViewLoading = true;
   bool _isFullscreen = false;
@@ -299,7 +304,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
                 child: Text(
                   widget.game.title,
                   style: const TextStyle(
-                    fontSize: 26,
+                    fontSize: _detailTitleFontSize,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                     fontFamily: 'Nunito',
@@ -321,9 +326,9 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
                 ),
                 child: Text(
                   '${widget.game.estimatedMinutes} mins',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                  style: TextStyle(
+                    fontSize: _detailLabelFontSize,
+                    fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
                 ),
@@ -338,9 +343,9 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
                 ),
                 child: Text(
                   widget.game.difficulty,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                  style: TextStyle(
+                    fontSize: _detailLabelFontSize,
+                    fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
                 ),
@@ -373,7 +378,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
               Text(
                 'Topics',
                 style: JuniorTheme.headingMedium.copyWith(
-                  fontSize: 22,
+                  fontSize: _detailHeadingFontSize,
                   color: JuniorTheme.textPrimary,
                 ),
               ),
@@ -395,7 +400,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
                       child: Text(
                         topic,
                         style: JuniorTheme.bodyMedium.copyWith(
-                          fontSize: 16,
+                          fontSize: _detailChipFontSize,
                           fontWeight: FontWeight.w600,
                           color: JuniorTheme.textPrimary,
                         ),
@@ -418,7 +423,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
           Text(
             'What You\'ll Learn',
             style: JuniorTheme.headingMedium.copyWith(
-              fontSize: 22,
+              fontSize: _detailHeadingFontSize,
               color: JuniorTheme.textPrimary,
             ),
           ),
@@ -441,9 +446,9 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
                     child: Center(
                       child: Text(
                         '${index + 1}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
-                          fontSize: 16,
+                          fontSize: _detailLabelFontSize,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -454,7 +459,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
                     child: Text(
                       goal,
                       style: JuniorTheme.bodyLarge.copyWith(
-                        fontSize: 16,
+                        fontSize: _detailBodyFontSize,
                         height: 1.5,
                         color: JuniorTheme.textPrimary,
                       ),
@@ -492,7 +497,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
               Text(
                 'About This Game',
                 style: JuniorTheme.headingSmall.copyWith(
-                  fontSize: 20,
+                  fontSize: _detailHeadingFontSize,
                   color: JuniorTheme.primaryBlue,
                 ),
               ),
@@ -502,7 +507,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
           Text(
             widget.game.explanation,
             style: JuniorTheme.bodyMedium.copyWith(
-              fontSize: 16,
+              fontSize: _detailBodyFontSize,
               height: 1.6,
               color: JuniorTheme.textPrimary,
             ),
@@ -535,7 +540,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
             child: Text(
               widget.game.warning!,
               style: JuniorTheme.bodyMedium.copyWith(
-                fontSize: 14,
+                fontSize: _detailBodyFontSize,
                 color: JuniorTheme.textPrimary,
               ),
             ),
@@ -569,7 +574,8 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
               'Start Game',
               style: JuniorTheme.headingMedium.copyWith(
                 color: Colors.white,
-                fontSize: 22,
+                fontSize: _detailHeadingFontSize,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],

@@ -41,6 +41,20 @@ class GameLauncherWebView extends StatefulWidget {
 }
 
 class _GameLauncherWebViewState extends State<GameLauncherWebView> {
+  static const String _preHideScript = '''
+  (function() {
+    try {
+      document.documentElement.style.visibility = 'hidden';
+      document.documentElement.style.backgroundColor = '#000';
+      if (document.body) {
+        document.body.style.visibility = 'hidden';
+        document.body.style.backgroundColor = '#000';
+      }
+    } catch (err) {
+      console.warn('pre-hide error', err);
+    }
+  })();
+  ''';
   static const String _cleanupScript = r'''
 (function () {
   const MAX_ATTEMPTS = 12;
@@ -264,6 +278,7 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
             },
             onLoadStart: (controller, url) {
               _setLoading(true);
+              controller.evaluateJavascript(source: _preHideScript);
             },
             onLoadStop: (controller, url) async {
               await Future.delayed(const Duration(milliseconds: 3000));
