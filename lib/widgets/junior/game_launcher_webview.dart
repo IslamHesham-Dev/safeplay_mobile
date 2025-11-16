@@ -99,6 +99,9 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
       }
 
       const rootGameNode = ruffle.closest('object') || ruffle;
+      document.documentElement.style.visibility = 'hidden';
+      document.documentElement.style.backgroundColor = '#000';
+      document.body.style.visibility = 'hidden';
 
       const gameWrapper = document.createElement('div');
       gameWrapper.id = '__app_game_wrapper';
@@ -160,6 +163,8 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
       });
 
       document.body.appendChild(gameWrapper);
+      document.body.style.visibility = 'visible';
+      document.documentElement.style.visibility = 'visible';
 
       attachPlayHooks(rootGameNode);
       removeSiteChrome();

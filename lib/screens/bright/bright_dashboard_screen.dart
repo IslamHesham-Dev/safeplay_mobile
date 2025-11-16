@@ -33,6 +33,10 @@ import '../../services/simulation_service.dart';
 import '../../widgets/bright/simulation_card.dart';
 import 'simulation_detail_screen.dart';
 import 'package:go_router/go_router.dart';
+import '../../models/web_game.dart';
+import '../../services/web_game_service.dart';
+import '../../widgets/junior/web_game_card.dart';
+import '../junior/web_game_detail_screen.dart';
 
 /// Bright (9-12) dashboard screen that reuses the junior UI for consistency
 class BrightDashboardScreen extends StatefulWidget {
@@ -61,6 +65,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   List<sim.Simulation> _scienceSimulations = [];
   List<sim.Simulation> _mathSimulations = [];
   final SimulationService _simulationService = SimulationService();
+  List<WebGame> _webGames = [];
+  final WebGameService _webGameService = WebGameService();
   int _currentBottomNavIndex = 0; // Home is active by default
   bool _showCelebration = false;
 
@@ -92,6 +98,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     _loadBooks();
     _loadScienceSimulations();
     _loadMathSimulations();
+    _loadWebGames();
     _animationController.forward();
     // Start background music
     _playBackgroundMusic();
@@ -643,6 +650,19 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     }
   }
 
+  Future<void> _loadWebGames() async {
+    try {
+      final games = await _webGameService.getWebGames(ageGroup: 'bright');
+      if (mounted) {
+        setState(() {
+          _webGames = games;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading web games: $e');
+    }
+  }
+
   Widget _buildBooksSection() {
     final childName = _currentChild?.name ?? 'Student';
 
@@ -1163,6 +1183,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildTodaysTasksSection(),
             const SizedBox(height: JuniorTheme.spacingLarge),
+            _buildWebGamesSection(),
+            const SizedBox(height: JuniorTheme.spacingLarge),
             _buildScienceSimulationsSection(),
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildMathSimulationsSection(),
@@ -1181,6 +1203,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildTodaysTasksSection(),
             const SizedBox(height: JuniorTheme.spacingLarge),
+            _buildWebGamesSection(),
+            const SizedBox(height: JuniorTheme.spacingLarge),
             _buildScienceSimulationsSection(),
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildMathSimulationsSection(),
@@ -1189,6 +1213,79 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
           ],
         );
     }
+  }
+
+  Widget _buildWebGamesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Interactive Science Games',
+          style: JuniorTheme.headingMedium.copyWith(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: JuniorTheme.spacingSmall),
+        Text(
+          'Play fun games to learn about nature!',
+          style: JuniorTheme.bodyLarge.copyWith(
+            color: JuniorTheme.textSecondary,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: JuniorTheme.spacingMedium),
+        if (_webGames.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(JuniorTheme.spacingLarge),
+            decoration: BoxDecoration(
+              color: JuniorTheme.backgroundCard,
+              borderRadius: BorderRadius.circular(JuniorTheme.radiusLarge),
+              boxShadow: JuniorTheme.shadowMedium,
+            ),
+            child: Center(
+              child: Text(
+                'Loading games...',
+                style: JuniorTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          )
+        else
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 0.75,
+            ),
+            itemCount: _webGames.length,
+            itemBuilder: (context, index) {
+              final game = _webGames[index];
+              return Semantics(
+                label: 'Game: ${game.title}',
+                child: WebGameCard(
+                  game: game,
+                  onTap: () {
+                    _playClickSound();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => WebGameDetailScreen(
+                          game: game,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+      ],
+    );
   }
 
   Widget _buildScienceSimulationsSection() {

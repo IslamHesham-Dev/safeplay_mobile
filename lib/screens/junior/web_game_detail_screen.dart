@@ -84,10 +84,10 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
-    // Use full screen height for the game in both modes
-    final previewHeight = mediaQuery.size.height;
     final safeTop = mediaQuery.padding.top;
     final screenHeight = mediaQuery.size.height;
+    // Preview takes 40% of screen height in detail mode
+    final previewHeight = _isFullscreen ? screenHeight : screenHeight * 0.4;
 
     return PopScope(
       canPop: !_isFullscreen,
@@ -98,31 +98,10 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
         await _exitFullscreenMode();
       },
       child: Scaffold(
-        backgroundColor: Colors.black, // Black background for game area
-        body: Stack(
-          children: [
-            // Game takes full screen
-            _buildGameOverlay(
-              previewHeight: previewHeight,
-              safeTop: safeTop,
-              screenHeight: screenHeight,
-            ),
-            // Back/Exit button
-            Positioned(
-              top: (_isFullscreen ? 16 : safeTop + 16),
-              left: 16,
-              child: _buildBackOrExitButton(),
-            ),
-            // Start button overlay (only in portrait mode, bottom center)
-            if (!_isFullscreen)
-              Positioned(
-                bottom: 32,
-                left: 24,
-                right: 24,
-                child: _buildStartButton(),
-              ),
-          ],
-        ),
+        backgroundColor: _isFullscreen ? Colors.black : Colors.white,
+        body: _isFullscreen
+            ? _buildFullscreenMode(safeTop, screenHeight)
+            : _buildDetailMode(safeTop, screenHeight, previewHeight),
         floatingActionButton: _isFullscreen
             ? FloatingActionButton(
                 onPressed: () => _exitFullscreenMode(),
@@ -130,6 +109,68 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
               )
             : null,
       ),
+    );
+  }
+
+  Widget _buildFullscreenMode(double safeTop, double screenHeight) {
+    return Stack(
+      children: [
+        // Game takes full screen
+        _buildGameOverlay(
+          previewHeight: screenHeight,
+          safeTop: safeTop,
+          screenHeight: screenHeight,
+        ),
+        // Exit button
+        Positioned(
+          top: 16,
+          left: 16,
+          child: _buildBackOrExitButton(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailMode(
+      double safeTop, double screenHeight, double previewHeight) {
+    return Column(
+      children: [
+        // Top section: Game preview (40% height)
+        SizedBox(
+          height: previewHeight,
+          child: Stack(
+            children: [
+              _buildGameOverlay(
+                previewHeight: previewHeight,
+                safeTop: safeTop,
+                screenHeight: previewHeight,
+              ),
+              // Back button
+              Positioned(
+                top: safeTop + 16,
+                left: 16,
+                child: _buildBackOrExitButton(),
+              ),
+            ],
+          ),
+        ),
+        // Bottom section: Scrollable content
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildTitleBar(),
+                _buildTopicsSection(),
+                _buildLearningGoalsSection(),
+                _buildExplanationSection(),
+                if (widget.game.warning != null) _buildWarningBox(),
+                _buildStartButton(),
+                const SizedBox(height: 24), // Bottom padding
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -507,17 +548,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
   Widget _buildStartButton() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            JuniorTheme.primaryBlue.withValues(alpha: 0.1),
-            JuniorTheme.primaryBlue.withValues(alpha: 0.05),
-          ],
-        ),
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: ElevatedButton(
         onPressed: () => _enterFullscreenMode(),
         style: ElevatedButton.styleFrom(

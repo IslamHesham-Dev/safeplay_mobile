@@ -102,37 +102,42 @@ class WebGameCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  // Title
-                  Text(
-                    game.title,
-                    style: JuniorTheme.headingMedium.copyWith(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 2,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
+                  // Title - constrained to prevent overflow
+                  SizedBox(
+                    height: 48, // Fixed height for 2 lines of title
+                    child: Text(
+                      game.title,
+                      style: JuniorTheme.headingMedium.copyWith(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 2,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
-                  // Description
-                  Text(
-                    game.description,
-                    style: JuniorTheme.bodySmall.copyWith(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 14,
-                      height: 1.3,
+                  // Description - constrained to prevent overflow
+                  Expanded(
+                    child: Text(
+                      game.description,
+                      style: JuniorTheme.bodySmall.copyWith(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 14,
+                        height: 1.3,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                  const Spacer(),
+                  const SizedBox(height: 8),
                   // Play button
                   Container(
                     width: double.infinity,
