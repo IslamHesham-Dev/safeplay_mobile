@@ -1092,6 +1092,743 @@ class WebGameService {
         iconEmoji: '🌡️',
         color: 'FF5722', // Deep orange for heat/thermal
       ),
+      // Math Games
+      const WebGame(
+        id: 'addition',
+        title: 'Addition Game for Kids',
+        description:
+            'Build a water slide by choosing numbers that add to the correct total, complete challenges and improve your addition skills.',
+        websiteUrl:
+            'https://www.sciencekids.co.nz/gamesactivities/math/addition.html',
+        canvasSelector: null,
+        topics: [
+          'Addition',
+          'Basic Math',
+          'Numbers',
+          'Arithmetic',
+          'Problem Solving',
+          'Math',
+        ],
+        learningGoals: [
+          'Complete a range of challenges that will help improve your addition skills.',
+          'Build a water slide while making sure you use sections that are the right length for the job.',
+          'Choose numbers that add to the correct total.',
+          'Finish as many of the challenges as you can.',
+          'Have fun playing this free online math game for kids.',
+        ],
+        explanation:
+            'Enjoy this fun addition game for kids! Complete a range of challenges that will help improve your addition skills. '
+            'The interactive activities involve building a water slide while making sure you use sections that are the right length for the job. '
+            'Choose numbers that add to the correct total, finish as many of the challenges as you can and have fun playing this free online math game for kids!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'math',
+        iconEmoji: '➕',
+        color: '2196F3', // Blue for math
+      ),
+      const WebGame(
+        id: 'subtraction',
+        title: 'Subtraction Game for Kids',
+        description:
+            'Repair a giant water slide by cutting pipe pieces to correct lengths, solve subtraction problems and complete challenges.',
+        websiteUrl:
+            'https://www.sciencekids.co.nz/gamesactivities/math/subtraction.html',
+        canvasSelector: null,
+        topics: [
+          'Subtraction',
+          'Basic Math',
+          'Numbers',
+          'Arithmetic',
+          'Problem Solving',
+          'Math',
+        ],
+        learningGoals: [
+          'Learn how to subtract as you repair a giant water slide.',
+          'Cut pieces of pipe into the correct lengths in the cutting room.',
+          'Solve a range of subtraction problems.',
+          'See if you can successfully fix the slide.',
+          'Put your subtraction skills to the test and complete the challenges.',
+        ],
+        explanation:
+            'Check out this cool subtraction game that\'s great for kids! Learn how to subtract as you repair a giant water slide. '
+            'Cut pieces of pipe into the correct lengths in the cutting room, solve a range of subtraction problems and see if you can successfully fix the slide. '
+            'Put your subtraction skills to the test, complete the challenges and have fun playing this free online math game for kids!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'math',
+        iconEmoji: '➖',
+        color: 'FF9800', // Orange for math
+      ),
+      const WebGame(
+        id: 'multiplication',
+        title: 'Multiplication Game for Kids',
+        description:
+            'Move your mouse over signs and click the correct answer, improve your times tables skills with this interactive math game.',
+        websiteUrl:
+            'https://www.sciencekids.co.nz/gamesactivities/math/multiplication.html',
+        canvasSelector: null,
+        topics: [
+          'Multiplication',
+          'Times Tables',
+          'Basic Math',
+          'Numbers',
+          'Arithmetic',
+          'Math',
+        ],
+        learningGoals: [
+          'Have fun improving your math skills online with this cool multiplication game.',
+          'Move your mouse over the signs and click on the number you think is the correct answer.',
+          'See how many of the questions you can get right.',
+          'Improve your times tables skills in a fun, interactive way.',
+          'Enjoy this free educational activity that\'s perfect for kids.',
+        ],
+        explanation:
+            'Check out this cool multiplication game for kids and have fun improving your math skills online! '
+            'Move your mouse over the signs and click on the number you think is the correct answer. How many of the questions can you get right? '
+            'Give it a go and find out! Enjoy this free educational activity that\'s perfect for kids wanting to improve their times tables skills in a fun, interactive way!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'math',
+        iconEmoji: '✖️',
+        color: '9C27B0', // Purple for math
+      ),
+      const WebGame(
+        id: 'division',
+        title: 'Division Game for Kids',
+        description:
+            'Click on flashing signs with correct answers, practice dividing with different numbers and take your division skills to a new level.',
+        websiteUrl:
+            'https://www.sciencekids.co.nz/gamesactivities/math/division.html',
+        canvasSelector: null,
+        topics: [
+          'Division',
+          'Basic Math',
+          'Numbers',
+          'Arithmetic',
+          'Problem Solving',
+          'Math',
+        ],
+        learningGoals: [
+          'Have fun improving your math skills online with this fun division game for kids.',
+          'Click on the flashing signs as they display the answer you think is correct.',
+          'Watch carefully and avoid clicking on the signs too early.',
+          'Practice dividing with a range of different numbers.',
+          'Move on to more difficult challenges and take your division skills to a new level.',
+        ],
+        explanation:
+            'Have fun improving your math skills online with this fun division game for kids! '
+            'Click on the flashing signs as they display the answer you think is correct, watch carefully and avoid clicking on the signs too early. '
+            'Practice dividing with a range of different numbers, move on to more difficult challenges, take your division skills to a new level and have fun playing this free interactive math game!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'math',
+        iconEmoji: '➗',
+        color: 'E91E63', // Pink for math
+      ),
+      const WebGame(
+        id: 'shapes',
+        title: 'Shapes Game for Kids',
+        description:
+            'Learn about geometric and 3D shapes, drag shapes into correct groups and discover the difference between triangle types.',
+        websiteUrl:
+            'https://www.sciencekids.co.nz/gamesactivities/math/shapes.html',
+        canvasSelector: null,
+        topics: [
+          'Shapes',
+          'Geometry',
+          '2D Shapes',
+          '3D Shapes',
+          'Triangles',
+          'Math',
+        ],
+        learningGoals: [
+          'Enjoy this shapes game for kids and have fun improving your geometry skills.',
+          'Learn about geometric and 3D shapes while completing a range of interactive activities and challenges.',
+          'Drag shapes into the correct groups as they move across the screen.',
+          'Discover how many shapes you know and identify different types.',
+          'Learn to tell the difference between an equilateral triangle and an isosceles triangle.',
+        ],
+        explanation:
+            'Enjoy this shapes game for kids and have fun improving your geometry skills! '
+            'Learn about geometric and 3D shapes while completing a range of interactive activities and challenges. '
+            'Drag shapes into the correct groups as they move across the screen. How many shapes do you know? '
+            'Can you tell the difference between an equilateral triangle and an isosceles triangle? '
+            'Give this fun geometry game for kids a try and find out!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'math',
+        iconEmoji: '🔷',
+        color: '00BCD4', // Cyan for math
+      ),
+      const WebGame(
+        id: 'angles',
+        title: 'Angles Game for Kids',
+        description:
+            'Learn about angles by rotating a water hose to squirt targets, understand how angles work with this interactive math game.',
+        websiteUrl:
+            'https://www.sciencekids.co.nz/gamesactivities/math/angles.html',
+        canvasSelector: null,
+        topics: [
+          'Angles',
+          'Geometry',
+          'Measurement',
+          'Rotation',
+          'Math Skills',
+          'Math',
+        ],
+        learningGoals: [
+          'Learn about angles with this fun angle game for kids that helps improve math skills.',
+          'Try to squirt different objects on screen by rotating the water hose at various angles.',
+          'See how many of the targets you can hit by adjusting the angle correctly.',
+          'Understand how angles work while having fun with this free math game.',
+          'Practice using angles in a practical, interactive way that kids will enjoy playing.',
+        ],
+        explanation:
+            'Learn about angles with this fun angle game for kids that helps improve math skills with a range of cool interactive activities! '
+            'Try to squirt different objects on screen by rotating the water hose at various angles, how many of the targets can you hit? '
+            'Give it a try and find out! Understand how angles work while having fun with this free math game that kids will enjoy playing!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'math',
+        iconEmoji: '📐',
+        color: 'FF9800', // Orange for math
+      ),
+      const WebGame(
+        id: 'measurements',
+        title: 'Measurements Game for Kids',
+        description:
+            'Learn to measure length and weight of parcels, use interactive scales and a ruler to complete challenges and apply correct postage.',
+        websiteUrl:
+            'https://www.sciencekids.co.nz/gamesactivities/math/measurements.html',
+        canvasSelector: null,
+        topics: [
+          'Measurements',
+          'Length',
+          'Weight',
+          'Scales',
+          'Ruler',
+          'Math',
+        ],
+        learningGoals: [
+          'Learn to measure length and weight with this fun measurement game for kids.',
+          'Practice your skills by measuring the length and weight of different parcels.',
+          'Take the measurements and give the parcels a stamp featuring the right postage rate.',
+          'Complete the challenges with the help of interactive scales and a ruler.',
+          'Enjoy this educational activity for kids and have fun learning about math online.',
+        ],
+        explanation:
+            'Learn to measure length and weight with this fun measurement game for kids! '
+            'Practice your skills by measuring the length and weight of different parcels. '
+            'Take the measurements and give the parcels a stamp featuring the right postage rate. '
+            'Complete the challenges with the help of interactive scales and a ruler. '
+            'Enjoy this educational activity for kids and have fun learning about math online!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'math',
+        iconEmoji: '📏',
+        color: '4CAF50', // Green for math
+      ),
+      const WebGame(
+        id: 'grids-coordinates',
+        title: 'Grids & Coordinates Game',
+        description:
+            'Use red compass arrows to move your car and pass the driving test, move north, south, east and west while avoiding obstacles.',
+        websiteUrl:
+            'https://www.sciencekids.co.nz/gamesactivities/math/grids.html',
+        canvasSelector: null,
+        topics: [
+          'Grids',
+          'Coordinates',
+          'Compass Directions',
+          'Navigation',
+          'Position',
+          'Math',
+        ],
+        learningGoals: [
+          'Learn how to use grids and coordinates with this interactive math game for kids.',
+          'Use the red compass arrows to move your car and pass the driving test.',
+          'Move north, south, east and west while trying to avoid bumping into any other objects.',
+          'Finish by parking your car and see how well you did.',
+          'Practice driving safely using the grid coordinates and positions.',
+        ],
+        explanation:
+            'Learn how to use grids and coordinates with this interactive math game for kids! '
+            'Use the red compass arrows to move your car and pass the driving test. '
+            'Move north, south, east and west while trying to avoid bumping into any other objects. '
+            'Finish by parking your car and see how well you did, can you drive safely using the grid coordinates and positions? '
+            'Have fun playing this free online math game for kids!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'math',
+        iconEmoji: '🧭',
+        color: '2196F3', // Blue for math
+      ),
+      const WebGame(
+        id: 'transformation',
+        title: 'Transformation Game for Kids',
+        description:
+            'Learn about transformation, rotation and reflection by placing mirror lines and rotating houses clockwise and anti-clockwise.',
+        websiteUrl:
+            'https://www.sciencekids.co.nz/gamesactivities/math/transformation.html',
+        canvasSelector: null,
+        topics: [
+          'Transformation',
+          'Rotation',
+          'Reflection',
+          'Translation',
+          'Geometry',
+          'Math',
+        ],
+        learningGoals: [
+          'Have fun learning about transformation, rotation and reflection with this interactive math game for kids.',
+          'Complete a number of activities that will test your skills.',
+          'Place a mirror line in the correct position to reflect the house on to its shadow.',
+          'Move on to other tasks such as rotating the house clockwise and anti-clockwise.',
+          'Finish as many challenges as you can and enjoy improving your math skills online.',
+        ],
+        explanation:
+            'Have fun learning about transformation, rotation and reflection with this interactive math game for kids! '
+            'Complete a number of activities that will test your skills. '
+            'Place a mirror line in the correct position to reflect the house on to its shadow before moving on to other tasks such as rotating the house clockwise and anti-clockwise. '
+            'Finish as many challenges as you can and enjoy improving your math skills online!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'math',
+        iconEmoji: '🔄',
+        color: 'FF5722', // Deep Orange for math
+      ),
+      const WebGame(
+        id: 'fractions',
+        title: 'Fractions Game for Kids',
+        description:
+            'Practice in the gallery and testing room, move fractions into the right order and cut pipes into correct lengths.',
+        websiteUrl:
+            'https://www.sciencekids.co.nz/gamesactivities/math/fractions.html',
+        canvasSelector: null,
+        topics: [
+          'Fractions',
+          'Numbers',
+          'Ordering',
+          'Measurement',
+          'Basic Math',
+          'Math',
+        ],
+        learningGoals: [
+          'Have fun learning about fractions with this interactive fraction game for kids.',
+          'Enjoy challenging activities that will help kids understand how fractions work.',
+          'Practice in the gallery and testing room.',
+          'Move fractions into the right order and cut pipes into the correct lengths.',
+          'Improve your fraction skills and have fun playing this free math game online.',
+        ],
+        explanation:
+            'Have fun learning about fractions with this interactive fraction game for kids! '
+            'Enjoy challenging activities that will help kids understand how fractions work. '
+            'Practice in the gallery and testing room, moving fractions into the right order and cutting pipes into the correct lengths. '
+            'Improve your fraction skills and have fun playing this free math game online!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'math',
+        iconEmoji: '🔢',
+        color: 'F44336', // Red for math
+      ),
+      const WebGame(
+        id: 'decimals',
+        title: 'Decimals Game for Kids',
+        description:
+            'Move decimal frames in order from lowest to highest, change number sets and complete educational challenges to improve decimal skills.',
+        websiteUrl:
+            'https://www.sciencekids.co.nz/gamesactivities/math/decimals.html',
+        canvasSelector: null,
+        topics: [
+          'Decimals',
+          'Numbers',
+          'Ordering',
+          'Number Sets',
+          'Basic Math',
+          'Math',
+        ],
+        learningGoals: [
+          'Check out this free decimals game for kids and put your math skills to the test.',
+          'Move the decimal frames so they are in order from the lowest to the highest.',
+          'Change number sets and improve your decimal skills.',
+          'Complete as many of the educational challenges as you can.',
+          'Have fun learning about decimals with this interactive online math game for kids.',
+        ],
+        explanation:
+            'Check out this free decimals game for kids and put your math skills to the test! '
+            'Move the decimal frames so they are in order from the lowest to the highest, change number sets and improve your decimal skills. '
+            'Complete as many of the educational challenges as you can and have fun learning about decimals with this interactive online math game for kids!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'math',
+        iconEmoji: '🔟',
+        color: '795548', // Brown for math
+      ),
+      const WebGame(
+        id: 'number-patterns',
+        title: 'Number Patterns Game',
+        description:
+            'Try unlocking the safe by dragging correct tiles into gaps, find rewards inside and move on to different challenges to crack the codes.',
+        websiteUrl:
+            'https://www.sciencekids.co.nz/gamesactivities/math/numberpatterns.html',
+        canvasSelector: null,
+        topics: [
+          'Number Patterns',
+          'Patterns',
+          'Problem Solving',
+          'Logic',
+          'Sequences',
+          'Math',
+        ],
+        learningGoals: [
+          'Check out this interactive number patterns game for kids and have fun trying to crack the code.',
+          'Try unlocking the safe by dragging the correct tiles into the gaps.',
+          'Find the rewards inside and move on to different challenges.',
+          'Enjoy learning about number patterns with this cool educational activity for kids.',
+          'Give it a try and see if you can crack the codes.',
+        ],
+        explanation:
+            'Check out this interactive number patterns game for kids and have fun trying to crack the code! '
+            'Try unlocking the safe by dragging the correct tiles into the gaps, find the rewards inside and move on to different challenges. '
+            'Enjoy learning about number patterns with this cool educational activity for kids, give it a try and see if you can crack the codes!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'math',
+        iconEmoji: '🔐',
+        color: '607D8B', // Blue Grey for math
+      ),
+      const WebGame(
+        id: 'place-values',
+        title: 'Place Values Game for Kids',
+        description:
+            'Learn about place values with units like tens, hundreds and thousands, move digits into right positions to form correct numbers.',
+        websiteUrl:
+            'https://www.sciencekids.co.nz/gamesactivities/math/placevalues.html',
+        canvasSelector: null,
+        topics: [
+          'Place Values',
+          'Tens',
+          'Hundreds',
+          'Thousands',
+          'Number Positions',
+          'Math',
+        ],
+        learningGoals: [
+          'Learn about place values with this interactive game for kids.',
+          'Improve your math skills and get comfortable with units such as tens, hundreds and thousands.',
+          'Complete the challenges by moving digits into the right positions to form numbers that correctly answer the questions.',
+          'See how the numbers change when multiplied and divided.',
+          'Understand how place values work and have fun learning online.',
+        ],
+        explanation:
+            'Learn about place values with this interactive game for kids! '
+            'Improve your math skills and get comfortable with units such as tens, hundreds and thousands. '
+            'Complete the challenges by moving digits into the right positions to form numbers that correctly answer the questions. '
+            'See how the numbers change when multiplied and divided, understand how place values work and have fun learning online!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'math',
+        iconEmoji: '🔢',
+        color: '673AB7', // Deep Purple for math
+      ),
+      const WebGame(
+        id: 'calculator',
+        title: 'Calculator Game for Kids',
+        description:
+            'Learn how to use a calculator with functions like AC, memory recall, square root and percentage, complete calculations and have fun learning math.',
+        websiteUrl:
+            'https://www.sciencekids.co.nz/gamesactivities/math/calculator.html',
+        canvasSelector: null,
+        topics: [
+          'Calculator',
+          'Calculator Functions',
+          'All Clear (AC)',
+          'Memory Recall (MR)',
+          'Square Root',
+          'Percentage',
+          'Division',
+          'Math',
+        ],
+        learningGoals: [
+          'Learn how to use a calculator with this interactive math game for kids.',
+          'Find out how you can use a calculator to make life easier when solving equations.',
+          'Practice with calculator functions such as all clear (AC), memory recall (MR), square root, percentage and division.',
+          'Complete the calculations and get familiar with the functions of a calculator.',
+          'Have fun learning about math with this free online activity.',
+        ],
+        explanation:
+            'Learn how to use a calculator with this interactive math game for kids! '
+            'Find out how you can use a calculator to make life easier when solving equations. '
+            'Practice with calculator functions such as all clear (AC), memory recall (MR), square root, percentage and division. '
+            'Complete the calculations, get familiar with the functions of a calculator and have fun learning about math with this free online activity!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'math',
+        iconEmoji: '🧮',
+        color: '9C27B0', // Purple for math
+      ),
+      const WebGame(
+        id: 'money-game',
+        title: 'Money Game for Kids',
+        description:
+            'Learn about shopping with money, read shopping notes and purchase items while spending the least amount possible, drag correct money into the box.',
+        websiteUrl:
+            'https://www.sciencekids.co.nz/gamesactivities/math/shoppingmoney.html',
+        canvasSelector: null,
+        topics: [
+          'Money',
+          'Shopping',
+          'Counting Money',
+          'Money Management',
+          'Budgeting',
+          'Math',
+        ],
+        learningGoals: [
+          'Learn about shopping with money by playing this interactive game for kids.',
+          'Complete a number of activities based around using money while shopping.',
+          'Read the shopping note and purchase the items it suggests while remembering to spend the least amount of money possible.',
+          'Choose the foods you want to buy and drag the correct amount of money into the green box.',
+          'Enjoy this free math game for kids and have fun learning online.',
+        ],
+        explanation:
+            'Learn about shopping with money by playing this interactive game for kids! '
+            'Complete a number of activities based around using money while shopping. '
+            'Read the shopping note and purchase the items it suggests while remembering to spend the least amount of money possible. '
+            'Choose the foods you want to buy and drag the correct amount of money into the green box. '
+            'Enjoy this free math game for kids and have fun learning online!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'math',
+        iconEmoji: '💰',
+        color: 'FF9800', // Orange for money/math
+      ),
+      const WebGame(
+        id: 'problem-solving',
+        title: 'Problem Solving Game for Kids',
+        description:
+            'Solve equations by dragging numbers onto the conveyor belt, watch them change through the transformation machine and work out which rule it used.',
+        websiteUrl:
+            'https://www.sciencekids.co.nz/gamesactivities/math/problemsolving.html',
+        canvasSelector: null,
+        topics: [
+          'Problem Solving',
+          'Equations',
+          'Number Patterns',
+          'Transformation',
+          'Logic',
+          'Math',
+        ],
+        learningGoals: [
+          'Check out this cool problem solving game for kids.',
+          'Have fun improving your math skills while completing a range of interactive activities and challenges.',
+          'Solve the equations by dragging numbers onto the conveyor belt and watching them change as they move through the special transformation machine.',
+          'Watch closely to work out which rule the machine used to change the number.',
+          'Give it a try and find out with this free online math game for kids.',
+        ],
+        explanation: 'Check out this cool problem solving game for kids! '
+            'Have fun improving your math skills while completing a range of interactive activities and challenges. '
+            'Solve the equations by dragging numbers onto the conveyor belt and watching them change as they move through the special transformation machine. '
+            'Watch closely to work out which rule the machine used to change the number, can you solve the problems? '
+            'Give it a try and find out with this free online math game for kids!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Medium',
+        ageGroup: 'junior',
+        subject: 'math',
+        iconEmoji: '🧩',
+        color: 'E91E63', // Pink for problem solving/math
+      ),
+      const WebGame(
+        id: 'probability',
+        title: 'Probability Game for Kids',
+        description:
+            'Experiment with the random ball machine and see what results you get, learn about chances of getting red or blue balls and how probability works.',
+        websiteUrl:
+            'https://www.sciencekids.co.nz/gamesactivities/math/probability.html',
+        canvasSelector: null,
+        topics: [
+          'Probability',
+          'Random Events',
+          'Chances',
+          'Statistics',
+          'Data Analysis',
+          'Math',
+        ],
+        learningGoals: [
+          'Enjoy this interactive probability game for kids and have fun while improving your math skills.',
+          'Experiment with the random ball machine and see what results you get.',
+          'Learn what are the chances of getting a red ball and what about the blue balls?',
+          'Learn how probability works and complete the educational challenges.',
+          'Make the most of this free online math game for kids.',
+        ],
+        explanation:
+            'Enjoy this interactive probability game for kids and have fun while improving your math skills! '
+            'Experiment with the random ball machine and see what results you get, what are the chances of getting a red ball? '
+            'What about the blue balls? Learn how probability works, complete the educational challenges and make the most of this free online math game for kids!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Medium',
+        ageGroup: 'junior',
+        subject: 'math',
+        iconEmoji: '🎲',
+        color: '00BCD4', // Cyan for probability/math
+      ),
+      const WebGame(
+        id: 'percentages',
+        title: 'Percentages Game for Kids',
+        description:
+            'Plan a park using features like water, grass, flowers and playgrounds, follow instructions to include the right percentage of each feature.',
+        websiteUrl:
+            'https://www.sciencekids.co.nz/gamesactivities/math/percentages.html',
+        canvasSelector: null,
+        topics: [
+          'Percentages',
+          'Planning',
+          'Proportions',
+          'Fractions',
+          'Math',
+        ],
+        learningGoals: [
+          'Enjoy this percentages game for kids and have fun improving your math skills.',
+          'Plan a park using a range of different features such as water, grass, flowers, woodland and playgrounds.',
+          'Follow the instructions and include the right percentage of each feature in the park.',
+          'Complete the challenges and move on to more difficult activities.',
+          'Have fun learning about percentages with this interactive game that children will enjoy.',
+        ],
+        explanation:
+            'Enjoy this percentages game for kids and have fun improving your math skills! '
+            'Your job is to plan a park using a range of different features such as water, grass, flowers, woodland and playgrounds. '
+            'Follow the instructions and include the right percentage of each feature in the park. '
+            'Complete the challenges, move on to more difficult activities and have fun learning about percentages with this interactive game that children will enjoy!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Medium',
+        ageGroup: 'junior',
+        subject: 'math',
+        iconEmoji: '🌳',
+        color: '4CAF50', // Green for park/percentages/math
+      ),
+      const WebGame(
+        id: 'mean-median-mode',
+        title: 'Mean, Median & Mode Game',
+        description:
+            'Answer questions about a collection of buildings, put them in order, find the median and work out what height is the mode.',
+        websiteUrl:
+            'https://www.sciencekids.co.nz/gamesactivities/math/meanmedianmode.html',
+        canvasSelector: null,
+        topics: [
+          'Mean',
+          'Median',
+          'Mode',
+          'Statistics',
+          'Data Analysis',
+          'Math',
+        ],
+        learningGoals: [
+          'Enjoy this interactive math game for kids and learn more about the concepts of mean, median and mode.',
+          'Answer a range of questions related to a collection of buildings.',
+          'Put buildings in order and find the median.',
+          'Work out what height is the mode.',
+          'Complete the challenges and have fun improving your math skills with this free online math game.',
+        ],
+        explanation:
+            'Enjoy this interactive math game for kids and learn more about the concepts of mean, median and mode! '
+            'Answer a range of questions related to a collection of buildings, can you put them in order, find the median and work out what height is the mode? '
+            'Give it a try and find out! Complete the challenges and have fun improving your math skills with this free online math game!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Medium',
+        ageGroup: 'junior',
+        subject: 'math',
+        iconEmoji: '📊',
+        color: '2196F3', // Blue for statistics/math
+      ),
+      const WebGame(
+        id: 'frequency-tables',
+        title: 'Frequency Tables Game',
+        description:
+            'Take a survey of hobbies children enjoy, record data, tally results and make a frequency table to create a bar graph.',
+        websiteUrl:
+            'https://www.sciencekids.co.nz/gamesactivities/math/frequencytables.html',
+        canvasSelector: null,
+        topics: [
+          'Frequency Tables',
+          'Charts',
+          'Graphs',
+          'Data Collection',
+          'Statistics',
+          'Math',
+        ],
+        learningGoals: [
+          'Learn about frequency tables, charts, graphs and other math data with this fun math game for kids.',
+          'Take a survey of what hobbies children enjoy, do they like reading, dancing, painting or football?',
+          'Record the data and tally the results.',
+          'Make a frequency table that can be used to create a bar graph.',
+          'Analyze the data and enjoy learning about statistics with this cool math game for kids.',
+        ],
+        explanation:
+            'Learn about frequency tables, charts, graphs and other math data with this fun math game for kids! '
+            'The interactive activities involve taking a survey of what hobbies children enjoy, do they like reading, dancing, painting or football? '
+            'Record the data, tally the results and make a frequency table that can be used to create a bar graph. '
+            'Analyze the data and enjoy learning about statistics with this cool math game for kids!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Medium',
+        ageGroup: 'junior',
+        subject: 'math',
+        iconEmoji: '📈',
+        color: '009688', // Teal for data/graphs/math
+      ),
     ];
 
     if (subject != null) {

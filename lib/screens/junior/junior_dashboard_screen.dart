@@ -65,7 +65,8 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   bool _showCelebration = false;
   List<Book> _books = [];
   final BookService _bookService = BookService();
-  List<WebGame> _webGames = [];
+  List<WebGame> _scienceWebGames = [];
+  List<WebGame> _mathWebGames = [];
   final WebGameService _webGameService = WebGameService();
 
   // Audio player for background music
@@ -94,7 +95,8 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     );
     _loadDashboardData();
     _loadBooks();
-    _loadWebGames();
+    _loadScienceWebGames();
+    _loadMathWebGames();
     _animationController.forward();
     // Start background music
     _playBackgroundMusic();
@@ -591,16 +593,31 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     }
   }
 
-  Future<void> _loadWebGames() async {
+  Future<void> _loadScienceWebGames() async {
     try {
-      final games = await _webGameService.getWebGames(ageGroup: 'junior');
+      final games = await _webGameService.getWebGames(
+          ageGroup: 'junior', subject: 'science');
       if (mounted) {
         setState(() {
-          _webGames = games;
+          _scienceWebGames = games;
         });
       }
     } catch (e) {
-      debugPrint('Error loading web games: $e');
+      debugPrint('Error loading science web games: $e');
+    }
+  }
+
+  Future<void> _loadMathWebGames() async {
+    try {
+      final games = await _webGameService.getWebGames(
+          ageGroup: 'junior', subject: 'math');
+      if (mounted) {
+        setState(() {
+          _mathWebGames = games;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading math web games: $e');
     }
   }
 
@@ -1229,7 +1246,9 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildTodaysTasksSection(),
             const SizedBox(height: JuniorTheme.spacingLarge),
-            _buildWebGamesSection(),
+            _buildScienceGamesSection(),
+            const SizedBox(height: JuniorTheme.spacingLarge),
+            _buildMathGamesSection(),
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildBooksSection(),
           ],
@@ -1245,7 +1264,9 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildTodaysTasksSection(),
             const SizedBox(height: JuniorTheme.spacingLarge),
-            _buildWebGamesSection(),
+            _buildScienceGamesSection(),
+            const SizedBox(height: JuniorTheme.spacingLarge),
+            _buildMathGamesSection(),
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildBooksSection(),
           ],
@@ -1253,9 +1274,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     }
   }
 
-  Widget _buildWebGamesSection() {
-    final childName = _currentChild?.name ?? 'Student';
-
+  Widget _buildScienceGamesSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1276,7 +1295,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
           ),
         ),
         const SizedBox(height: JuniorTheme.spacingMedium),
-        if (_webGames.isEmpty)
+        if (_scienceWebGames.isEmpty)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(JuniorTheme.spacingLarge),
@@ -1300,9 +1319,83 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 8),
               separatorBuilder: (_, __) => const SizedBox(width: 16),
-              itemCount: _webGames.length,
+              itemCount: _scienceWebGames.length,
               itemBuilder: (context, index) {
-                final game = _webGames[index];
+                final game = _scienceWebGames[index];
+                return SizedBox(
+                  width: 260,
+                  child: Semantics(
+                    label: 'Game: ${game.title}',
+                    child: WebGameCard(
+                      game: game,
+                      onTap: () {
+                        _playClickSound();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => WebGameDetailScreen(
+                              game: game,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildMathGamesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Interactive Math Games',
+          style: JuniorTheme.headingMedium.copyWith(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: JuniorTheme.spacingSmall),
+        Text(
+          'Play fun games to master math skills!',
+          style: JuniorTheme.bodyLarge.copyWith(
+            color: JuniorTheme.textSecondary,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: JuniorTheme.spacingMedium),
+        if (_mathWebGames.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(JuniorTheme.spacingLarge),
+            decoration: BoxDecoration(
+              color: JuniorTheme.backgroundCard,
+              borderRadius: BorderRadius.circular(JuniorTheme.radiusLarge),
+              boxShadow: JuniorTheme.shadowMedium,
+            ),
+            child: Center(
+              child: Text(
+                'Loading games...',
+                style: JuniorTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          )
+        else
+          SizedBox(
+            height: 320,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              separatorBuilder: (_, __) => const SizedBox(width: 16),
+              itemCount: _mathWebGames.length,
+              itemBuilder: (context, index) {
+                final game = _mathWebGames[index];
                 return SizedBox(
                   width: 260,
                   child: Semantics(
