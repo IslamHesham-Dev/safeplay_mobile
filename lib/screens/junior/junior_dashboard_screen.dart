@@ -683,16 +683,16 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
                   padding:
                       const EdgeInsets.only(bottom: 8), // Extra bottom padding
                   child: Semantics(
-                    label: 'Book: ${book.title}',
-                    child: BookCard(
-                      book: book,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => BookReaderScreen(book: book),
-                          ),
-                        );
-                      },
+                  label: 'Book: ${book.title}',
+                  child: BookCard(
+                    book: book,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => BookReaderScreen(book: book),
+                        ),
+                      );
+                    },
                     ),
                   ),
                 );

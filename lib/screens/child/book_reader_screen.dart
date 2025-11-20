@@ -66,7 +66,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: JuniorTheme.backgroundLight,
+      backgroundColor: Colors.black,
       appBar: AppBar(
         title: Text(
           widget.book.title,
@@ -129,6 +129,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                       swipeHorizontal: true, // Enable horizontal swiping
                       autoSpacing: false,
                       pageFling: true, // Enable page fling gesture
+                      backgroundColor: Colors.black,
                       onRender: (pages) {
                         if (mounted) {
                           setState(() {
