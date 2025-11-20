@@ -731,24 +731,28 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
           )
         else
           SizedBox(
-            height: 220,
+            height: 240, // Increased height for better visibility
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               itemCount: _books.length,
               itemBuilder: (context, index) {
                 final book = _books[index];
-                return Semantics(
-                  label: 'Book: ${book.title}',
-                  child: BookCard(
-                    book: book,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => BookReaderScreen(book: book),
-                        ),
-                      );
-                    },
+                return Padding(
+                  padding:
+                      const EdgeInsets.only(bottom: 8), // Extra bottom padding
+                  child: Semantics(
+                    label: 'Book: ${book.title}',
+                    child: BookCard(
+                      book: book,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => BookReaderScreen(book: book),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 );
               },
@@ -1232,6 +1236,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
             _buildEnglishGamesSection(),
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildBooksSection(),
+            const SizedBox(
+                height: 80), // Extra space at bottom for floating nav bar
           ],
         );
       case 1: // Notifications - Show Achievements
@@ -1256,6 +1262,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
             _buildEnglishGamesSection(),
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildBooksSection(),
+            const SizedBox(
+                height: 80), // Extra space at bottom for floating nav bar
           ],
         );
     }
