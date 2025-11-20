@@ -125,6 +125,10 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
               : _localPath != null
                   ? PDFView(
                       filePath: _localPath!,
+                      enableSwipe: true,
+                      swipeHorizontal: true, // Enable horizontal swiping
+                      autoSpacing: false,
+                      pageFling: true, // Enable page fling gesture
                       onRender: (pages) {
                         if (mounted) {
                           setState(() {
