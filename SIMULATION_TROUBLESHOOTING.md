@@ -123,3 +123,4 @@ If still black screen:
 3. Try fullscreen mode (Start Simulation button)
 4. Check device network settings
 
+

@@ -1829,6 +1829,799 @@ class WebGameService {
         iconEmoji: '📈',
         color: '009688', // Teal for data/graphs/math
       ),
+      const WebGame(
+        id: 'map-routes-directions',
+        title: 'Map Routes & Directions Game',
+        description:
+            'Practice following instructions, read carefully and give directions in correct order, plot shortest map routes between locations.',
+        websiteUrl:
+            'https://www.funenglishgames.com/readinggames/directions.html',
+        canvasSelector: null,
+        topics: [
+          'Directions',
+          'Map Reading',
+          'Following Instructions',
+          'Route Planning',
+          'Reading Comprehension',
+          'English',
+        ],
+        learningGoals: [
+          'Check out this fun directions game and practice following instructions while completing a number of different challenges.',
+          'Read the instructions carefully and give directions in the correct order.',
+          'Plot the shortest possible map routes between locations such as a park, school, café, swimming pool and skate park.',
+          'Achieve the goals by clicking on sections of road and using the quickest possible route on the interactive map of the town.',
+          'Learn to follow instructions, complete as many tasks as you can and have fun with this great English activity for kids.',
+        ],
+        explanation: 'Check out this fun directions game! '
+            'Practice following instructions while completing a number of different challenges. '
+            'Read the instructions carefully and give directions in the correct order. '
+            'Plot the shortest possible map routes between locations such as a park, school, café, swimming pool and skate park. '
+            'Achieve the goals by clicking on sections of road and using the quickest possible route on the interactive map of the town. '
+            'Learn to follow instructions, complete as many tasks as you can and have fun with this great English activity for kids!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'english',
+        iconEmoji: '🗺️',
+        color: 'FF5722', // Deep Orange for directions/english
+      ),
+      const WebGame(
+        id: 'poetry-game',
+        title: 'Poetry Game for Kids',
+        description:
+            'Read poetry verses and answer questions about mood and meaning, learn about metaphor, simile, alliteration, rhyme and more English terms.',
+        websiteUrl: 'https://www.funenglishgames.com/readinggames/poem.html',
+        canvasSelector: null,
+        topics: [
+          'Poetry',
+          'Poems',
+          'Metaphor',
+          'Simile',
+          'Alliteration',
+          'Rhyme',
+          'Adjective',
+          'Conjunction',
+          'Adverb',
+          'Ellipsis',
+          'Reading Comprehension',
+          'English',
+        ],
+        learningGoals: [
+          'Enjoy this fun poem game for kids.',
+          'Read poetry verses before answering a range of related questions.',
+          'Learn what is the mood of the poem and what are the verses describing.',
+          'Press play and listen to the verses line by line.',
+          'Learn about important English terms such as metaphor, simile, alliteration, rhyme, adjective, conjunction, adverb and ellipsis.',
+          'Answer the questions, move on to the next verse, complete as many tasks as you can and have fun with this free poetry activity for kids.',
+        ],
+        explanation: 'Enjoy this fun poem game for kids! '
+            'Read poetry verses before answering a range of related questions. '
+            'What is the mood of the poem? What are the verses describing? '
+            'Press play and listen to the verses line by line. '
+            'Learn about important English terms such as metaphor, simile, alliteration, rhyme, adjective, conjunction, adverb and ellipsis. '
+            'Answer the questions, move on to the next verse, complete as many tasks as you can and have fun with this free poetry activity for kids!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Medium',
+        ageGroup: 'junior',
+        subject: 'english',
+        iconEmoji: '📝',
+        color: '9C27B0', // Purple for poetry/english
+      ),
+      const WebGame(
+        id: 'non-fiction-game',
+        title: 'Non Fiction Game for Kids',
+        description:
+            'Design layouts for children\'s books, news stories and toy catalogues, choose appropriate titles, text and pictures to inform, advertise or report.',
+        websiteUrl:
+            'https://www.funenglishgames.com/readinggames/nonfiction.html',
+        canvasSelector: null,
+        topics: [
+          'Non Fiction',
+          'Book Publishing',
+          'Layout Design',
+          'Writing Styles',
+          'News Stories',
+          'Children\'s Books',
+          'Catalogue Pages',
+          'Reading Skills',
+          'English',
+        ],
+        learningGoals: [
+          'Check out this non fiction book publishing game for kids.',
+          'Choose between a children\'s book, news story and toy catalogue page before designing an appropriate layout.',
+          'Think about what style of title, text and picture suits the chosen theme while remembering whether you are trying to inform, advertise or report.',
+          'Challenge your reading skills, choose the best messages, complete the tasks and enjoy this fun English activity for kids.',
+        ],
+        explanation:
+            'Check out this non fiction book publishing game for kids! '
+            'Choose between a children\'s book, news story and toy catalogue page before designing an appropriate layout. '
+            'Think about what style of title, text and picture suits the chosen theme while remembering whether you are trying to inform, advertise or report. '
+            'Challenge your reading skills, choose the best messages, complete the tasks and enjoy this fun English activity for kids!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Medium',
+        ageGroup: 'junior',
+        subject: 'english',
+        iconEmoji: '📚',
+        color: '795548', // Brown for books/english
+      ),
+      const WebGame(
+        id: 'dictionary-game',
+        title: 'Dictionary Game for Kids',
+        description:
+            'Use hints from the word machine to find correct words, look up the dictionary and identify which adjective, verb or noun best fits the clue.',
+        websiteUrl:
+            'https://www.funenglishgames.com/readinggames/dictionary.html',
+        canvasSelector: null,
+        topics: [
+          'Dictionary',
+          'Vocabulary',
+          'Word Search',
+          'Adjectives',
+          'Verbs',
+          'Nouns',
+          'Reading Practice',
+          'Alphabet',
+          'English',
+        ],
+        learningGoals: [
+          'Enjoy this fun dictionary game for kids.',
+          'Use hints from the word machine to help you find the correct words to label the products hidden inside the boxes.',
+          'Look up the dictionary and think about which adjective, verb or noun best fits the clue.',
+          'Search through the alphabet for the best answer while reading the descriptions.',
+          'Help the broken down word machine complete its job, test yourself with a variety of reading practice exercises and have fun with this great English activity for students.',
+        ],
+        explanation: 'Enjoy this fun dictionary game for kids! '
+            'Use hints from the word machine to help you find the correct words to label the products hidden inside the boxes. '
+            'Look up the dictionary and think about which adjective, verb or noun best fits the clue. '
+            'Search through the alphabet for the best answer while reading the descriptions. '
+            'Help the broken down word machine complete its job, test yourself with a variety of reading practice exercises and have fun with this great English activity for students!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Medium',
+        ageGroup: 'junior',
+        subject: 'english',
+        iconEmoji: '📖',
+        color: '3F51B5', // Indigo for dictionary/english
+      ),
+      const WebGame(
+        id: 'punctuation-game',
+        title: 'Punctuation Games for Kids',
+        description:
+            'Complete grammar practice exercises to learn about full stops, question marks, commas, apostrophes, exclamation marks and inverted commas.',
+        websiteUrl:
+            'https://www.funenglishgames.com/grammargames/punctuation.html',
+        canvasSelector: null,
+        topics: [
+          'Punctuation',
+          'Grammar',
+          'Full Stop',
+          'Question Mark',
+          'Comma',
+          'Apostrophe',
+          'Exclamation Mark',
+          'Inverted Commas',
+          'English',
+        ],
+        learningGoals: [
+          'Check out this great punctuation game for kids.',
+          'Have fun completing grammar practice exercises that help students learn about important English language punctuation such as the full stop, question mark, comma, apostrophe, exclamation mark and inverted commas.',
+          'Read the sentences, aim the target and fire the correct punctuation where you think it should go in the sentence.',
+          'Use the proper punctuation in the right location and you can move on to the next challenge, keep going and see if you can complete this interactive activity.',
+        ],
+        explanation: 'Check out this great punctuation game for kids! '
+            'Have fun completing grammar practice exercises that help students learn about important English language punctuation such as the full stop, question mark, comma, apostrophe, exclamation mark and inverted commas. '
+            'Read the sentences, aim the target and fire the correct punctuation where you think it should go in the sentence. '
+            'Use the proper punctuation in the right location and you can move on to the next challenge, keep going and see if you can complete this interactive activity!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'english',
+        iconEmoji: '✏️',
+        color: 'E91E63', // Pink for punctuation/english
+      ),
+      const WebGame(
+        id: 'conjunction-game',
+        title: 'Conjunction Game for Kids',
+        description:
+            'Learn about sentence structure and the correct use of conjunctions like but, so, and, or, while, because, since, after, if and although.',
+        websiteUrl:
+            'https://www.funenglishgames.com/grammargames/conjunction.html',
+        canvasSelector: null,
+        topics: [
+          'Conjunctions',
+          'Joining Words',
+          'Sentence Structure',
+          'Compound Sentences',
+          'Grammar',
+          'But',
+          'So',
+          'And',
+          'Or',
+          'While',
+          'Because',
+          'Since',
+          'After',
+          'If',
+          'Although',
+          'English',
+        ],
+        learningGoals: [
+          'Enjoy this great conjunction game for kids and have fun while learning more about sentence structure.',
+          'The practice exercises involve understanding the correct use of conjunctions (joining words) such as but, so, and or, while, because, since, after, if and although.',
+          'Complete each compound sentence by finding the right conjunction, read the sentences carefully, click the bubbles and find out if you were correct.',
+          'This interactive English language activity offers perfect practice exercises for students.',
+        ],
+        explanation:
+            'Enjoy this great conjunction game for kids and have fun while learning more about sentence structure! '
+            'The practice exercises involve understanding the correct use of conjunctions (joining words) such as but, so, and or, while, because, since, after, if and although. '
+            'Complete each compound sentence by finding the right conjunction, read the sentences carefully, click the bubbles and find out if you were correct. '
+            'This interactive English language activity offers perfect practice exercises for students!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Medium',
+        ageGroup: 'junior',
+        subject: 'english',
+        iconEmoji: '🔗',
+        color: '00BCD4', // Cyan for conjunctions/english
+      ),
+      const WebGame(
+        id: 'prefix-suffix-game',
+        title: 'Prefix & Suffix Game',
+        description:
+            'Learn how to add letters to the beginning or end of words to modify their meaning, add prefixes and suffixes and see if the result is a real word.',
+        websiteUrl:
+            'https://www.funenglishgames.com/grammargames/prefixsuffix.html',
+        canvasSelector: null,
+        topics: [
+          'Prefixes',
+          'Suffixes',
+          'Word Formation',
+          'Vocabulary',
+          'Grammar',
+          'Word Modification',
+          'English',
+        ],
+        learningGoals: [
+          'Check out this great prefix & suffix game for kids.',
+          'Learn how to add letters to the beginning or end of a word to modify its meaning.',
+          'Understand how prefixes and suffixes are used in the English language while enjoying fun challenges.',
+          'Add prefixes and suffixes to words and see if the result is a real word.',
+          'As the challenges become more difficult, try adding both a prefix and a suffix to make words.',
+          'Complete as many challenges as you can and have fun learning about word formation!',
+        ],
+        explanation: 'Check out this great prefix & suffix game for kids! '
+            'Learn how to add letters to the beginning or end of a word to modify its meaning. '
+            'This excellent practice exercise activity will help students understand how prefixes and suffixes are used in the English language while they enjoy the fun challenges on offer. '
+            'Add prefixes and suffixes to words and see if the result is a real word. '
+            'As the challenges become more difficult, try adding both a prefix and a suffix to make words. '
+            'How many challenges can you complete? Give it a go and find out!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Medium',
+        ageGroup: 'junior',
+        subject: 'english',
+        iconEmoji: '🔤',
+        color: 'FF9800', // Orange for prefixes/suffixes/english
+      ),
+      const WebGame(
+        id: 'verb-noun-adjective-game',
+        title: 'Verb, Noun, Adjective Game',
+        description:
+            'Learn about different word types like verbs, nouns, adjectives, adverbs, pronouns, conjunctions, prepositions, articles, clauses and phrases.',
+        websiteUrl:
+            'https://www.funenglishgames.com/grammargames/verbnounadjective.html',
+        canvasSelector: null,
+        topics: [
+          'Verbs',
+          'Nouns',
+          'Adjectives',
+          'Adverbs',
+          'Pronouns',
+          'Conjunctions',
+          'Prepositions',
+          'Articles',
+          'Clauses',
+          'Phrases',
+          'Word Types',
+          'Grammar',
+          'English',
+        ],
+        learningGoals: [
+          'Learn about different word types such as the verb, noun and adjective with this fun game for kids.',
+          'Complete a series of challenges related to nouns, verbs, adjectives, adverbs, pronouns, conjunctions, prepositions, articles, clauses and phrases.',
+          'Find these types of words in sentences and understand when to use them properly.',
+          'Use the interactive highlighter to choose the words you think best answer the questions.',
+          'Complete as many challenges as you can and have fun learning English!',
+        ],
+        explanation:
+            'Learn about different word types such as the verb, noun and adjective with this fun game for kids! '
+            'This great online practice activity for students involves a series of challenges related to nouns, verbs, adjectives, adverbs, pronouns, conjunctions, prepositions, articles, clauses and phrases. '
+            'Find these types of words in sentences and understand when to use them properly. '
+            'Use the interactive highlighter to choose the words you think best answer the questions. '
+            'Complete as many challenges as you can and have fun learning English!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Medium',
+        ageGroup: 'junior',
+        subject: 'english',
+        iconEmoji: '📝',
+        color: '9C27B0', // Purple for word types/english
+      ),
+      const WebGame(
+        id: 'debate-game',
+        title: 'Debate Game for Kids',
+        description:
+            'Take part in interactive debates against opponents on interesting topics, listen to arguments, choose responses and try to win the judges\' votes.',
+        websiteUrl: 'https://www.funenglishgames.com/writinggames/debate.html',
+        canvasSelector: null,
+        topics: [
+          'Debate',
+          'Arguments',
+          'Persuasion',
+          'Critical Thinking',
+          'Public Speaking',
+          'Discussion',
+          'Opinions',
+          'English',
+        ],
+        learningGoals: [
+          'Enjoy this fun debate game for kids.',
+          'Take part in an interactive debate against an opponent arguing from the opposite point of view on a range of interesting topics.',
+          'Listen to what they have to say before choosing your response from a list of possible alternatives.',
+          'The judges will then vote on who they thought had the best argument, try hard and see if you can get the crowd on your side and win the debate.',
+          'Have fun learning about debating and arguments with this great online activity for students.',
+        ],
+        explanation: 'Enjoy this fun debate game for kids! '
+            'Take part in an interactive debate against an opponent arguing from the opposite point of view on a range of interesting topics. '
+            'Listen to what they have to say before choosing your response from a list of possible alternatives. '
+            'The judges will then vote on who they thought had the best argument, try hard and see if you can get the crowd on your side and win the debate. '
+            'Have fun learning about debating and arguments with this great online activity for students!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 20,
+        difficulty: 'Medium',
+        ageGroup: 'junior',
+        subject: 'english',
+        iconEmoji: '💬',
+        color: 'E91E63', // Pink for debate/english
+      ),
+      const WebGame(
+        id: 'newspaper-game',
+        title: 'Newspaper Game for Kids',
+        description:
+            'Practice headline writing with interactive challenges, learn how good news headlines and comments should be written and select the best comments for headlines.',
+        websiteUrl:
+            'https://www.funenglishgames.com/writinggames/newspaper.html',
+        canvasSelector: null,
+        topics: [
+          'Newspaper',
+          'Headlines',
+          'Journalism',
+          'Writing',
+          'News Writing',
+          'Headline Writing',
+          'Comments',
+          'English',
+        ],
+        learningGoals: [
+          'Check out this fun newspaper game for kids.',
+          'Practice your headline writing with a series of interactive challenges designed to help students understand how good news headlines and comments should be written.',
+          'Take a look at the examples and select the comment that best answers questions relating to various newspaper headlines.',
+          'Learn why newspaper headlines should be short, informative and to the point.',
+          'Enjoy learning online with this cool journalism activity that\'s perfect for children.',
+        ],
+        explanation: 'Check out this fun newspaper game for kids! '
+            'Practice your headline writing with a series of interactive challenges designed to help students understand how good news headlines and comments should be written. '
+            'Take a look at the examples and select the comment that best answers questions relating to various newspaper headlines. '
+            'Learn why newspaper headlines should be short, informative and to the point. '
+            'Enjoy learning online with this cool journalism activity that\'s perfect for children!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Medium',
+        ageGroup: 'junior',
+        subject: 'english',
+        iconEmoji: '📰',
+        color: '424242', // Dark Gray for newspaper/journalism/english
+      ),
+      const WebGame(
+        id: 'advertising-game',
+        title: 'Advertising Game',
+        description:
+            'Create attractive brochures and leaflets, design advertising campaigns with effective titles, pictures and words to capture readers\' attention.',
+        websiteUrl:
+            'https://www.funenglishgames.com/writinggames/advertising.html',
+        canvasSelector: null,
+        topics: [
+          'Advertising',
+          'Brochures',
+          'Leaflets',
+          'Design',
+          'Marketing',
+          'Writing',
+          'Persuasion',
+          'English',
+        ],
+        learningGoals: [
+          'Enjoy this great advertising game and learn how to successfully create attractive and informative brochures and leaflets that will capture the attention of readers.',
+          'Design a range of advertising campaigns that include a birthday invitation, café brochure and a leaflet aimed at keeping playgrounds clean.',
+          'Use effective titles, pictures and words to make your leaflets and brochures.',
+          'Create titles that are short, sharp and memorable. Choose bright, attractive, clear pictures that will grab attention and don\'t forget to include all the essential information in the text.',
+          'Attract customers with unique advertising campaigns and have fun with this online design activity for kids.',
+        ],
+        explanation:
+            'Enjoy this great advertising game and learn how to successfully create attractive and informative brochures and leaflets that will capture the attention of readers! '
+            'Design a range of advertising campaigns that include a birthday invitation, café brochure and a leaflet aimed at keeping playgrounds clean. '
+            'Use effective titles, pictures and words to make your leaflets and brochures. '
+            'Create titles that are short, sharp and memorable. Choose bright, attractive, clear pictures that will grab attention and don\'t forget to include all the essential information in the text. '
+            'Attract customers with unique advertising campaigns and have fun with this online design activity for kids!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 20,
+        difficulty: 'Medium',
+        ageGroup: 'junior',
+        subject: 'english',
+        iconEmoji: '📢',
+        color: 'FF5722', // Deep Orange for advertising/english
+      ),
+      const WebGame(
+        id: 'letter-writing-game',
+        title: 'Learn How to Write a Letter',
+        description:
+            'Learn how to write concise, well worded letters that are set out correctly, discover where to write your name, address, date and how to layout paragraphs.',
+        websiteUrl: 'https://www.funenglishgames.com/writinggames/letters.html',
+        canvasSelector: null,
+        topics: [
+          'Letter Writing',
+          'Writing',
+          'Formal Writing',
+          'Letter Format',
+          'Paragraphs',
+          'Address',
+          'Date',
+          'English',
+        ],
+        learningGoals: [
+          'Check out this great letter writing practice activity for kids.',
+          'Learn how to write concise, well worded letters that are set out correctly.',
+          'Discover where in the letter you should write your name and address.',
+          'Learn how you should layout paragraphs and where the date should go.',
+          'Find out the answers to these questions and more while enjoying this interactive activity that\'s perfect for students.',
+        ],
+        explanation:
+            'Check out this great letter writing practice activity for kids! '
+            'Learn how to write concise, well worded letters that are set out correctly. '
+            'Where in the letter should you write your name and address? How should you layout paragraphs? Where does the date go? '
+            'Find out the answer to these questions and more. '
+            'Learn how to write a letter while you enjoy this interactive activity that\'s perfect for students!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'english',
+        iconEmoji: '✉️',
+        color: '2196F3', // Blue for letter writing/english
+      ),
+      const WebGame(
+        id: 'story-writing-game',
+        title: 'Story Writing Game for Kids',
+        description:
+            'Learn how to create the right atmosphere when planning stories, use correct words for ghost stories, spy stories or romance and choose your theme.',
+        websiteUrl: 'https://www.funenglishgames.com/writinggames/story.html',
+        canvasSelector: null,
+        topics: [
+          'Story Writing',
+          'Creative Writing',
+          'Atmosphere',
+          'Ghost Stories',
+          'Spy Stories',
+          'Romance',
+          'Story Planning',
+          'Writing',
+          'English',
+        ],
+        learningGoals: [
+          'This great story writing game for kids will help teach children how to create the right atmosphere when planning stories based around a chosen topic.',
+          'Use the correct words to create an atmosphere suitable for a ghost story, spy story or romance.',
+          'Discover what words help create a spooky atmosphere and how about a spy thriller?',
+          'Choose your theme and use the tips provided to help write your sentences.',
+          'Enjoy learning how to write stories with the help of this fun, interactive activity that\'s perfect for students.',
+        ],
+        explanation:
+            'This great story writing game for kids will help teach children how to create the right atmosphere when planning stories based around a chosen topic! '
+            'Use the correct words to create an atmosphere suitable for a ghost story, spy story or romance. '
+            'What words help create a spooky atmosphere? How about a spy thriller? '
+            'Choose your theme and use the tips provided to help write your sentences. '
+            'Enjoy learning how to write stories with the help of this fun, interactive activity that\'s perfect for students!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 20,
+        difficulty: 'Medium',
+        ageGroup: 'junior',
+        subject: 'english',
+        iconEmoji: '📖',
+        color: '9C27B0', // Purple for story writing/english
+      ),
+      const WebGame(
+        id: 'instructions-game',
+        title: 'Instructions Game for Kids',
+        description:
+            'Write clear, concise step-by-step instructions for activities like making a sandwich, putting up a tent and making a robot from a beginner\'s perspective.',
+        websiteUrl:
+            'https://www.funenglishgames.com/writinggames/instructions.html',
+        canvasSelector: null,
+        topics: [
+          'Instructions',
+          'Writing',
+          'Step by Step',
+          'Clear Writing',
+          'Procedural Writing',
+          'How To',
+          'English',
+        ],
+        learningGoals: [
+          'This instructions game for kids will help students understand the importance of writing clear, concise instructions for a range of interesting tasks.',
+          'Choose from a list of different activities such as making a sandwich, putting up a tent and making a robot.',
+          'Write step by step instructions in English for how it should be performed from the perspective of someone who has never done it before.',
+          'It sounds easy but it\'s not quite as simple as you might think. Can you complete all the challenges?',
+          'Give it a go and find out with this fun, interactive online activity for kids.',
+        ],
+        explanation:
+            'This instructions game for kids will help students understand the importance of writing clear, concise instructions for a range of interesting tasks! '
+            'Choose from a list of different activities such as making a sandwich, putting up a tent and making a robot. '
+            'Write step by step instructions in English for how it should be performed from the perspective of someone who has never done it before. '
+            'It sounds easy but it\'s not quite as simple as you might think. Can you complete all the challenges? '
+            'Give it a go and find out with this fun, interactive online activity for kids!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 20,
+        difficulty: 'Medium',
+        ageGroup: 'junior',
+        subject: 'english',
+        iconEmoji: '📋',
+        color: '607D8B', // Blue Grey for instructions/english
+      ),
+      const WebGame(
+        id: 'crossword-game',
+        title: 'Fun Crossword Game for Kids',
+        description:
+            'Complete puzzles by filling in correct missing letters, click on empty spaces and select letters that appear throughout the crossword giving useful hints.',
+        websiteUrl: 'https://www.funenglishgames.com/wordgames/crossword.html',
+        canvasSelector: null,
+        topics: [
+          'Crossword',
+          'Puzzles',
+          'Vocabulary',
+          'Word Recognition',
+          'Spelling',
+          'Problem Solving',
+          'English',
+        ],
+        learningGoals: [
+          'Check out this fun crossword game for kids.',
+          'Complete the puzzle by filling in the correct missing letters.',
+          'Click on an empty space in the crossword and select a letter you think might go there, the letter will then appear throughout the crossword in highlighted boxes, giving you useful hints on other words in the crossword.',
+          'If you choose the wrong letter, other parts of the puzzle won\'t make sense, so be careful.',
+          'Finishing the crossword will raise the difficulty from beginner to easy and onwards to normal, hard and expert. If you\'re stuck for ideas then simply choose \'give up\' and try a new crossword.',
+          'This free online puzzle activity offers a great challenge for students.',
+        ],
+        explanation: 'Check out this fun crossword game for kids! '
+            'Complete the puzzle by filling in the correct missing letters. '
+            'Click on an empty space in the crossword and select a letter you think might go there, the letter will then appear throughout the crossword in highlighted boxes, giving you useful hints on other words in the crossword. '
+            'If you choose the wrong letter, other parts of the puzzle won\'t make sense, so be careful. '
+            'Finishing the crossword will raise the difficulty from beginner to easy and onwards to normal, hard and expert. '
+            'If you\'re stuck for ideas then simply choose \'give up\' and try a new crossword. '
+            'This free online puzzle activity offers a great challenge for students!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'english',
+        iconEmoji: '🧩',
+        color: 'FF9800', // Orange for crossword/english
+      ),
+      const WebGame(
+        id: 'letter-matching-game',
+        title: 'Letter Matching Game for Kids',
+        description:
+            'Test problem solving skills while improving recognition of the English alphabet, match letters in rows or columns to eliminate them from the grid.',
+        websiteUrl:
+            'https://www.funenglishgames.com/wordgames/lettermatching.html',
+        canvasSelector: null,
+        topics: [
+          'Letter Matching',
+          'Alphabet',
+          'Problem Solving',
+          'Puzzles',
+          'Letter Recognition',
+          'Strategy',
+          'English',
+        ],
+        learningGoals: [
+          'This fun letter game for kids tests your problem solving skills while helping improve your recognition of the English alphabet.',
+          'Match letters together in either rows or columns to eliminate them from the grid.',
+          'How far can you progress through the puzzle? Can you clear the grid?',
+          'Letters drop into new positions as you solve the puzzle, enabling an element of strategy to help you on your way.',
+          'This free letter matching puzzle is perfect for students and anyone interested in interactive English activities online.',
+        ],
+        explanation:
+            'This fun letter game for kids tests your problem solving skills while helping improve your recognition of the English alphabet! '
+            'Match letters together in either rows or columns to eliminate them from the grid. '
+            'How far can you progress through the puzzle? Can you clear the grid? '
+            'Letters drop into new positions as you solve the puzzle, enabling an element of strategy to help you on your way. '
+            'This free letter matching puzzle is perfect for students and anyone interested in interactive English activities online!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'english',
+        iconEmoji: '🔤',
+        color: '00BCD4', // Cyan for letter matching/english
+      ),
+      const WebGame(
+        id: 'spiderman-spelling-game',
+        title: 'Spiderman Spelling Game',
+        description:
+            'Help Spiderman save the day by using his web of words to climb buildings, form words from letters and advance through fun stages to keep the city safe.',
+        websiteUrl: 'https://calendar.google.com/calendar/u/0/r/month/2025/9/1',
+        canvasSelector: null,
+        topics: [
+          'Spelling',
+          'Word Formation',
+          'Vocabulary',
+          'Puzzles',
+          'Word Games',
+          'English',
+        ],
+        learningGoals: [
+          'Help Spiderman save the day with this great spelling game for kids.',
+          'Use Spiderman\'s web of words to climb buildings and keep the city safe from Doc Ock.',
+          'Use letters to form as many different words as you can, advancing onwards through a variety of fun stages.',
+          'This free word puzzle game will help students develop their English ability while entertaining them at the same time.',
+          'Enjoy the challenge of this interactive activity and have fun learning online!',
+        ],
+        explanation:
+            'Help Spiderman save the day with this great spelling game for kids! '
+            'Use Spiderman\'s web of words to climb buildings and keep the city safe from Doc Ock. '
+            'Use letters to form as many different words as you can, advancing onwards through a variety of fun stages. '
+            'This free word puzzle game will help students develop their English ability while entertaining them at the same time. '
+            'Enjoy the challenge of this interactive activity and have fun learning online!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'english',
+        iconEmoji: '🕷️',
+        color: 'D32F2F', // Red for Spiderman/spelling/english
+      ),
+      const WebGame(
+        id: 'alphabet-game',
+        title: 'Alphabet Game for Kids',
+        description:
+            'Quickly rearrange letters into words as they fall into the alphabet soup bowl, create more words before time runs out to score higher and earn bonuses.',
+        websiteUrl:
+            'https://www.funenglishgames.com/spellinggames/alphabet.html',
+        canvasSelector: null,
+        topics: [
+          'Alphabet',
+          'Spelling',
+          'Word Formation',
+          'Vocabulary',
+          'Puzzles',
+          'Time Management',
+          'English',
+        ],
+        learningGoals: [
+          'Check out this great alphabet game for kids.',
+          'Quickly rearrange letters into words as they fall into the alphabet soup bowl.',
+          'The more words you create before the time runs out, the higher your score.',
+          'Solve the puzzles fast and earn a bonus.',
+          'How many puzzles can you solve? Give this free word spelling activity a try and find out. Beat your high score and have fun learning English online.',
+        ],
+        explanation: 'Check out this great alphabet game for kids! '
+            'Quickly rearrange letters into words as they fall into the alphabet soup bowl. '
+            'The more words you create before the time runs out, the higher your score. '
+            'Solve the puzzles fast and earn a bonus. '
+            'How many puzzles can you solve? Give this free word spelling activity a try and find out. Beat your high score and have fun learning English online!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'english',
+        iconEmoji: '🔤',
+        color: '4CAF50', // Green for alphabet/spelling/english
+      ),
+      const WebGame(
+        id: 'easy-spelling-game',
+        title: 'Easy Spelling Game for Kids',
+        description:
+            'Learn to spell with this easy word puzzle game, combine letters to form different words and use provided pictures to help narrow down the options.',
+        websiteUrl:
+            'https://www.funenglishgames.com/spellinggames/learntospell.html',
+        canvasSelector: null,
+        topics: [
+          'Spelling',
+          'Word Formation',
+          'Vocabulary',
+          'Puzzles',
+          'Letter Combination',
+          'English',
+        ],
+        learningGoals: [
+          'Learn to spell with this easy word puzzle game for kids.',
+          'Combine letters to form a range of different words, how many can you get correct?',
+          'Use the provided pictures to help narrow down the options and make the questions easier.',
+          'This fun online activity will help improve student\'s spelling ability in a fun, interactive way.',
+          'Get started and improve your English today!',
+        ],
+        explanation: 'Learn to spell with this easy word puzzle game for kids! '
+            'Combine letters to form a range of different words, how many can you get correct? '
+            'Use the provided pictures to help narrow down the options and make the questions easier. '
+            'This fun online activity will help improve student\'s spelling ability in a fun, interactive way. '
+            'Get started and improve your English today!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Easy',
+        ageGroup: 'junior',
+        subject: 'english',
+        iconEmoji: '✏️',
+        color: '2196F3', // Blue for spelling/english
+      ),
+      const WebGame(
+        id: 'word-guessing-puzzle-game',
+        title: 'Word Guessing Puzzle Game',
+        description:
+            'Check out this classic word guessing puzzle game, enjoy the challenge of solving the word in just five guesses by inputting words and following clues.',
+        websiteUrl:
+            'https://www.funenglishgames.com/spellinggames/guessing.html',
+        canvasSelector: null,
+        topics: [
+          'Word Guessing',
+          'Puzzles',
+          'Spelling',
+          'Vocabulary',
+          'Problem Solving',
+          'Logic',
+          'English',
+        ],
+        learningGoals: [
+          'Check out this classic word guessing puzzle game for kids and enjoy the challenge of solving the word in just five guesses.',
+          'Input a word, follow the clues and solve the puzzle as quick as you can.',
+          'Even correct letters in the wrong location are handy, move them to a new place and see if that helps you narrow down the possibilities.',
+          'This free online English activity is perfect for students looking to improve their language skills in a fun, interactive way.',
+        ],
+        explanation:
+            'Check out this classic word guessing puzzle game for kids and enjoy the challenge of solving the word in just five guesses! '
+            'Input a word, follow the clues and solve the puzzle as quick as you can. '
+            'Even correct letters in the wrong location are handy, move them to a new place and see if that helps you narrow down the possibilities. '
+            'This free online English activity is perfect for students looking to improve their language skills in a fun, interactive way!',
+        warning:
+            'This game requires an internet connection. Adult guidance is recommended for younger learners.',
+        estimatedMinutes: 15,
+        difficulty: 'Medium',
+        ageGroup: 'junior',
+        subject: 'english',
+        iconEmoji: '🧩',
+        color: '9C27B0', // Purple for puzzles/english
+      ),
     ];
 
     if (subject != null) {

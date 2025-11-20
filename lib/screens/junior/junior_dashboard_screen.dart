@@ -67,6 +67,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   final BookService _bookService = BookService();
   List<WebGame> _scienceWebGames = [];
   List<WebGame> _mathWebGames = [];
+  List<WebGame> _englishWebGames = [];
   final WebGameService _webGameService = WebGameService();
 
   // Audio player for background music
@@ -97,6 +98,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     _loadBooks();
     _loadScienceWebGames();
     _loadMathWebGames();
+    _loadEnglishWebGames();
     _animationController.forward();
     // Start background music
     _playBackgroundMusic();
@@ -618,6 +620,20 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
       }
     } catch (e) {
       debugPrint('Error loading math web games: $e');
+    }
+  }
+
+  Future<void> _loadEnglishWebGames() async {
+    try {
+      final games = await _webGameService.getWebGames(
+          ageGroup: 'junior', subject: 'english');
+      if (mounted) {
+        setState(() {
+          _englishWebGames = games;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading english web games: $e');
     }
   }
 
@@ -1250,6 +1266,8 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildMathGamesSection(),
             const SizedBox(height: JuniorTheme.spacingLarge),
+            _buildEnglishGamesSection(),
+            const SizedBox(height: JuniorTheme.spacingLarge),
             _buildBooksSection(),
           ],
         );
@@ -1267,6 +1285,8 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
             _buildScienceGamesSection(),
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildMathGamesSection(),
+            const SizedBox(height: JuniorTheme.spacingLarge),
+            _buildEnglishGamesSection(),
             const SizedBox(height: JuniorTheme.spacingLarge),
             _buildBooksSection(),
           ],
@@ -1396,6 +1416,80 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
               itemCount: _mathWebGames.length,
               itemBuilder: (context, index) {
                 final game = _mathWebGames[index];
+                return SizedBox(
+                  width: 260,
+                  child: Semantics(
+                    label: 'Game: ${game.title}',
+                    child: WebGameCard(
+                      game: game,
+                      onTap: () {
+                        _playClickSound();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => WebGameDetailScreen(
+                              game: game,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildEnglishGamesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Interactive English Games',
+          style: JuniorTheme.headingMedium.copyWith(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: JuniorTheme.spacingSmall),
+        Text(
+          'Play fun games to improve your English skills!',
+          style: JuniorTheme.bodyLarge.copyWith(
+            color: JuniorTheme.textSecondary,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: JuniorTheme.spacingMedium),
+        if (_englishWebGames.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(JuniorTheme.spacingLarge),
+            decoration: BoxDecoration(
+              color: JuniorTheme.backgroundCard,
+              borderRadius: BorderRadius.circular(JuniorTheme.radiusLarge),
+              boxShadow: JuniorTheme.shadowMedium,
+            ),
+            child: Center(
+              child: Text(
+                'Loading games...',
+                style: JuniorTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          )
+        else
+          SizedBox(
+            height: 320,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              separatorBuilder: (_, __) => const SizedBox(width: 16),
+              itemCount: _englishWebGames.length,
+              itemBuilder: (context, index) {
+                final game = _englishWebGames[index];
                 return SizedBox(
                   width: 260,
                   child: Semantics(

@@ -55,3 +55,4 @@ class WebGame extends Equatable {
         color,
       ];
 }
+
