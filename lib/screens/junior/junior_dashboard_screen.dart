@@ -70,6 +70,11 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   List<WebGame> _englishWebGames = [];
   final WebGameService _webGameService = WebGameService();
 
+  // Category filter states
+  String _selectedScienceCategory = 'All';
+  String _selectedMathCategory = 'All';
+  String _selectedEnglishCategory = 'All';
+
   // Audio player for background music
   final AudioPlayer _audioPlayer = AudioPlayer();
   // Audio player for click sounds
@@ -1294,16 +1299,173 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     }
   }
 
+  String _getCategoryIcon(String category) {
+    // Science categories
+    if (category == 'Living Things') return '🌱';
+    if (category == 'Physical Processes') return '⚡';
+    if (category == 'Solids, Liquids & Gases') return '💧';
+
+    // Math categories
+    if (category == 'Arithmetic Games') return '➕';
+    if (category == 'Geometry Games') return '📐';
+    if (category == 'Number Games') return '🔢';
+    if (category == 'Statistics Games') return '📊';
+
+    // English categories
+    if (category == 'Reading Games') return '📖';
+    if (category == 'Grammar Games') return '✍️';
+    if (category == 'Writing Games') return '📝';
+    if (category == 'Word Games') return '🎯';
+    if (category == 'Spelling Games') return '🔤';
+
+    // Default
+    return '✨';
+  }
+
+  Color _getCategoryColor(String category) {
+    // Science categories
+    if (category == 'Living Things') return JuniorTheme.primaryGreen;
+    if (category == 'Physical Processes') return JuniorTheme.primaryOrange;
+    if (category == 'Solids, Liquids & Gases') return JuniorTheme.primaryBlue;
+
+    // Math categories
+    if (category == 'Arithmetic Games') return JuniorTheme.primaryPurple;
+    if (category == 'Geometry Games') return JuniorTheme.primaryBlue;
+    if (category == 'Number Games') return JuniorTheme.primaryYellow;
+    if (category == 'Statistics Games') return JuniorTheme.primaryPink;
+
+    // English categories
+    if (category == 'Reading Games') return JuniorTheme.primaryBlue;
+    if (category == 'Grammar Games') return JuniorTheme.primaryPurple;
+    if (category == 'Writing Games') return JuniorTheme.primaryOrange;
+    if (category == 'Word Games') return JuniorTheme.primaryGreen;
+    if (category == 'Spelling Games') return JuniorTheme.primaryPink;
+
+    // Default (All)
+    return JuniorTheme.primaryBlue;
+  }
+
+  Widget _buildCategoryChips({
+    required List<String> categories,
+    required String selectedCategory,
+    required Function(String) onCategorySelected,
+  }) {
+    return SizedBox(
+      height: 50,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemCount: categories.length,
+        itemBuilder: (context, index) {
+          final category = categories[index];
+          final isSelected = category == selectedCategory;
+          final categoryColor = _getCategoryColor(category);
+          final categoryIcon = _getCategoryIcon(category);
+
+          return AnimatedContainer(
+            duration: JuniorTheme.animationFast,
+            curve: Curves.easeInOut,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  onCategorySelected(category);
+                  _playClickSound();
+                },
+                borderRadius: BorderRadius.circular(JuniorTheme.radiusLarge),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    gradient: isSelected
+                        ? LinearGradient(
+                            colors: [
+                              categoryColor.withOpacity(0.8),
+                              categoryColor.withOpacity(0.6),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          )
+                        : null,
+                    color: isSelected ? null : JuniorTheme.backgroundCard,
+                    borderRadius:
+                        BorderRadius.circular(JuniorTheme.radiusLarge),
+                    border: Border.all(
+                      color: isSelected
+                          ? categoryColor
+                          : JuniorTheme.textLight.withOpacity(0.3),
+                      width: isSelected ? 2.5 : 1.5,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: categoryColor.withOpacity(0.4),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                        : JuniorTheme.shadowLight,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (category != 'All') ...[
+                        Text(
+                          categoryIcon,
+                          style: TextStyle(
+                            fontSize: isSelected ? 18 : 16,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+                      Text(
+                        category,
+                        style: TextStyle(
+                          fontSize: isSelected ? 15 : 14,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.w600,
+                          color: isSelected
+                              ? Colors.white
+                              : JuniorTheme.textPrimary,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      if (isSelected) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildScienceGamesSection() {
+    final filteredGames = _webGameService.filterGamesByCategory(
+      _scienceWebGames,
+      _selectedScienceCategory == 'All' ? null : _selectedScienceCategory,
+    );
+    final categories = _webGameService.getCategoriesForSubject('science');
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Interactive Science Games',
-          style: JuniorTheme.headingMedium.copyWith(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+          style: JuniorTheme.headingMedium,
         ),
         const SizedBox(height: JuniorTheme.spacingSmall),
         Text(
@@ -1313,6 +1475,16 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
+        ),
+        const SizedBox(height: JuniorTheme.spacingMedium),
+        _buildCategoryChips(
+          categories: categories,
+          selectedCategory: _selectedScienceCategory,
+          onCategorySelected: (category) {
+            setState(() {
+              _selectedScienceCategory = category;
+            });
+          },
         ),
         const SizedBox(height: JuniorTheme.spacingMedium),
         if (_scienceWebGames.isEmpty)
@@ -1332,6 +1504,23 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
               ),
             ),
           )
+        else if (filteredGames.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(JuniorTheme.spacingLarge),
+            decoration: BoxDecoration(
+              color: JuniorTheme.backgroundCard,
+              borderRadius: BorderRadius.circular(JuniorTheme.radiusLarge),
+              boxShadow: JuniorTheme.shadowMedium,
+            ),
+            child: Center(
+              child: Text(
+                'No games found in this category.',
+                style: JuniorTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          )
         else
           SizedBox(
             height: 320,
@@ -1339,9 +1528,9 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 8),
               separatorBuilder: (_, __) => const SizedBox(width: 16),
-              itemCount: _scienceWebGames.length,
+              itemCount: filteredGames.length,
               itemBuilder: (context, index) {
-                final game = _scienceWebGames[index];
+                final game = filteredGames[index];
                 return SizedBox(
                   width: 260,
                   child: Semantics(
@@ -1369,15 +1558,18 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   }
 
   Widget _buildMathGamesSection() {
+    final filteredGames = _webGameService.filterGamesByCategory(
+      _mathWebGames,
+      _selectedMathCategory == 'All' ? null : _selectedMathCategory,
+    );
+    final categories = _webGameService.getCategoriesForSubject('math');
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Interactive Math Games',
-          style: JuniorTheme.headingMedium.copyWith(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+          style: JuniorTheme.headingMedium,
         ),
         const SizedBox(height: JuniorTheme.spacingSmall),
         Text(
@@ -1387,6 +1579,16 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
+        ),
+        const SizedBox(height: JuniorTheme.spacingMedium),
+        _buildCategoryChips(
+          categories: categories,
+          selectedCategory: _selectedMathCategory,
+          onCategorySelected: (category) {
+            setState(() {
+              _selectedMathCategory = category;
+            });
+          },
         ),
         const SizedBox(height: JuniorTheme.spacingMedium),
         if (_mathWebGames.isEmpty)
@@ -1406,6 +1608,23 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
               ),
             ),
           )
+        else if (filteredGames.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(JuniorTheme.spacingLarge),
+            decoration: BoxDecoration(
+              color: JuniorTheme.backgroundCard,
+              borderRadius: BorderRadius.circular(JuniorTheme.radiusLarge),
+              boxShadow: JuniorTheme.shadowMedium,
+            ),
+            child: Center(
+              child: Text(
+                'No games found in this category.',
+                style: JuniorTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          )
         else
           SizedBox(
             height: 320,
@@ -1413,9 +1632,9 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 8),
               separatorBuilder: (_, __) => const SizedBox(width: 16),
-              itemCount: _mathWebGames.length,
+              itemCount: filteredGames.length,
               itemBuilder: (context, index) {
-                final game = _mathWebGames[index];
+                final game = filteredGames[index];
                 return SizedBox(
                   width: 260,
                   child: Semantics(
@@ -1443,15 +1662,18 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   }
 
   Widget _buildEnglishGamesSection() {
+    final filteredGames = _webGameService.filterGamesByCategory(
+      _englishWebGames,
+      _selectedEnglishCategory == 'All' ? null : _selectedEnglishCategory,
+    );
+    final categories = _webGameService.getCategoriesForSubject('english');
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Interactive English Games',
-          style: JuniorTheme.headingMedium.copyWith(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+          style: JuniorTheme.headingMedium,
         ),
         const SizedBox(height: JuniorTheme.spacingSmall),
         Text(
@@ -1461,6 +1683,16 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
+        ),
+        const SizedBox(height: JuniorTheme.spacingMedium),
+        _buildCategoryChips(
+          categories: categories,
+          selectedCategory: _selectedEnglishCategory,
+          onCategorySelected: (category) {
+            setState(() {
+              _selectedEnglishCategory = category;
+            });
+          },
         ),
         const SizedBox(height: JuniorTheme.spacingMedium),
         if (_englishWebGames.isEmpty)
@@ -1480,6 +1712,23 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
               ),
             ),
           )
+        else if (filteredGames.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(JuniorTheme.spacingLarge),
+            decoration: BoxDecoration(
+              color: JuniorTheme.backgroundCard,
+              borderRadius: BorderRadius.circular(JuniorTheme.radiusLarge),
+              boxShadow: JuniorTheme.shadowMedium,
+            ),
+            child: Center(
+              child: Text(
+                'No games found in this category.',
+                style: JuniorTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          )
         else
           SizedBox(
             height: 320,
@@ -1487,9 +1736,9 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 8),
               separatorBuilder: (_, __) => const SizedBox(width: 16),
-              itemCount: _englishWebGames.length,
+              itemCount: filteredGames.length,
               itemBuilder: (context, index) {
-                final game = _englishWebGames[index];
+                final game = filteredGames[index];
                 return SizedBox(
                   width: 260,
                   child: Semantics(

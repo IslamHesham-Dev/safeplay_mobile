@@ -2667,4 +2667,201 @@ class WebGameService {
       color: game.color,
     );
   }
+
+  /// Get the category for a game based on its ID
+  /// Returns null if category not found
+  String? getGameCategory(String gameId) {
+    // Remove age group suffix if present (e.g., 'food-chains-bright' -> 'food-chains')
+    final baseId = gameId.split('-bright').first.split('-junior').first;
+
+    // Science Games Categories
+    const scienceLivingThings = [
+      'food-chains',
+      'microorganisms',
+      'health-growth',
+      'teeth-eating',
+      'plants-animals',
+      'keeping-healthy',
+      'how-plants-grow',
+      'skeleton-bones',
+      'plant-animal-differences',
+      'life-cycle-plant',
+    ];
+
+    const sciencePhysicalProcesses = [
+      'electricity-circuits',
+      'forces-action',
+      'how-we-see',
+      'earth-sun-moon',
+      'circuits-conductors',
+      'magnets-springs',
+      'sun-light-shadows',
+      'changing-sounds',
+      'friction',
+      'light-dark',
+    ];
+
+    const scienceSolidsLiquidsGases = [
+      'changing-state-water',
+      'reversible-changes',
+      'properties-materials',
+      'rocks-minerals-soils',
+      'melting-points',
+      'solids-liquids-gases',
+      'heat-transfer',
+    ];
+
+    // Math Games Categories
+    const mathArithmetic = [
+      'addition',
+      'subtraction',
+      'multiplication',
+      'division',
+    ];
+
+    const mathGeometry = [
+      'shapes',
+      'angles',
+      'measurements',
+      'grids-coordinates',
+      'transformation',
+    ];
+
+    const mathNumber = [
+      'fractions',
+      'decimals',
+      'number-patterns',
+      'place-values',
+      'calculator',
+      'money-game',
+      'problem-solving',
+    ];
+
+    const mathStatistics = [
+      'probability',
+      'percentages',
+      'mean-median-mode',
+      'frequency-tables',
+    ];
+
+    // English Games Categories
+    const englishReading = [
+      'map-routes-directions',
+      'poetry-game',
+      'non-fiction-game',
+      'dictionary-game',
+    ];
+
+    const englishGrammar = [
+      'punctuation-game',
+      'conjunction-game',
+      'prefix-suffix-game',
+      'verb-noun-adjective-game',
+    ];
+
+    const englishWriting = [
+      'debate-game',
+      'newspaper-game',
+      'advertising-game',
+      'letter-writing-game',
+      'story-writing-game',
+      'instructions-game',
+    ];
+
+    const englishWord = [
+      'crossword-game',
+      'letter-matching-game',
+    ];
+
+    const englishSpelling = [
+      'spiderman-spelling-game',
+      'alphabet-game',
+      'easy-spelling-game',
+      'word-guessing-puzzle-game',
+    ];
+
+    // Check Science categories
+    if (scienceLivingThings.contains(baseId)) {
+      return 'Living Things';
+    }
+    if (sciencePhysicalProcesses.contains(baseId)) {
+      return 'Physical Processes';
+    }
+    if (scienceSolidsLiquidsGases.contains(baseId)) {
+      return 'Solids, Liquids & Gases';
+    }
+
+    // Check Math categories
+    if (mathArithmetic.contains(baseId)) {
+      return 'Arithmetic Games';
+    }
+    if (mathGeometry.contains(baseId)) {
+      return 'Geometry Games';
+    }
+    if (mathNumber.contains(baseId)) {
+      return 'Number Games';
+    }
+    if (mathStatistics.contains(baseId)) {
+      return 'Statistics Games';
+    }
+
+    // Check English categories
+    if (englishReading.contains(baseId)) {
+      return 'Reading Games';
+    }
+    if (englishGrammar.contains(baseId)) {
+      return 'Grammar Games';
+    }
+    if (englishWriting.contains(baseId)) {
+      return 'Writing Games';
+    }
+    if (englishWord.contains(baseId)) {
+      return 'Word Games';
+    }
+    if (englishSpelling.contains(baseId)) {
+      return 'Spelling Games';
+    }
+
+    return null;
+  }
+
+  /// Get all available categories for a subject
+  List<String> getCategoriesForSubject(String subject) {
+    switch (subject) {
+      case 'science':
+        return [
+          'All',
+          'Living Things',
+          'Physical Processes',
+          'Solids, Liquids & Gases'
+        ];
+      case 'math':
+        return [
+          'All',
+          'Arithmetic Games',
+          'Geometry Games',
+          'Number Games',
+          'Statistics Games'
+        ];
+      case 'english':
+        return [
+          'All',
+          'Reading Games',
+          'Grammar Games',
+          'Writing Games',
+          'Word Games',
+          'Spelling Games'
+        ];
+      default:
+        return ['All'];
+    }
+  }
+
+  /// Filter games by category
+  List<WebGame> filterGamesByCategory(List<WebGame> games, String? category) {
+    if (category == null || category == 'All') {
+      return games;
+    }
+    return games.where((game) => getGameCategory(game.id) == category).toList();
+  }
 }
