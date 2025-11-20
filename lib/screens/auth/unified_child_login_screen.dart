@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:audioplayers/audioplayers.dart';
 import '../../constants/authentication_options.dart';
 import '../../design_system/colors.dart';
 import '../../widgets/auth/picture_password_grid.dart';
@@ -42,9 +41,6 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
   // Emoji authentication
   final List<String> _juniorEmojis = juniorEmojiOptions;
 
-  // Audio player for background music
-  final AudioPlayer _audioPlayer = AudioPlayer();
-
   @override
   void initState() {
     super.initState();
@@ -71,48 +67,12 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
 
     // Load children data (all children from local storage)
     _loadChildren();
-
-    // Start background music for "Who's here?" page
-    _playBackgroundMusic();
-  }
-
-  Future<void> _playBackgroundMusic() async {
-    try {
-      // Only play when showing the "Who's here?" page (no child selected)
-      if (_selectedChildId == null) {
-        // Configure background music player to use media player mode for proper looping
-        await _audioPlayer.setPlayerMode(PlayerMode.mediaPlayer);
-        await _audioPlayer.setReleaseMode(ReleaseMode.loop);
-        await _audioPlayer.setVolume(0.7); // Set volume to 70%
-        await _audioPlayer.play(AssetSource('audio/first.mp3'));
-        debugPrint('✅ Background music started: first.mp3');
-
-        // Verify player state after a short delay
-        Future.delayed(const Duration(milliseconds: 500), () async {
-          final state = _audioPlayer.state;
-          debugPrint('📊 Audio player state: $state');
-        });
-      }
-    } catch (e) {
-      debugPrint('❌ Error playing background music: $e');
-      debugPrint('Stack trace: ${StackTrace.current}');
-    }
-  }
-
-  Future<void> _stopBackgroundMusic() async {
-    try {
-      await _audioPlayer.stop();
-    } catch (e) {
-      debugPrint('Error stopping background music: $e');
-    }
   }
 
   @override
   void dispose() {
     _fadeController.dispose();
     _slideController.dispose();
-    _stopBackgroundMusic();
-    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -180,8 +140,6 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
       _selectedChild = null;
       _loginMethod = '';
     });
-    // Resume background music when returning to "Who's here?" page
-    _playBackgroundMusic();
   }
 
   String _getAddButtonText() {
