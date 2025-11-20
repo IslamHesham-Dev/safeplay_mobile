@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:flutter/services.dart';
-import 'package:pdfx/pdfx.dart';
-import 'package:turn_page_transition/turn_page_transition.dart';
-
-import '../../design_system/junior_theme.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import '../../models/book.dart';
+import '../../design_system/junior_theme.dart';
 
 /// PDF Reader screen for displaying books
 class BookReaderScreen extends StatefulWidget {
@@ -20,44 +20,39 @@ class BookReaderScreen extends StatefulWidget {
 }
 
 class _BookReaderScreenState extends State<BookReaderScreen> {
+  String? _localPath;
   bool _isLoading = true;
   String? _error;
   int _currentPage = 1;
   int _totalPages = 0;
-  PdfDocument? _document;
-  late final TurnPageController _turnPageController;
-  final Map<int, Future<PdfPageImage?>> _pageImageCache = {};
+  PDFViewController? _pdfViewController;
 
   @override
   void initState() {
     super.initState();
-    _turnPageController = TurnPageController();
     _loadPdf();
-  }
-
-  @override
-  void dispose() {
-    _turnPageController.dispose();
-    _document?.close();
-    super.dispose();
   }
 
   Future<void> _loadPdf() async {
     try {
+      // Load PDF from assets and copy to local file system
       final ByteData data = await rootBundle.load(widget.book.pdfPath);
       final Uint8List bytes = data.buffer.asUint8List();
 
-      final document = await PdfDocument.openData(bytes);
+      // Get temporary directory
+      final directory = await getTemporaryDirectory();
+      final fileName = widget.book.pdfPath.split('/').last;
+      final file = File('${directory.path}/$fileName');
+
+      // Write PDF to local file
+      await file.writeAsBytes(bytes);
 
       if (mounted) {
         setState(() {
-          _document = document;
-          _totalPages = document.pagesCount;
+          _localPath = file.path;
           _isLoading = false;
-          _currentPage = 1;
         });
       }
-      _prefetchInitialPages();
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -127,175 +122,36 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                     ],
                   ),
                 )
-              : _document != null && _totalPages > 0
-                  ? _buildFlipBook()
+              : _localPath != null
+                  ? PDFView(
+                      filePath: _localPath!,
+                      enableSwipe: true,
+                      swipeHorizontal: true, // Enable horizontal swiping
+                      autoSpacing: false,
+                      pageFling: true, // Enable page fling gesture
+                      backgroundColor: Colors.black,
+                      onRender: (pages) {
+                        if (mounted) {
+                          setState(() {
+                            _totalPages = pages ?? 0;
+                          });
+                        }
+                      },
+                      onPageChanged: (page, total) {
+                        if (mounted) {
+                          setState(() {
+                            _currentPage = page ?? 1;
+                            _totalPages = total ?? 0;
+                          });
+                        }
+                      },
+                      onViewCreated: (PDFViewController controller) {
+                        _pdfViewController = controller;
+                      },
+                    )
                   : const Center(
-                      child: Text(
-                        'No pages available',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      child: Text('No PDF loaded'),
                     ),
-    );
-  }
-
-  void _prefetchInitialPages() {
-    if (_totalPages <= 0) return;
-    _renderPageImage(0);
-    if (_totalPages > 1) {
-      _renderPageImage(1);
-    }
-  }
-
-  Future<PdfPageImage?> _renderPageImage(int index) {
-    final document = _document;
-    if (document == null) return Future.value(null);
-
-    return _pageImageCache.putIfAbsent(index, () async {
-      final page = await document.getPage(index + 1);
-      try {
-        final image = await page.render(
-          width: page.width * 2,
-          height: page.height * 2,
-          format: PdfPageImageFormat.png,
-          backgroundColor: '#FFFFFFFF',
-          quality: 100,
-          forPrint: true,
-        );
-        return image;
-      } finally {
-        await page.close();
-      }
-    });
-  }
-
-  Widget _buildFlipBook() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final availableWidth = constraints.maxWidth;
-        final availableHeight = constraints.maxHeight;
-        final bookWidth = availableWidth > 900 ? 900.0 : availableWidth;
-        final bookHeight = availableHeight > 900 ? 900.0 : availableHeight;
-
-        return Center(
-          child: SizedBox(
-            width: bookWidth,
-            height: bookHeight,
-            child: TurnPageView.builder(
-              controller: _turnPageController,
-              itemCount: _totalPages,
-              animationTransitionPoint: 0.45,
-              overleafColorBuilder: (_) => Colors.grey.shade300,
-              overleafBorderColorBuilder: (_) =>
-                  Colors.black.withValues(alpha: 0.1),
-              overleafBorderWidthBuilder: (_) => 1.0,
-              onSwipe: (_) => _updateDisplayedPage(),
-              onTap: (_) => _updateDisplayedPage(),
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
-                  child: _buildPage(index),
-                );
-              },
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _updateDisplayedPage() {
-    if (!mounted || _totalPages == 0) return;
-    setState(() {
-      _currentPage =
-          (_turnPageController.currentIndex + 1).clamp(1, _totalPages);
-    });
-  }
-
-  Widget _buildPage(int index) {
-    return FutureBuilder<PdfPageImage?>(
-      future: _renderPageImage(index),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return _buildPageLoader();
-        }
-
-        final image = snapshot.data;
-        if (image == null) {
-          return _buildPageError(index);
-        }
-
-        final pageWidth = (image.width ?? 1).toDouble();
-        final pageHeight = (image.height ?? 1).toDouble();
-
-        return DecoratedBox(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.35),
-                blurRadius: 25,
-                offset: const Offset(0, 16),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: ColoredBox(
-              color: Colors.white,
-              child: Center(
-                child: FittedBox(
-                  fit: BoxFit.contain,
-                  child: SizedBox(
-                    width: pageWidth,
-                    height: pageHeight,
-                    child: Image.memory(
-                      image.bytes,
-                      fit: BoxFit.fill,
-                      gaplessPlayback: true,
-                      filterQuality: FilterQuality.high,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildPageLoader() {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.white24,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white24),
-      ),
-      child: const Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
-  }
-
-  Widget _buildPageError(int index) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.redAccent),
-      ),
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            'Could not load page ${index + 1}',
-            textAlign: TextAlign.center,
-            style: JuniorTheme.bodyMedium,
-          ),
-        ),
-      ),
     );
   }
 }
