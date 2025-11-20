@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import '../../models/web_game.dart';
+
 import '../../design_system/junior_theme.dart';
+import '../../models/web_game.dart';
+import '../../utils/orientation_utils.dart';
 import '../../widgets/junior/game_launcher_webview.dart';
 
 /// Detail screen for web-based games with canvas isolation
@@ -31,10 +33,8 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Lock orientation to portrait for detail view
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-    ]);
+    // Allow players to rotate freely in the detail view
+    allowAllDeviceOrientations();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 
@@ -42,11 +42,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
   void dispose() {
     _exitFullscreenMode(notifyWebView: false, force: true);
     // Reset orientation when leaving
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
+    allowAllDeviceOrientations();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
   }
@@ -72,9 +68,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
       setState(() => _isFullscreen = false);
     }
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-    ]);
+    await allowAllDeviceOrientations();
     if (notifyWebView) {
       try {
         await _webViewController?.evaluateJavascript(

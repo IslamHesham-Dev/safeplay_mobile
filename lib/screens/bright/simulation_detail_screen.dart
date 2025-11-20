@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+
 import '../../models/simulation.dart' as sim;
+import '../../utils/orientation_utils.dart';
 
 /// Simulation Detail & Launch Page
 /// Replicates the UI design from the DIY Bubble Wand reference
@@ -52,10 +54,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
     _overlayTimer?.cancel();
     _previewOverlayTimer?.cancel();
     // Reset orientation when leaving
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
+    allowAllDeviceOrientations();
     super.dispose();
   }
 
@@ -87,11 +86,8 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
     _showInitialOverlay = false;
     _startPreviewOverlayTimer();
 
-    // Return to portrait
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
+    // Return to system-wide orientation support
+    await allowAllDeviceOrientations();
 
     // Show system UI
     await SystemChrome.setEnabledSystemUIMode(

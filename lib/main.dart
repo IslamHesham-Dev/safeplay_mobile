@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 
@@ -16,6 +15,7 @@ import 'services/offline_storage_service.dart';
 import 'services/sync_service.dart';
 import 'services/notification_service.dart';
 import 'services/auth_service.dart';
+import 'utils/orientation_utils.dart';
 // Database initialization removed - it requires admin permissions and should be run manually
 // import 'services/database_initializer.dart';
 
@@ -25,10 +25,7 @@ Future<void> main() async {
 
   // Set preferred orientations (not applicable on web)
   if (!kIsWeb) {
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
+    await allowAllDeviceOrientations();
   }
 
   runApp(const SafePlayApp());

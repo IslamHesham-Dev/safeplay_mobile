@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_pdfview/flutter_pdfview.dart';
-import 'package:flutter/services.dart';
 import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:path_provider/path_provider.dart';
-import '../../models/book.dart';
+
 import '../../design_system/junior_theme.dart';
+import '../../models/book.dart';
 
 /// PDF Reader screen for displaying books
 class BookReaderScreen extends StatefulWidget {
