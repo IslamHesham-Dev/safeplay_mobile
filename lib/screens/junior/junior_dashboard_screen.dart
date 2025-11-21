@@ -479,18 +479,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
         Text(
           'Hello, $childName!',
           textAlign: TextAlign.left,
-          style: JuniorTheme.headingLarge.copyWith(
-            fontFamily: 'Nunito',
-            fontWeight: FontWeight.w700,
-            fontSize: 28,
-            color: JuniorTheme.textPrimary,
-            shadows: [
-              Shadow(
-                  color: Colors.white.withOpacity(0.3),
-                  blurRadius: 4,
-                  offset: Offset(1, 2))
-            ],
-          ),
+          style: JuniorTheme.headingMedium,
         ),
         const SizedBox(height: 5),
         Row(

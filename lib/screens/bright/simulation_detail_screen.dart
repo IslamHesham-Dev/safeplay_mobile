@@ -145,6 +145,9 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                 mixedContentMode: MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW,
                 domStorageEnabled: true,
                 databaseEnabled: true,
+                supportZoom: true,
+                builtInZoomControls: true,
+                displayZoomControls: false,
               ),
               onWebViewCreated: (controller) {
                 // Controller created
@@ -684,6 +687,9 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                 domStorageEnabled: true,
                 databaseEnabled: true,
                 transparentBackground: true,
+                supportZoom: true,
+                builtInZoomControls: true,
+                displayZoomControls: false,
               ),
               onLoadStop: (controller, _) {},
             ),
