@@ -643,26 +643,6 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.chat_bubble_outline,
-                color: Colors.white.withValues(alpha: 0.8),
-                size: 16,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Help us improve',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
