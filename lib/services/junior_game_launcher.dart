@@ -19,6 +19,7 @@ class JuniorGameLauncher {
   Future<void> launchGame({
     required BuildContext context,
     required Lesson lesson,
+    Future<void> Function()? onGameClosed,
   }) async {
     try {
       debugPrint('🎮 JuniorGameLauncher: Launching game ${lesson.title}...');
@@ -125,7 +126,7 @@ class JuniorGameLauncher {
 
       // Navigate to game player screen
       if (context.mounted) {
-        Navigator.of(context).push(
+        await Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => JuniorGamePlayerScreen(
               gameType: gameType,
@@ -135,6 +136,9 @@ class JuniorGameLauncher {
             ),
           ),
         );
+        if (onGameClosed != null) {
+          await onGameClosed();
+        }
       }
     } catch (e) {
       debugPrint('❌ JuniorGameLauncher: Error launching game: $e');

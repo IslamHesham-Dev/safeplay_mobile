@@ -154,20 +154,11 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
 
   Future<void> _resumeBackgroundMusicIfNeeded() async {
     try {
-      final state = _audioPlayer.state;
-      if (state == PlayerState.playing) {
-        return;
-      }
-
-      if (state == PlayerState.paused) {
-        await _audioPlayer.resume();
-      } else {
-        await _playBackgroundMusic();
-      }
-    } catch (e) {
-      debugPrint('Error resuming background music: $e');
-      await _playBackgroundMusic();
+      await _audioPlayer.stop();
+    } catch (_) {
+      // Ignore stop errors
     }
+    await _playBackgroundMusic();
   }
 
   Future<T?> _pushWithMusicResume<T>(Route<T> route) async {
@@ -2006,11 +1997,11 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     }
   }
 
-  void _playTask(Lesson task) {
-    // Launch the game
-    _gameLauncher.launchGame(
+  Future<void> _playTask(Lesson task) async {
+    await _gameLauncher.launchGame(
       context: context,
       lesson: task,
+      onGameClosed: _resumeBackgroundMusicIfNeeded,
     );
   }
 

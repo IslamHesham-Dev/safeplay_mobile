@@ -685,6 +685,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                 databaseEnabled: true,
                 transparentBackground: true,
               ),
+              onLoadStop: (controller, _) {},
             ),
           ),
           if (_showInitialOverlay)
@@ -726,4 +727,5 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
       ),
     );
   }
+
 }
