@@ -148,6 +148,31 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     }
   }
 
+  Future<void> _resumeBackgroundMusicIfNeeded() async {
+    try {
+      final state = _audioPlayer.state;
+      if (state == PlayerState.playing) {
+        return;
+      }
+      if (state == PlayerState.paused) {
+        await _audioPlayer.resume();
+      } else {
+        await _playBackgroundMusic();
+      }
+    } catch (e) {
+      debugPrint('Error resuming background music: $e');
+      await _playBackgroundMusic();
+    }
+  }
+
+  Future<T?> _pushWithMusicResume<T>(Route<T> route) async {
+    final result = await Navigator.of(context).push(route);
+    if (mounted) {
+      await _resumeBackgroundMusicIfNeeded();
+    }
+    return result;
+  }
+
   @override
   void dispose() {
     _animationController.dispose();
@@ -686,8 +711,8 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
                     label: 'Book: ${book.title}',
                     child: BookCard(
                       book: book,
-                      onTap: () {
-                        Navigator.of(context).push(
+                      onTap: () async {
+                        await _pushWithMusicResume(
                           MaterialPageRoute(
                             builder: (context) => BookReaderScreen(book: book),
                           ),
@@ -1194,46 +1219,46 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     );
   }
 
-  void _navigateToCategory(String category) {
+  Future<void> _navigateToCategory(String category) async {
     _playClickSound();
     switch (category) {
       case 'Math Adventures':
-        Navigator.of(context).push(
+        await _pushWithMusicResume(
           MaterialPageRoute(
             builder: (context) => const MathAdventuresGamesScreen(),
           ),
         );
         break;
       case 'Reading Adventures':
-        Navigator.of(context).push(
+        await _pushWithMusicResume(
           MaterialPageRoute(
             builder: (context) => const ReadingAdventuresGamesScreen(),
           ),
         );
         break;
       case 'Science Adventures':
-        Navigator.of(context).push(
+        await _pushWithMusicResume(
           MaterialPageRoute(
             builder: (context) => const ScienceAdventuresGamesScreen(),
           ),
         );
         break;
       case 'Number Hunt':
-        Navigator.of(context).push(
+        await _pushWithMusicResume(
           MaterialPageRoute(
             builder: (context) => const NumberHuntGamesScreen(),
           ),
         );
         break;
       case 'Koala Jumps':
-        Navigator.of(context).push(
+        await _pushWithMusicResume(
           MaterialPageRoute(
             builder: (context) => const KoalaJumpsGamesScreen(),
           ),
         );
         break;
       case 'Pattern Wizard':
-        Navigator.of(context).push(
+        await _pushWithMusicResume(
           MaterialPageRoute(
             builder: (context) => const PatternWizardGamesScreen(),
           ),
@@ -1545,9 +1570,9 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
                     label: 'Game: ${game.title}',
                     child: WebGameCard(
                       game: game,
-                      onTap: () {
+                      onTap: () async {
                         _playClickSound();
-                        Navigator.of(context).push(
+                        await _pushWithMusicResume(
                           MaterialPageRoute(
                             builder: (context) => WebGameDetailScreen(
                               game: game,
@@ -1649,9 +1674,9 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
                     label: 'Game: ${game.title}',
                     child: WebGameCard(
                       game: game,
-                      onTap: () {
+                      onTap: () async {
                         _playClickSound();
-                        Navigator.of(context).push(
+                        await _pushWithMusicResume(
                           MaterialPageRoute(
                             builder: (context) => WebGameDetailScreen(
                               game: game,
@@ -1753,9 +1778,9 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
                     label: 'Game: ${game.title}',
                     child: WebGameCard(
                       game: game,
-                      onTap: () {
+                      onTap: () async {
                         _playClickSound();
-                        Navigator.of(context).push(
+                        await _pushWithMusicResume(
                           MaterialPageRoute(
                             builder: (context) => WebGameDetailScreen(
                               game: game,
