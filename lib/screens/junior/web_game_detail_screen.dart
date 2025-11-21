@@ -206,6 +206,8 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
                 if (!mounted) return;
                 setState(() => _webViewLoading = loading);
               },
+              onWebFullscreenExit: () =>
+                  _exitFullscreenMode(notifyWebView: false),
             ),
             if (_webViewLoading) _buildLoadingOverlay(cardColor),
           ],

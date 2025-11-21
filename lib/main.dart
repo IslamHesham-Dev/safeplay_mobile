@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show PointerDeviceKind;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -118,10 +119,24 @@ class _SafePlayAppState extends State<SafePlayApp> {
             title: 'SafePlay Portal',
             theme: SafePlayTheme.lightTheme,
             routerConfig: _appRouter!.router,
+            scrollBehavior: const SafePlayScrollBehavior(),
             debugShowCheckedModeBanner: false,
           );
         },
       ),
     );
   }
+}
+
+class SafePlayScrollBehavior extends MaterialScrollBehavior {
+  const SafePlayScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => const {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.stylus,
+        PointerDeviceKind.trackpad,
+        PointerDeviceKind.unknown,
+      };
 }

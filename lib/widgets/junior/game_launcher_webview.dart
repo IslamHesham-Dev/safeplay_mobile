@@ -1,5 +1,9 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+
+import 'web_game_iframe_stub.dart'
+    if (dart.library.html) 'web_game_iframe_web.dart' as web_iframe;
 
 /// Shared WebView widget that loads an external game page, injects cleanup JS,
 /// and notifies Flutter when the child taps Play/exit inside the web content.
@@ -13,6 +17,7 @@ class GameLauncherWebView extends StatefulWidget {
     required this.onGamePlay,
     required this.onExitRequested,
     this.onLoadingChanged,
+    this.onWebFullscreenExit,
   });
 
   /// The target URL that hosts the embedded game.
@@ -35,6 +40,9 @@ class GameLauncherWebView extends StatefulWidget {
 
   /// Optional loading callback so parents can show custom overlays.
   final ValueChanged<bool>? onLoadingChanged;
+
+  /// Web-only callback since iframe fullscreen requests can't be intercepted otherwise
+  final VoidCallback? onWebFullscreenExit;
 
   @override
   State<GameLauncherWebView> createState() => _GameLauncherWebViewState();
@@ -215,8 +223,8 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
       _loadingGeneration++;
       if (!_isLoading) {
         setState(() => _isLoading = true);
+        widget.onLoadingChanged?.call(true);
       }
-      widget.onLoadingChanged?.call(true);
       return;
     }
 
@@ -227,13 +235,16 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
       }
       if (_isLoading) {
         setState(() => _isLoading = false);
+        widget.onLoadingChanged?.call(false);
       }
-      widget.onLoadingChanged?.call(false);
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb) {
+      return _buildWebIframe(context);
+    }
     return Container(
       color: Colors.black,
       constraints: BoxConstraints(
@@ -315,6 +326,33 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
             ),
         ],
       ),
+    );
+  }
+
+  Widget _buildWebIframe(BuildContext context) {
+    final viewType =
+        'game-launcher-${widget.gameUrl.hashCode}-${widget.isFullscreen}-${DateTime.now().microsecondsSinceEpoch}';
+    final iframe = web_iframe.buildWebGameIframe(
+      viewType: viewType,
+      url: widget.gameUrl,
+      minHeight: widget.isFullscreen ? MediaQuery.of(context).size.height : widget.previewHeight,
+      onLoaded: () => _setLoading(false),
+    );
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        iframe,
+        if (_isLoading)
+          Container(
+            color: Colors.black,
+            child: const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
