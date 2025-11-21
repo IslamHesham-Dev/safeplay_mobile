@@ -547,36 +547,42 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
   }
 
   Widget _buildStartButton() {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-      child: ElevatedButton(
-        onPressed: () => _enterFullscreenMode(),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: JuniorTheme.primaryOrange,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 4,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.play_arrow, size: 28),
-            const SizedBox(width: 12),
-            Text(
-              'Start Game',
-              style: JuniorTheme.headingMedium.copyWith(
-                color: Colors.white,
-                fontSize: _detailHeadingFontSize,
-                fontWeight: FontWeight.bold,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          child: ElevatedButton(
+            onPressed: () => _enterFullscreenMode(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: JuniorTheme.primaryOrange,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
+              elevation: 4,
             ),
-          ],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.play_arrow, size: 28),
+                const SizedBox(width: 12),
+                Text(
+                  'Start Game',
+                  style: JuniorTheme.headingMedium.copyWith(
+                    color: Colors.white,
+                    fontSize: _detailHeadingFontSize,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-      ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 }
