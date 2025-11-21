@@ -216,7 +216,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
 
   Widget _buildLoadingOverlay(Color cardColor) {
     return Container(
-      color: cardColor.withValues(alpha: 0.9),
+      color: cardColor.withValues(alpha: 1),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
