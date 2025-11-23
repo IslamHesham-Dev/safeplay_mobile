@@ -1,6 +1,8 @@
-﻿import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+﻿import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/activity_provider.dart';
 import '../../models/user_profile.dart';
@@ -152,22 +154,43 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   }
 
   Future<void> _playRewardSound() async {
+    final wasBackgroundPlaying = _audioPlayer.state == PlayerState.playing;
+    if (wasBackgroundPlaying) {
+      try {
+        await _audioPlayer.pause();
+      } catch (_) {
+        // Ignore pause errors; we'll restart afterwards
+      }
+    }
+
     try {
       await _rewardSoundPlayer.stop();
       await _rewardSoundPlayer.setPlayerMode(PlayerMode.lowLatency);
+
+      Future<void> _playSource(String assetPath) async {
+        await _rewardSoundPlayer.play(AssetSource(assetPath));
+      }
+
       try {
-        await _rewardSoundPlayer.play(
-          AssetSource(
-              'audio/sound effects/sound effects/back to dashboard.mp3'),
-        );
+        await _playSource(
+            'audio/sound effects/sound effects/back to dashboard.mp3');
       } catch (_) {
-        await _rewardSoundPlayer.play(
-          AssetSource(
-              'audio/sound effects/sound effects/back to dashboard.wav'),
-        );
+        await _playSource(
+            'audio/sound effects/sound effects/back to dashboard.wav');
+      }
+
+      try {
+        await _rewardSoundPlayer.onPlayerComplete.first
+            .timeout(const Duration(seconds: 5));
+      } on TimeoutException {
+        // Ignore timeout and continue
       }
     } catch (e) {
       debugPrint('Error playing reward sound: $e');
+    } finally {
+      if (wasBackgroundPlaying) {
+        await _ensureBackgroundMusicPlaying();
+      }
     }
   }
 
@@ -186,6 +209,22 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
       // Ignore stop errors
     }
     await _playBackgroundMusic();
+  }
+
+  Future<void> _ensureBackgroundMusicPlaying() async {
+    try {
+      final state = _audioPlayer.state;
+      if (state == PlayerState.playing) {
+        return;
+      }
+      if (state == PlayerState.paused) {
+        await _audioPlayer.resume();
+      } else {
+        await _playBackgroundMusic();
+      }
+    } catch (_) {
+      await _playBackgroundMusic();
+    }
   }
 
   ChildrenProgress _progressOrPlaceholder() {

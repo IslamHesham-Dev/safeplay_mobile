@@ -1,9 +1,11 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:audioplayers/audioplayers.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:audioplayers/audioplayers.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:convert';
 import '../../providers/auth_provider.dart';
 import '../../models/user_profile.dart';
 import '../../models/user_type.dart';
@@ -148,22 +150,43 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   }
 
   Future<void> _playRewardSound() async {
+    final wasBackgroundPlaying = _audioPlayer.state == PlayerState.playing;
+    if (wasBackgroundPlaying) {
+      try {
+        await _audioPlayer.pause();
+      } catch (_) {
+        // Ignore pause errors; we'll restart later if needed
+      }
+    }
+
     try {
       await _rewardSoundPlayer.stop();
       await _rewardSoundPlayer.setPlayerMode(PlayerMode.lowLatency);
+
+      Future<void> _playSource(String assetPath) async {
+        await _rewardSoundPlayer.play(AssetSource(assetPath));
+      }
+
       try {
-        await _rewardSoundPlayer.play(
-          AssetSource(
-              'audio/sound effects/sound effects/back to dashboard.mp3'),
-        );
+        await _playSource(
+            'audio/sound effects/sound effects/back to dashboard.mp3');
       } catch (_) {
-        await _rewardSoundPlayer.play(
-          AssetSource(
-              'audio/sound effects/sound effects/back to dashboard.wav'),
-        );
+        await _playSource(
+            'audio/sound effects/sound effects/back to dashboard.wav');
+      }
+
+      try {
+        await _rewardSoundPlayer.onPlayerComplete.first
+            .timeout(const Duration(seconds: 5));
+      } on TimeoutException {
+        // Ignore timeout and resume music anyway
       }
     } catch (e) {
       debugPrint('Error playing reward sound: $e');
+    } finally {
+      if (wasBackgroundPlaying) {
+        await _ensureBackgroundMusicPlaying();
+      }
     }
   }
 
@@ -182,6 +205,22 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
       // ignore stop errors
     }
     await _playBackgroundMusic();
+  }
+
+  Future<void> _ensureBackgroundMusicPlaying() async {
+    try {
+      final state = _audioPlayer.state;
+      if (state == PlayerState.playing) {
+        return;
+      }
+      if (state == PlayerState.paused) {
+        await _audioPlayer.resume();
+      } else {
+        await _playBackgroundMusic();
+      }
+    } catch (_) {
+      await _playBackgroundMusic();
+    }
   }
 
   ChildrenProgress _progressOrPlaceholder() {
