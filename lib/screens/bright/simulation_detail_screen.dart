@@ -32,10 +32,6 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
   Timer? _overlayTimer;
   bool _showPreviewOverlay = true;
   Timer? _previewOverlayTimer;
-  bool _hasReturnedReward = false;
-  bool _allowSystemPop = false;
-
-  int get _rewardPoints => widget.simulation.estimatedMinutes * 2;
 
   @override
   void initState() {
@@ -99,35 +95,12 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
     );
   }
 
-  void _returnWithReward() {
-    if (_hasReturnedReward) return;
-    _hasReturnedReward = true;
-    _allowSystemPop = true;
-    Navigator.of(context).pop(_rewardPoints);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final Widget content =
-        _isFullscreen ? _buildFullscreenView() : _buildStandardView();
+    if (_isFullscreen) {
+      return _buildFullscreenView();
+    }
 
-    return PopScope(
-      canPop: _allowSystemPop && !_isFullscreen,
-      onPopInvokedWithResult: (didPop, _) async {
-        if (_isFullscreen) {
-          await _exitFullscreen();
-          return;
-        }
-        if (_hasReturnedReward) {
-          return;
-        }
-        _returnWithReward();
-      },
-      child: content,
-    );
-  }
-
-  Widget _buildStandardView() {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5), // Light gray background
       body: SafeArea(
@@ -212,11 +185,11 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
             Positioned(
               top: 8,
               left: 8,
-            child: Material(
-              color: Colors.white.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(20),
-              child: InkWell(
-                onTap: () => _returnWithReward(),
+              child: Material(
+                color: Colors.white.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(20),
+                child: InkWell(
+                  onTap: () => Navigator.of(context).pop(),
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
                     padding: const EdgeInsets.all(8),
