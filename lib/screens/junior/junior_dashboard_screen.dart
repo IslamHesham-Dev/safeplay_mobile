@@ -69,12 +69,6 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   List<WebGame> _mathWebGames = [];
   List<WebGame> _englishWebGames = [];
   final WebGameService _webGameService = WebGameService();
-  static const double _backgroundMusicVolume = 0.7;
-  static const double _rewardDuckVolume = 0.25;
-  double _coinsAnimationStart = 0;
-  double _coinsAnimationEnd = 0;
-  bool _coinsAnimationInitialized = false;
-  int _coinsAnimationTick = 0;
 
   // Category filter states
   String _selectedScienceCategory = 'All';
@@ -122,7 +116,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
       // Configure background music player to use media player mode for proper looping
       await _audioPlayer.setPlayerMode(PlayerMode.mediaPlayer);
       await _audioPlayer.setReleaseMode(ReleaseMode.loop);
-      await _audioPlayer.setVolume(_backgroundMusicVolume);
+      await _audioPlayer.setVolume(0.7); // Set volume to 70%
       await _audioPlayer.play(AssetSource('audio/third.mp3'));
       debugPrint('✅ Background music started: third.mp3');
 
@@ -250,9 +244,6 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
         earnedPoints: 0,
         lastActiveDate: DateTime.now(),
       );
-      _coinsAnimationStart = _childProgress!.earnedPoints.toDouble();
-      _coinsAnimationEnd = _childProgress!.earnedPoints.toDouble();
-      _coinsAnimationInitialized = true;
 
       // Categorize tasks
       final completedLessonIds = _childProgress!.completedLessons;
@@ -354,29 +345,20 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
                           alignment: Alignment.topCenter,
                           clipBehavior: Clip.none,
                           children: [
-                            TweenAnimationBuilder<double>(
-                              key: ValueKey(_coinsAnimationEnd),
-                              tween: Tween<double>(
-                                begin: _coinsAnimationStart,
-                                end: _coinsAnimationEnd,
-                              ),
-                              duration: const Duration(milliseconds: 900),
-                              curve: Curves.easeOut,
-                              builder: (context, value, child) => Text(
-                                value.round().toString(),
-                                textAlign: TextAlign.center,
-                                style: JuniorTheme.headingLarge.copyWith(
-                                  color: JuniorTheme.textPrimary,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 52,
-                                  shadows: [
-                                    Shadow(
-                                      color: Colors.white.withOpacity(0.5),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 1),
-                                    ),
-                                  ],
-                                ),
+                            Text(
+                              '${_childProgress?.earnedPoints ?? 0}',
+                              textAlign: TextAlign.center,
+                              style: JuniorTheme.headingLarge.copyWith(
+                                color: JuniorTheme.textPrimary,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 52,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.white.withOpacity(0.5),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
                               ),
                             ),
                             Positioned(
@@ -547,21 +529,12 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
           const SizedBox(height: JuniorTheme.spacingMedium),
 
           // Points display - large number
-          TweenAnimationBuilder<double>(
-            key: ValueKey('avatar-$_coinsAnimationEnd'),
-            tween: Tween<double>(
-              begin: _coinsAnimationStart,
-              end: _coinsAnimationEnd,
-            ),
-            duration: const Duration(milliseconds: 900),
-            curve: Curves.easeOut,
-            builder: (context, value, child) => Text(
-              value.round().toString(),
-              style: JuniorTheme.headingLarge.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 48,
-              ),
+          Text(
+            '${_childProgress?.earnedPoints ?? 0}',
+            style: JuniorTheme.headingLarge.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 48,
             ),
           ),
 
@@ -1822,49 +1795,29 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
 
   Future<void> _applyRewardPoints(int? rewardPoints) async {
     if (rewardPoints == null || rewardPoints <= 0) return;
-    final progress = _childProgress ??
-        ChildrenProgress(
-          id: 'progress_${_currentChild?.id ?? 'temp'}',
-          childId: _currentChild?.id ?? 'temp',
-          completedLessons: const [],
-          earnedPoints: 0,
-          lastActiveDate: DateTime.now(),
-        );
-    final currentCoins = _coinsAnimationInitialized
-        ? _coinsAnimationEnd
-        : progress.earnedPoints.toDouble();
-    final newCoins = currentCoins + rewardPoints;
-    final animationId = ++_coinsAnimationTick;
     setState(() {
+      final progress = _childProgress ??
+          ChildrenProgress(
+            id: 'progress_${_currentChild?.id ?? 'temp'}',
+            childId: _currentChild?.id ?? 'temp',
+            completedLessons: const [],
+            earnedPoints: 0,
+            lastActiveDate: DateTime.now(),
+          );
       _childProgress =
-          progress.copyWith(earnedPoints: newCoins.round());
-      _coinsAnimationStart = currentCoins;
-      _coinsAnimationEnd = newCoins;
-      _coinsAnimationInitialized = true;
+          progress.copyWith(earnedPoints: progress.earnedPoints + rewardPoints);
     });
-    try {
-      await _audioPlayer.setVolume(_rewardDuckVolume);
-    } catch (_) {}
     try {
       await _rewardSoundPlayer.stop();
     } catch (_) {}
     try {
       await _rewardSoundPlayer.play(
-        AssetSource('audio/sound effects/sound effects/back to dashboard.mp3'),
+        AssetSource(
+            'audio/sound effects/sound effects/back to dashboard.mp3'),
       );
     } catch (e) {
       debugPrint('Error playing reward sound: $e');
     }
-    Future.delayed(const Duration(milliseconds: 900), () {
-      if (!mounted || animationId != _coinsAnimationTick) return;
-      setState(() {
-        _coinsAnimationStart = _coinsAnimationEnd;
-      });
-    });
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      if (!mounted) return;
-      _audioPlayer.setVolume(_backgroundMusicVolume);
-    });
   }
 
   void _showTaskCompletionCelebration(Lesson task) {
