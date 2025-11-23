@@ -79,6 +79,13 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   final AudioPlayer _audioPlayer = AudioPlayer();
   // Audio player for click sounds
   final AudioPlayer _clickSoundPlayer = AudioPlayer();
+  // Audio player dedicated to the back-to-dashboard reward cue
+  final AudioPlayer _rewardSoundPlayer = AudioPlayer();
+
+  // Animation bookkeeping for the coin counter
+  int _coinAnimationStartValue = 0;
+  int _coinAnimationTargetValue = 0;
+  int _coinAnimationKey = 0;
 
   String _sanitizeGender(String? gender) {
     if (gender == null) return 'female';
@@ -140,6 +147,26 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     }
   }
 
+  Future<void> _playRewardSound() async {
+    try {
+      await _rewardSoundPlayer.stop();
+      await _rewardSoundPlayer.setPlayerMode(PlayerMode.lowLatency);
+      try {
+        await _rewardSoundPlayer.play(
+          AssetSource(
+              'audio/sound effects/sound effects/back to dashboard.mp3'),
+        );
+      } catch (_) {
+        await _rewardSoundPlayer.play(
+          AssetSource(
+              'audio/sound effects/sound effects/back to dashboard.wav'),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error playing reward sound: $e');
+    }
+  }
+
   Future<void> _stopBackgroundMusic() async {
     try {
       await _audioPlayer.stop();
@@ -157,6 +184,88 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     await _playBackgroundMusic();
   }
 
+  ChildrenProgress _progressOrPlaceholder() {
+    if (_childProgress != null) {
+      return _childProgress!;
+    }
+    final childId = _currentChild?.id ?? 'local_child';
+    return ChildrenProgress(
+      id: 'progress_$childId',
+      childId: childId,
+      completedLessons: const [],
+      earnedPoints: 0,
+      lastActiveDate: DateTime.now(),
+    );
+  }
+
+  void _updateCoinAnimationTarget(int newValue, {required bool animate}) {
+    if (!animate) {
+      _coinAnimationStartValue = newValue;
+    } else {
+      _coinAnimationStartValue = _coinAnimationTargetValue;
+    }
+    _coinAnimationTargetValue = newValue;
+    _coinAnimationKey++;
+  }
+
+  Widget _buildAnimatedCoinValue({
+    required TextStyle textStyle,
+    required String keyPrefix,
+    TextAlign textAlign = TextAlign.center,
+  }) {
+    return TweenAnimationBuilder<double>(
+      key: ValueKey('$keyPrefix$_coinAnimationKey'),
+      tween: Tween<double>(
+        begin: _coinAnimationStartValue.toDouble(),
+        end: _coinAnimationTargetValue.toDouble(),
+      ),
+      duration: const Duration(milliseconds: 900),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) => Text(
+        value.toInt().toString(),
+        style: textStyle,
+        textAlign: textAlign,
+      ),
+    );
+  }
+
+  Future<void> _applyMinutesReward({
+    required int minutes,
+    required String sourceTitle,
+  }) async {
+    if (minutes <= 0) return;
+    final rewardPoints = minutes * 2;
+    final baseProgress = _progressOrPlaceholder();
+    final updatedProgress = baseProgress.copyWith(
+      earnedPoints: baseProgress.earnedPoints + rewardPoints,
+      lastActiveDate: DateTime.now(),
+    );
+
+    setState(() {
+      _childProgress = updatedProgress;
+      _updateCoinAnimationTarget(updatedProgress.earnedPoints, animate: true);
+    });
+
+    await _playRewardSound();
+    debugPrint(
+        'Reward applied from $sourceTitle: +$rewardPoints coins (minutes: $minutes)');
+  }
+
+  Future<void> _openWebGame(WebGame game) async {
+    await _pushWithMusicResume(
+      MaterialPageRoute(
+        builder: (context) => WebGameDetailScreen(
+          game: game,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    await _applyMinutesReward(
+      minutes: game.estimatedMinutes,
+      sourceTitle: game.title,
+    );
+  }
+
   Future<T?> _pushWithMusicResume<T>(Route<T> route) async {
     final result = await Navigator.of(context).push(route);
     if (mounted) {
@@ -171,6 +280,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     _stopBackgroundMusic();
     _audioPlayer.dispose();
     _clickSoundPlayer.dispose();
+    _rewardSoundPlayer.dispose();
     super.dispose();
   }
 
@@ -234,7 +344,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
 
       // Load child progress to determine completed tasks
       // For now, create a mock progress if not available
-      _childProgress = ChildrenProgress(
+      final progress = ChildrenProgress(
         id: 'progress_${_currentChild!.id}',
         childId: _currentChild!.id,
         completedLessons: [], // Start with no completed lessons
@@ -243,7 +353,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
       );
 
       // Categorize tasks
-      final completedLessonIds = _childProgress!.completedLessons;
+      final completedLessonIds = progress.completedLessons;
 
       final availableTasks =
           games.where((task) => !completedLessonIds.contains(task.id)).toList();
@@ -254,9 +364,11 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
           '📊 Dashboard: Setting state - Total games: ${games.length}, Available: ${availableTasks.length}, Completed: ${completedTasks.length}');
 
       setState(() {
+        _childProgress = progress;
         _todaysTasks = games;
         _completedTasks = completedTasks;
         _availableTasks = availableTasks;
+        _updateCoinAnimationTarget(progress.earnedPoints, animate: false);
       });
 
       debugPrint(
@@ -342,10 +454,9 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
                           alignment: Alignment.topCenter,
                           clipBehavior: Clip.none,
                           children: [
-                            Text(
-                              '${_childProgress?.earnedPoints ?? 0}',
-                              textAlign: TextAlign.center,
-                              style: JuniorTheme.headingLarge.copyWith(
+                            _buildAnimatedCoinValue(
+                              keyPrefix: 'hero_',
+                              textStyle: JuniorTheme.headingLarge.copyWith(
                                 color: JuniorTheme.textPrimary,
                                 fontWeight: FontWeight.w800,
                                 fontSize: 52,
@@ -526,9 +637,9 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
           const SizedBox(height: JuniorTheme.spacingMedium),
 
           // Points display - large number
-          Text(
-            '${_childProgress?.earnedPoints ?? 0}',
-            style: JuniorTheme.headingLarge.copyWith(
+          _buildAnimatedCoinValue(
+            keyPrefix: 'card_',
+            textStyle: JuniorTheme.headingLarge.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.bold,
               fontSize: 48,
@@ -1553,13 +1664,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
                       game: game,
                       onTap: () async {
                         _playClickSound();
-                        await _pushWithMusicResume(
-                          MaterialPageRoute(
-                            builder: (context) => WebGameDetailScreen(
-                              game: game,
-                            ),
-                          ),
-                        );
+                        await _openWebGame(game);
                       },
                     ),
                   ),
@@ -1657,13 +1762,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
                       game: game,
                       onTap: () async {
                         _playClickSound();
-                        await _pushWithMusicResume(
-                          MaterialPageRoute(
-                            builder: (context) => WebGameDetailScreen(
-                              game: game,
-                            ),
-                          ),
-                        );
+                        await _openWebGame(game);
                       },
                     ),
                   ),
@@ -1761,13 +1860,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
                       game: game,
                       onTap: () async {
                         _playClickSound();
-                        await _pushWithMusicResume(
-                          MaterialPageRoute(
-                            builder: (context) => WebGameDetailScreen(
-                              game: game,
-                            ),
-                          ),
-                        );
+                        await _openWebGame(game);
                       },
                     ),
                   ),
