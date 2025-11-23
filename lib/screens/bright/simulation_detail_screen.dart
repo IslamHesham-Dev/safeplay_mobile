@@ -21,35 +21,22 @@ class SimulationDetailScreen extends StatefulWidget {
 }
 
 class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
-  static const double _detailTitleFontSize = 36;
-  static const double _detailHeadingFontSize = 28;
-  static const double _detailBodyFontSize = 20;
-  static const double _detailChipFontSize = 20;
-  static const double _detailLabelFontSize = 20;
   bool _isFullscreen = false;
   final ScrollController _scrollController = ScrollController();
+  final PageController _guidePageController = PageController();
+  int _currentGuidePage = 0;
   bool _showInitialOverlay = false;
   Timer? _overlayTimer;
-  bool _showPreviewOverlay = true;
   Timer? _previewOverlayTimer;
 
   @override
   void initState() {
     super.initState();
-    _startPreviewOverlayTimer();
-  }
-
-  void _startPreviewOverlayTimer() {
-    _previewOverlayTimer?.cancel();
-    setState(() => _showPreviewOverlay = true);
-    _previewOverlayTimer = Timer(const Duration(seconds: 5), () {
-      if (!mounted) return;
-      setState(() => _showPreviewOverlay = false);
-    });
   }
 
   @override
   void dispose() {
+    _guidePageController.dispose();
     _scrollController.dispose();
     _overlayTimer?.cancel();
     _previewOverlayTimer?.cancel();
@@ -60,8 +47,10 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
 
   Future<void> _enterFullscreen() async {
     _overlayTimer?.cancel();
-    setState(() => _isFullscreen = true);
-    setState(() => _showInitialOverlay = true);
+    setState(() {
+      _isFullscreen = true;
+      _showInitialOverlay = true;
+    });
     _overlayTimer = Timer(const Duration(seconds: 5), () {
       if (mounted) {
         setState(() => _showInitialOverlay = false);
@@ -80,259 +69,440 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
     );
   }
 
-  Future<void> _exitFullscreen() async {
-    _overlayTimer?.cancel();
-    setState(() => _isFullscreen = false);
-    _showInitialOverlay = false;
-    _startPreviewOverlayTimer();
-
-    // Return to system-wide orientation support
-    await allowAllDeviceOrientations();
-
-    // Show system UI
-    await SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.edgeToEdge,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
     if (_isFullscreen) {
       return _buildFullscreenView();
     }
-
+    
+    // Always show guide if not fullscreen (guide handles the "start" transition)
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5), // Light gray background
-      body: SafeArea(
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: _buildGuidePages(),
+    );
+  }
+
+  // Calculate number of guide pages needed
+  int _getTotalGuidePages() {
+    int pages = 2; // Title+Topics page + Explanation page
+    // Learning goals: 2-3 per page
+    int learningGoalPages = (widget.simulation.learningGoals.length / 2.5).ceil();
+    pages += learningGoalPages;
+    return pages;
+  }
+
+  // Get learning goals for a specific page (0-indexed, excluding title page)
+  List<String> _getLearningGoalsForPage(int pageIndex) {
+    // Page 0 = Title+Topics
+    // Pages 1 to N = Learning Goals (2-3 per page)
+    // Last page = Explanation + Warning
+    int totalLearningGoalPages = (widget.simulation.learningGoals.length / 2.5).ceil();
+    if (pageIndex <= 0 || pageIndex > totalLearningGoalPages) {
+      return [];
+    }
+    int startIndex = (pageIndex - 1) * 2;
+    int endIndex = (startIndex + 3).clamp(0, widget.simulation.learningGoals.length);
+    return widget.simulation.learningGoals.sublist(startIndex, endIndex);
+  }
+
+  // Check if current page is the last page
+  bool _isLastGuidePage(int pageIndex) {
+    return pageIndex == _getTotalGuidePages() - 1;
+  }
+
+  // Get page type
+  String _getPageType(int pageIndex) {
+    if (pageIndex == 0) return 'title_topics';
+    int totalLearningGoalPages = (widget.simulation.learningGoals.length / 2.5).ceil();
+    if (pageIndex > 0 && pageIndex <= totalLearningGoalPages) return 'learning_goals';
+    return 'explanation';
+  }
+
+  Widget _buildGuidePages() {
+    final totalPages = _getTotalGuidePages();
+    final safeTop = MediaQuery.of(context).padding.top;
+    
+    return Stack(
+      children: [
+        Column(
+          children: [
+            Expanded(
+              child: PageView.builder(
+                controller: _guidePageController,
+                physics: const BouncingScrollPhysics(),
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentGuidePage = index;
+                  });
+                },
+                itemCount: totalPages,
+                itemBuilder: (context, index) {
+                  return _buildGuidePage(index);
+                },
+              ),
+            ),
+            _buildGuideNavigationButtons(),
+          ],
+        ),
+        // Page Indicator (Top Center)
+        Positioned(
+          top: safeTop + 12,
+          left: 0,
+          right: 0,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(totalPages, (index) {
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: _currentGuidePage == index ? 24 : 8,
+                height: 8,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4),
+                  color: Colors.white.withValues(alpha: _currentGuidePage == index ? 1.0 : 0.4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ),
+        ),
+        // Back Button (Top Left)
+        Positioned(
+          top: safeTop + 8,
+          left: 16,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => Navigator.of(context).pop(),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGuidePage(int pageIndex) {
+    final pageType = _getPageType(pageIndex);
+    
+    return Container(
+      color: Colors.white,
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.only(bottom: 100),
         child: Column(
           children: [
-            // Top section: Simulation preview (fixed)
-            _buildTopPreviewSection(),
-
-            // Bottom section: Scrollable content
-            Expanded(
-              child: _buildScrollableContent(),
-            ),
+            if (pageType == 'title_topics') ...[
+              _buildHeaderSection(),
+              _buildTopicsSection(),
+            ] else if (pageType == 'learning_goals') ...[
+              _buildSimpleHeader('Learning Goals', Icons.check_circle_outline),
+              _buildLearningGoalsPage(pageIndex),
+            ] else if (pageType == 'explanation') ...[
+              _buildSimpleHeader('Scientific Explanation', Icons.lightbulb_outline),
+              _buildScientificExplanationSection(),
+              _buildWarningSection(),
+            ],
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTopPreviewSection() {
-    final screenHeight = MediaQuery.of(context).size.height;
+  Widget _buildLearningGoalsPage(int pageIndex) {
+    final goals = _getLearningGoalsForPage(pageIndex);
+    
     return Container(
-      height: screenHeight * 0.5, // Take half the screen
-      margin: const EdgeInsets.all(0), // Remove margin to fill space
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(0),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(0),
-        child: Stack(
-          children: [
-            // WebView preview
-            InAppWebView(
-              initialUrlRequest: URLRequest(
-                url: WebUri(widget.simulation.iframeUrl),
-              ),
-              initialSettings: InAppWebViewSettings(
-                javaScriptEnabled: true,
-                mediaPlaybackRequiresUserGesture: false,
-                allowsInlineMediaPlayback: true,
-                useHybridComposition: true,
-                mixedContentMode: MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW,
-                domStorageEnabled: true,
-                databaseEnabled: true,
-                supportZoom: true,
-                builtInZoomControls: true,
-                displayZoomControls: false,
-              ),
-              onWebViewCreated: (controller) {
-                // Controller created
-              },
-              onLoadStop: (controller, url) async {
-                // Inject JavaScript to detect fullscreen changes
-                await controller.evaluateJavascript(source: '''
-                  document.addEventListener('fullscreenchange', function() {
-                    if (document.fullscreenElement) {
-                      window.flutter_inappwebview.callHandler('enterFullscreen');
-                    } else {
-                      window.flutter_inappwebview.callHandler('exitFullscreen');
-                    }
-                  });
-                ''');
-              },
-            ),
-            if (_showPreviewOverlay)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: Container(color: Colors.black),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      child: Column(
+        children: goals.asMap().entries.map((entry) {
+          final goal = entry.value;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 20),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-              ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: screenHeight * 0.10,
-              child: IgnorePointer(
-                child: Container(color: Colors.black),
-              ),
+              ],
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
             ),
-
-            // Back button overlay (top-left)
-            Positioned(
-              top: 8,
-              left: 8,
-              child: Material(
-                color: Colors.white.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(20),
-                child: InkWell(
-                  onTap: () => Navigator.of(context).pop(),
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    child: const Icon(
-                      Icons.arrow_back,
-                      color: Colors.black87,
-                      size: 24,
-                    ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF5B9BD5).withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
                   ),
-                ),
-              ),
-            ),
-
-            // Sound button overlay (top-right)
-            Positioned(
-              top: 8,
-              right: 8,
-              child: Material(
-                color: Colors.white.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
                   child: const Icon(
-                    Icons.volume_up,
-                    color: Colors.black87,
+                    Icons.star_rounded,
+                    color: Color(0xFF5B9BD5),
                     size: 24,
                   ),
                 ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    goal,
+                    style: TextStyle(
+                      fontSize: 18,
+                      height: 1.5,
+                      color: Colors.grey[800],
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Nunito',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildGuideNavigationButtons() {
+    final isLastPage = _isLastGuidePage(_currentGuidePage);
+    
+    return Container(
+      padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + MediaQuery.of(context).padding.bottom),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Back button
+          if (_currentGuidePage > 0)
+            TextButton(
+              onPressed: () {
+                _guidePageController.previousPage(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  side: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
+                ),
+              ),
+              child: Text(
+                'Previous',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[600],
+                  fontFamily: 'Nunito',
+                ),
+              ),
+            )
+          else
+            const SizedBox(width: 16),
+            
+          // Next/Start button
+          Expanded(
+            child: Container(
+              margin: EdgeInsets.only(left: _currentGuidePage > 0 ? 16 : 0),
+              child: ElevatedButton(
+                onPressed: () {
+                  if (isLastPage) {
+                    _enterFullscreen();
+                  } else {
+                    _guidePageController.nextPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF5B9BD5),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  elevation: 8,
+                  shadowColor: const Color(0xFF5B9BD5).withValues(alpha: 0.4),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      isLastPage ? 'Start Sim' : 'Next',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                        fontFamily: 'Nunito',
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Icon(
+                      isLastPage ? Icons.play_arrow_rounded : Icons.arrow_forward_rounded,
+                      size: 28,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildScrollableContent() {
-    return SingleChildScrollView(
-      controller: _scrollController,
-      child: Column(
-        children: [
-          // Blue curved title bar
-          _buildTitleBar(),
-
-          // Orange topics section
-          _buildTopicsSection(),
-
-          // Blue learning goals section
-          _buildLearningGoalsSection(),
-
-          // Orange scientific explanation section
-          _buildScientificExplanationSection(),
-
-          // Yellow warning section
-          _buildWarningSection(),
-
-          // Start Simulation button section with blue background
-          _buildStartButton(),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildTitleBar() {
+  Widget _buildHeaderSection() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      decoration: const BoxDecoration(
-        color: Color(0xFF5B9BD5), // Blue
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(0), // Straight corners
-          topRight: Radius.circular(0), // Straight corners
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 60,
+        bottom: 40,
+        left: 24,
+        right: 24,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF5B9BD5),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(40),
+          bottomRight: Radius.circular(40),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF5B9BD5).withValues(alpha: 0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // First row: Title only
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  widget.simulation.title,
-                  style: TextStyle(
-                    fontSize: _detailTitleFontSize,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    fontFamily: 'Nunito',
-                  ),
-                ),
-              ),
-            ],
+          const Icon(Icons.science_rounded, size: 72, color: Colors.white),
+          const SizedBox(height: 16),
+          Text(
+            widget.simulation.title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontFamily: 'Nunito',
+              height: 1.2,
+            ),
           ),
-          const SizedBox(height: 12),
-          // Second row: Tags aligned to the right
+          const SizedBox(height: 24),
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Time badge
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${widget.simulation.estimatedMinutes} mins',
-                  style: TextStyle(
-                    fontSize: _detailLabelFontSize,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
+              _buildTag(
+                '${widget.simulation.estimatedMinutes} mins',
+                Colors.white.withValues(alpha: 0.2),
               ),
-              const SizedBox(width: 8),
-              // Difficulty badge
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFB4D47E), // Light green
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  widget.simulation.difficulty,
-                  style: TextStyle(
-                    fontSize: _detailLabelFontSize,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Heart icon
-              const Icon(
-                Icons.favorite_border,
-                color: Colors.white,
-                size: 24,
+              const SizedBox(width: 12),
+              _buildTag(
+                widget.simulation.difficulty,
+                Colors.white.withValues(alpha: 0.2),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSimpleHeader(String title, IconData icon) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 60,
+        bottom: 30,
+        left: 24,
+        right: 24,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF5B9BD5),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(40),
+          bottomRight: Radius.circular(40),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF5B9BD5).withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 48, color: Colors.white),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontFamily: 'Nunito',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTag(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
       ),
     );
   }
@@ -341,65 +511,47 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(
-        color: Color(0xFFFDB462), // Orange
-      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.science_outlined,
-                color: Color(0xFF1565C0),
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Topics',
-                style: TextStyle(
-                  fontSize: _detailHeadingFontSize,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1565C0),
-                  fontFamily: 'Nunito',
-                ),
-              ),
-              const Spacer(),
-              Text(
-                'TIP: Tap to mark ✓',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.black.withValues(alpha: 0.6),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+          Text(
+            'TOPICS',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+              color: Colors.grey[600],
+            ),
           ),
           const SizedBox(height: 16),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 12,
+            runSpacing: 12,
+            alignment: WrapAlignment.center,
             children: widget.simulation.topics.map((topic) {
               return Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(25),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
                     ),
                   ],
+                  border: Border.all(
+                    color: const Color(0xFF5B9BD5).withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Text(
                   topic,
-                  style: TextStyle(
-                    fontSize: _detailChipFontSize,
+                  style: const TextStyle(
+                    fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    color: Color(0xFF5B9BD5),
+                    fontFamily: 'Nunito',
                   ),
                 ),
               );
@@ -410,127 +562,22 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
     );
   }
 
-  Widget _buildLearningGoalsSection() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(
-        color: Color(0xFF5B9BD5), // Blue
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.check_circle_outline,
-                color: Colors.white,
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Learning Goals',
-                style: TextStyle(
-                  fontSize: _detailHeadingFontSize,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontFamily: 'Nunito',
-                ),
-              ),
-              const Spacer(),
-              Text(
-                'TIP: Tap step when done',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          ...widget.simulation.learningGoals.asMap().entries.map((entry) {
-            int index = entry.key;
-            String goal = entry.value;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${index + 1}',
-                        style: TextStyle(
-                          fontSize: _detailLabelFontSize,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF5B9BD5),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      goal,
-                      style: TextStyle(
-                        fontSize: _detailBodyFontSize,
-                        color: Colors.white,
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
 
   Widget _buildScientificExplanationSection() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(
-        color: Color(0xFFFDB462), // Orange
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.lightbulb_outline,
-                color: Color(0xFF1565C0),
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Scientific Explanation',
-                style: TextStyle(
-                  fontSize: _detailHeadingFontSize,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1565C0),
-                  fontFamily: 'Nunito',
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
           Text(
             widget.simulation.scientificExplanation,
             style: TextStyle(
-              fontSize: _detailBodyFontSize,
-              color: Colors.black.withValues(alpha: 0.8),
+              fontSize: 20,
               height: 1.6,
+              color: Colors.grey[800],
+              fontWeight: FontWeight.w500,
+              fontFamily: 'Nunito',
             ),
           ),
         ],
@@ -541,39 +588,46 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
   Widget _buildWarningSection() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(
-        color: Color(0xFF5B9BD5), // Blue
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF3E0),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.3), width: 1),
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(
-                Icons.warning_amber_rounded,
-                color: Color(0xFFFDB462),
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Warning',
-                style: TextStyle(
-                  fontSize: _detailHeadingFontSize,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontFamily: 'Nunito',
-                ),
-              ),
-            ],
+          const Icon(
+            Icons.warning_amber_rounded,
+            color: Colors.orange,
+            size: 28,
           ),
-          const SizedBox(height: 12),
-          Text(
-            widget.simulation.warning,
-            style: TextStyle(
-              fontSize: _detailBodyFontSize,
-              color: Colors.white,
-              height: 1.6,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Important Note',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange[800],
+                    fontFamily: 'Nunito',
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.simulation.warning,
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey[800],
+                    height: 1.4,
+                    fontFamily: 'Nunito',
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -581,72 +635,6 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
     );
   }
 
-  Widget _buildStartButton() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF5B9BD5),
-            const Color(0xFF4A8CC5),
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      child: Column(
-        children: [
-          // Custom curved top edge using ClipPath
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 32),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(30),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: _enterFullscreen,
-                borderRadius: BorderRadius.circular(30),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 18, horizontal: 32),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.check_circle,
-                        color: Color(0xFF5B9BD5),
-                        size: 26,
-                      ),
-                      SizedBox(width: 12),
-                      Text(
-                        'Start Simulation',
-                        style: TextStyle(
-                          fontSize: _detailHeadingFontSize,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                          fontFamily: 'Nunito',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildFullscreenView() {
     return Scaffold(
@@ -696,7 +684,14 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                 shape: const CircleBorder(),
                 child: InkWell(
                   customBorder: const CircleBorder(),
-                  onTap: _exitFullscreen,
+                  onTap: () {
+                    // Pop until we reach the dashboard
+                    Navigator.of(context).popUntil((route) {
+                      return route.isFirst || 
+                             route.settings.name == '/bright-dashboard' ||
+                             route.settings.name == '/junior-dashboard';
+                    });
+                  },
                   child: const Padding(
                     padding: EdgeInsets.all(12),
                     child: Icon(
