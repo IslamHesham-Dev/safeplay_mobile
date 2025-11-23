@@ -81,6 +81,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   final AudioPlayer _audioPlayer = AudioPlayer();
   // Audio player for click sounds
   final AudioPlayer _clickSoundPlayer = AudioPlayer();
+<<<<<<< HEAD
   static const double _backgroundMusicVolume = 0.7;
   static const double _rewardDuckVolume = 0.25;
   double _coinsAnimationStart = 0;
@@ -88,6 +89,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   bool _coinsAnimationInitialized = false;
   int _coinsAnimationTick = 0;
   final AudioPlayer _rewardSoundPlayer = AudioPlayer();
+=======
+>>>>>>> parent of eb76fed (Add reward points and sound on activity completion)
 
   String _sanitizeGender(String? gender) {
     if (gender == null) return 'female';
@@ -118,7 +121,6 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     _animationController.forward();
     // Start background music
     _playBackgroundMusic();
-    _rewardSoundPlayer.setPlayerMode(PlayerMode.lowLatency);
   }
 
   Future<void> _playBackgroundMusic() async {
@@ -183,7 +185,6 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     _stopBackgroundMusic();
     _audioPlayer.dispose();
     _clickSoundPlayer.dispose();
-    _rewardSoundPlayer.dispose();
     super.dispose();
   }
 
@@ -1545,14 +1546,13 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                       game: game,
                       onTap: () async {
                         _playClickSound();
-                        final reward = await _pushWithMusicResume<int>(
+                        await _pushWithMusicResume(
                           MaterialPageRoute(
                             builder: (context) => WebGameDetailScreen(
                               game: game,
                             ),
                           ),
                         );
-                        await _applyRewardPoints(reward);
                       },
                     ),
                   ),
@@ -1650,14 +1650,13 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                       game: game,
                       onTap: () async {
                         _playClickSound();
-                        final reward = await _pushWithMusicResume<int>(
+                        await _pushWithMusicResume(
                           MaterialPageRoute(
                             builder: (context) => WebGameDetailScreen(
                               game: game,
                             ),
                           ),
                         );
-                        await _applyRewardPoints(reward);
                       },
                     ),
                   ),
@@ -1755,14 +1754,13 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                       game: game,
                       onTap: () async {
                         _playClickSound();
-                        final reward = await _pushWithMusicResume<int>(
+                        await _pushWithMusicResume(
                           MaterialPageRoute(
                             builder: (context) => WebGameDetailScreen(
                               game: game,
                             ),
                           ),
                         );
-                        await _applyRewardPoints(reward);
                       },
                     ),
                   ),
@@ -1852,14 +1850,13 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                   color: color,
                   onTap: () async {
                     _playClickSound();
-                    final reward = await _pushWithMusicResume<int>(
+                    await _pushWithMusicResume(
                       MaterialPageRoute(
                         builder: (context) => SimulationDetailScreen(
                           simulation: simulation,
                         ),
                       ),
                     );
-                    await _applyRewardPoints(reward);
                   },
                 ),
               );
@@ -1947,14 +1944,13 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                   color: color,
                   onTap: () async {
                     _playClickSound();
-                    final reward = await _pushWithMusicResume<int>(
+                    await _pushWithMusicResume(
                       MaterialPageRoute(
                         builder: (context) => SimulationDetailScreen(
                           simulation: simulation,
                         ),
                       ),
                     );
-                    await _applyRewardPoints(reward);
                   },
                 ),
               );
@@ -2029,6 +2025,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     );
   }
 
+<<<<<<< HEAD
   Future<void> _applyRewardPoints(int? rewardPoints) async {
     if (rewardPoints == null || rewardPoints <= 0) return;
     final progress = _childProgress ??
@@ -2076,6 +2073,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     });
   }
 
+=======
+>>>>>>> parent of eb76fed (Add reward points and sound on activity completion)
   void _showTaskCompletionCelebration(Lesson task) {
     setState(() {
       _showCelebration = true;

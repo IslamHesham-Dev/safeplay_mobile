@@ -29,10 +29,6 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
   InAppWebViewController? _webViewController;
   bool _webViewLoading = true;
   bool _isFullscreen = false;
-  bool _hasReturnedReward = false;
-  bool _allowSystemPop = false;
-
-  int get _rewardPoints => widget.game.estimatedMinutes * 2;
 
   @override
   void initState() {
@@ -93,16 +89,12 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
     final previewHeight = _isFullscreen ? screenHeight : screenHeight * 0.4;
 
     return PopScope(
-      canPop: _allowSystemPop && !_isFullscreen,
+      canPop: !_isFullscreen,
       onPopInvokedWithResult: (didPop, _) async {
-        if (_isFullscreen) {
-          await _exitFullscreenMode();
+        if (!_isFullscreen || didPop) {
           return;
         }
-        if (_hasReturnedReward) {
-          return;
-        }
-        _returnWithReward();
+        await _exitFullscreenMode();
       },
       child: Scaffold(
         backgroundColor: _isFullscreen ? Colors.black : Colors.white,
@@ -260,7 +252,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
           if (_isFullscreen) {
             await _exitFullscreenMode();
           } else {
-            _returnWithReward();
+            Navigator.of(context).pop();
           }
         },
         child: Container(
@@ -592,12 +584,5 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
         const SizedBox(height: 16),
       ],
     );
-  }
-
-  void _returnWithReward() {
-    if (_hasReturnedReward) return;
-    _hasReturnedReward = true;
-    _allowSystemPop = true;
-    Navigator.of(context).pop(_rewardPoints);
   }
 }
