@@ -85,6 +85,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   final AudioPlayer _audioPlayer = AudioPlayer();
   // Audio player for click sounds
   final AudioPlayer _clickSoundPlayer = AudioPlayer();
+  final AudioPlayer _rewardSoundPlayer = AudioPlayer();
 
   String _sanitizeGender(String? gender) {
     if (gender == null) return 'female';
@@ -113,6 +114,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     _animationController.forward();
     // Start background music
     _playBackgroundMusic();
+    _rewardSoundPlayer.setPlayerMode(PlayerMode.lowLatency);
   }
 
   Future<void> _playBackgroundMusic() async {
@@ -177,6 +179,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     _stopBackgroundMusic();
     _audioPlayer.dispose();
     _clickSoundPlayer.dispose();
+    _rewardSoundPlayer.dispose();
     super.dispose();
   }
 
@@ -1580,13 +1583,14 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
                       game: game,
                       onTap: () async {
                         _playClickSound();
-                        await _pushWithMusicResume(
+                        final reward = await _pushWithMusicResume<int>(
                           MaterialPageRoute(
                             builder: (context) => WebGameDetailScreen(
                               game: game,
                             ),
                           ),
                         );
+                        await _applyRewardPoints(reward);
                       },
                     ),
                   ),
@@ -1684,13 +1688,14 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
                       game: game,
                       onTap: () async {
                         _playClickSound();
-                        await _pushWithMusicResume(
+                        final reward = await _pushWithMusicResume<int>(
                           MaterialPageRoute(
                             builder: (context) => WebGameDetailScreen(
                               game: game,
                             ),
                           ),
                         );
+                        await _applyRewardPoints(reward);
                       },
                     ),
                   ),
@@ -1788,13 +1793,14 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
                       game: game,
                       onTap: () async {
                         _playClickSound();
-                        await _pushWithMusicResume(
+                        final reward = await _pushWithMusicResume<int>(
                           MaterialPageRoute(
                             builder: (context) => WebGameDetailScreen(
                               game: game,
                             ),
                           ),
                         );
+                        await _applyRewardPoints(reward);
                       },
                     ),
                   ),
@@ -1814,7 +1820,6 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     );
   }
 
-<<<<<<< HEAD
   Future<void> _applyRewardPoints(int? rewardPoints) async {
     if (rewardPoints == null || rewardPoints <= 0) return;
     final progress = _childProgress ??
@@ -1862,8 +1867,6 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     });
   }
 
-=======
->>>>>>> parent of eb76fed (Add reward points and sound on activity completion)
   void _showTaskCompletionCelebration(Lesson task) {
     setState(() {
       _showCelebration = true;
