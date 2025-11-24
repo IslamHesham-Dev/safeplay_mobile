@@ -498,6 +498,9 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
 
   Widget _buildGuideNavigationButtons(double safeTop) {
     final isLastPage = _isLastGuidePage(_currentGuidePage);
+    // Get game color for button styling
+    final colorValue = int.parse('FF${widget.game.color}', radix: 16);
+    final cardColor = Color(colorValue);
     
     return Container(
       padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + MediaQuery.of(context).padding.bottom),
@@ -527,15 +530,16 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
-                  side: BorderSide(color: JuniorTheme.textSecondary.withValues(alpha: 0.2)),
+                  side: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
                 ),
               ),
               child: Text(
                 'Previous',
-                style: JuniorTheme.bodyMedium.copyWith(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: JuniorTheme.textSecondary,
+                  color: Colors.grey[600],
+                  fontFamily: 'Nunito',
                 ),
               ),
             )
@@ -558,31 +562,33 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: JuniorTheme.primaryOrange,
+                  backgroundColor: cardColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
                   elevation: 8,
-                  shadowColor: JuniorTheme.primaryOrange.withValues(alpha: 0.4),
+                  shadowColor: cardColor.withValues(alpha: 0.4),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       isLastPage ? 'Start Game' : 'Next',
-                      style: JuniorTheme.headingMedium.copyWith(
-                        color: Colors.white,
+                      style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1,
+                        fontFamily: 'Nunito',
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Icon(
                       isLastPage ? Icons.play_arrow_rounded : Icons.arrow_forward_rounded,
                       size: 28,
+                      color: Colors.white,
                     ),
                   ],
                 ),
