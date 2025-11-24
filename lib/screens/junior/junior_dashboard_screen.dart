@@ -291,7 +291,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   }
 
   Future<void> _openWebGame(WebGame game) async {
-    await _pushWithMusicResume(
+    final result = await _pushWithMusicResume<bool>(
       MaterialPageRoute(
         builder: (context) => WebGameDetailScreen(
           game: game,
@@ -299,10 +299,13 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
       ),
     );
     if (!mounted) return;
-    await _applyMinutesReward(
-      minutes: game.estimatedMinutes,
-      sourceTitle: game.title,
-    );
+    // Only apply reward if game was actually played (result == true)
+    if (result == true) {
+      await _applyMinutesReward(
+        minutes: game.estimatedMinutes,
+        sourceTitle: game.title,
+      );
+    }
   }
 
   Future<T?> _pushWithMusicResume<T>(Route<T> route) async {

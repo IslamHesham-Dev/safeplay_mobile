@@ -24,6 +24,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
   InAppWebViewController? _webViewController;
   bool _webViewLoading = true;
   bool _isFullscreen = false;
+  bool _gameWasPlayed = false; // Track if game was actually played
   bool _showGuide = true; // Show guide first, then game
   final PageController _guidePageController = PageController();
   int _currentGuidePage = 0;
@@ -52,6 +53,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
     setState(() {
       _showGuide = false;
       _isFullscreen = true;
+      _gameWasPlayed = true; // Mark that game was played
     });
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
@@ -115,12 +117,8 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
         body: _buildFullscreenMode(safeTop, screenHeight),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            // Pop until we reach the dashboard
-            Navigator.of(context).popUntil((route) {
-              return route.isFirst || 
-                     route.settings.name == '/bright-dashboard' ||
-                     route.settings.name == '/junior-dashboard';
-            });
+            // Return true if game was played (they entered fullscreen)
+            Navigator.of(context).pop(_gameWasPlayed);
           },
           child: const Icon(Icons.fullscreen_exit),
         ),
@@ -600,7 +598,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => Navigator.of(context).pop(),
+        onTap: () => Navigator.of(context).pop(_gameWasPlayed), // Return true if game was played
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -711,13 +709,11 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
       child: InkWell(
         onTap: () async {
           if (_isFullscreen) {
-            Navigator.of(context).popUntil((route) {
-              return route.isFirst || 
-                     route.settings.name == '/bright-dashboard' ||
-                     route.settings.name == '/junior-dashboard';
-            });
+            // Return true if game was played, false otherwise
+            Navigator.of(context).pop(_gameWasPlayed);
           } else {
-            Navigator.of(context).pop();
+            // If they played the game but exited fullscreen, still return true
+            Navigator.of(context).pop(_gameWasPlayed);
           }
         },
         child: Container(

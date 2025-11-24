@@ -22,6 +22,7 @@ class SimulationDetailScreen extends StatefulWidget {
 
 class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
   bool _isFullscreen = false;
+  bool _gameWasPlayed = false; // Track if game was actually played
   final ScrollController _scrollController = ScrollController();
   final PageController _guidePageController = PageController();
   int _currentGuidePage = 0;
@@ -49,6 +50,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
     _overlayTimer?.cancel();
     setState(() {
       _isFullscreen = true;
+      _gameWasPlayed = true; // Mark that game was played
       _showInitialOverlay = true;
     });
     _overlayTimer = Timer(const Duration(seconds: 5), () {
@@ -181,7 +183,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () => Navigator.of(context).pop(),
+              onTap: () => Navigator.of(context).pop(false), // Return false - game not played
               borderRadius: BorderRadius.circular(20),
               child: Container(
                 padding: const EdgeInsets.all(8),
@@ -686,12 +688,8 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                 child: InkWell(
                   customBorder: const CircleBorder(),
                   onTap: () {
-                    // Pop until we reach the dashboard
-                    Navigator.of(context).popUntil((route) {
-                      return route.isFirst || 
-                             route.settings.name == '/bright-dashboard' ||
-                             route.settings.name == '/junior-dashboard';
-                    });
+                    // Return true if game was played (they entered fullscreen)
+                    Navigator.of(context).pop(_gameWasPlayed);
                   },
                   child: const Padding(
                     padding: EdgeInsets.all(12),

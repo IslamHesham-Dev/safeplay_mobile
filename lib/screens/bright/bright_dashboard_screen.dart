@@ -295,7 +295,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   }
 
   Future<void> _openWebGame(WebGame game) async {
-    await _pushWithMusicResume(
+    final result = await _pushWithMusicResume<bool>(
       MaterialPageRoute(
         builder: (context) => WebGameDetailScreen(
           game: game,
@@ -303,14 +303,17 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
       ),
     );
     if (!mounted) return;
-    await _applyMinutesReward(
-      minutes: game.estimatedMinutes,
-      sourceTitle: game.title,
-    );
+    // Only apply reward if game was actually played (result == true)
+    if (result == true) {
+      await _applyMinutesReward(
+        minutes: game.estimatedMinutes,
+        sourceTitle: game.title,
+      );
+    }
   }
 
   Future<void> _openSimulation(sim.Simulation simulation) async {
-    await _pushWithMusicResume(
+    final result = await _pushWithMusicResume<bool>(
       MaterialPageRoute(
         builder: (context) => SimulationDetailScreen(
           simulation: simulation,
@@ -318,10 +321,13 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
       ),
     );
     if (!mounted) return;
-    await _applyMinutesReward(
-      minutes: simulation.estimatedMinutes,
-      sourceTitle: simulation.title,
-    );
+    // Only apply reward if game was actually played (result == true)
+    if (result == true) {
+      await _applyMinutesReward(
+        minutes: simulation.estimatedMinutes,
+        sourceTitle: simulation.title,
+      );
+    }
   }
 
   Future<T?> _pushWithMusicResume<T>(Route<T> route) async {
