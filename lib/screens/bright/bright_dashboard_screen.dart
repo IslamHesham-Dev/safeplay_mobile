@@ -312,11 +312,12 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     }
   }
 
-  Future<void> _openSimulation(sim.Simulation simulation) async {
+  Future<void> _openSimulation(sim.Simulation simulation, {Color? color}) async {
     final result = await _pushWithMusicResume<bool>(
       MaterialPageRoute(
         builder: (context) => SimulationDetailScreen(
           simulation: simulation,
+          cardColor: color,
         ),
       ),
     );
@@ -1970,7 +1971,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                   color: color,
                   onTap: () async {
                     _playClickSound();
-                    await _openSimulation(simulation);
+                    await _openSimulation(simulation, color: color);
                   },
                 ),
               );
@@ -2058,7 +2059,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                   color: color,
                   onTap: () async {
                     _playClickSound();
-                    await _openSimulation(simulation);
+                    await _openSimulation(simulation, color: color);
                   },
                 ),
               );

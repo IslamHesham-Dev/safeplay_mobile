@@ -10,10 +10,12 @@ import '../../utils/orientation_utils.dart';
 /// Replicates the UI design from the DIY Bubble Wand reference
 class SimulationDetailScreen extends StatefulWidget {
   final sim.Simulation simulation;
+  final Color? cardColor; // Color from the dashboard card
 
   const SimulationDetailScreen({
     super.key,
     required this.simulation,
+    this.cardColor,
   });
 
   @override
@@ -29,6 +31,9 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
   bool _showInitialOverlay = false;
   Timer? _overlayTimer;
   Timer? _previewOverlayTimer;
+
+  // Get the card color with fallback to default blue
+  Color get _cardColor => widget.cardColor ?? const Color(0xFF5B9BD5);
 
   @override
   void initState() {
@@ -261,12 +266,12 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF5B9BD5).withValues(alpha: 0.1),
+                    color: _cardColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.star_rounded,
-                    color: Color(0xFF5B9BD5),
+                    color: _cardColor,
                     size: 24,
                   ),
                 ),
@@ -354,14 +359,14 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF5B9BD5),
+                  backgroundColor: _cardColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
                   elevation: 8,
-                  shadowColor: const Color(0xFF5B9BD5).withValues(alpha: 0.4),
+                  shadowColor: _cardColor.withValues(alpha: 0.4),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -402,14 +407,14 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
         right: 24,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFF5B9BD5),
+        color: _cardColor,
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(40),
           bottomRight: Radius.circular(40),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF5B9BD5).withValues(alpha: 0.3),
+            color: _cardColor.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 10),
           ),
@@ -460,14 +465,14 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
         right: 24,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFF5B9BD5),
+        color: _cardColor,
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(40),
           bottomRight: Radius.circular(40),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF5B9BD5).withValues(alpha: 0.3),
+            color: _cardColor.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -546,15 +551,15 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                     ),
                   ],
                   border: Border.all(
-                    color: const Color(0xFF5B9BD5).withValues(alpha: 0.2),
+                    color: _cardColor.withValues(alpha: 0.2),
                   ),
                 ),
                 child: Text(
                   topic,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF5B9BD5),
+                    color: _cardColor,
                     fontFamily: 'Nunito',
                   ),
                 ),
