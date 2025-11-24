@@ -1925,7 +1925,6 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: JuniorTheme.spacingMedium),
         if (_scienceSimulations.isEmpty)
           Container(
             width: double.infinity,
@@ -2013,7 +2012,6 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: JuniorTheme.spacingMedium),
         if (_mathSimulations.isEmpty)
           Container(
             width: double.infinity,
