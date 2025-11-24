@@ -380,6 +380,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                     Icon(
                       isLastPage ? Icons.play_arrow_rounded : Icons.arrow_forward_rounded,
                       size: 28,
+                      color: Colors.white,
                     ),
                   ],
                 ),
