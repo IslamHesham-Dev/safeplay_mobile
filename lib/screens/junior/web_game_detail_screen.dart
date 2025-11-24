@@ -131,8 +131,8 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
   // Calculate number of guide pages needed
   int _getTotalGuidePages() {
     int pages = 2; // Title+Topics page + Explanation page
-    // Learning goals: 2-3 per page
-    int learningGoalPages = (widget.game.learningGoals.length / 2.5).ceil();
+    // Learning goals: 3 per page
+    int learningGoalPages = (widget.game.learningGoals.length / 3.0).ceil();
     pages += learningGoalPages;
     return pages;
   }
@@ -146,7 +146,8 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
     if (pageIndex <= 0 || pageIndex > totalLearningGoalPages) {
       return [];
     }
-    int startIndex = (pageIndex - 1) * 2;
+    // Fix: Use 3 items per page to avoid overlap (was using 2 as multiplier causing last item to repeat)
+    int startIndex = (pageIndex - 1) * 3;
     int endIndex = (startIndex + 3).clamp(0, widget.game.learningGoals.length);
     return widget.game.learningGoals.sublist(startIndex, endIndex);
   }
@@ -159,7 +160,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
   // Get page type
   String _getPageType(int pageIndex) {
     if (pageIndex == 0) return 'title_topics';
-    int totalLearningGoalPages = (widget.game.learningGoals.length / 2.5).ceil();
+    int totalLearningGoalPages = (widget.game.learningGoals.length / 3.0).ceil();
     if (pageIndex > 0 && pageIndex <= totalLearningGoalPages) return 'learning_goals';
     return 'explanation';
   }
