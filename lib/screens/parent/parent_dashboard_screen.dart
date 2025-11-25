@@ -11,7 +11,6 @@ import '../../models/user_type.dart';
 import '../../providers/activity_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
-import '../../widgets/parent/activity_timeline_widget.dart';
 import '../../widgets/parent/child_list_item.dart';
 import '../../widgets/parent/parent_settings_menu.dart';
 
@@ -102,6 +101,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Parent Dashboard'),
+        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
@@ -125,82 +125,75 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               slivers: [
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                     child: _buildWelcomeSection(context, user, children.length),
                   ),
                 ),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     child: _buildChildSelectorCard(context, childProvider),
                   ),
                 ),
                 SliverPadding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   sliver: SliverToBoxAdapter(
-                    child:
-                        _buildStatsRow(context, children.length, selectedChild),
+                    child: _buildStatsRow(context, children.length, selectedChild),
+                  ),
+                ),
+                // Recent Activities Section (moved here, right after stats)
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  sliver: SliverToBoxAdapter(
+                    child: _buildRecentActivitiesCard(context, childProvider, activityProvider),
                   ),
                 ),
                 // Parental Controls Section
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   sliver: SliverToBoxAdapter(
                     child: _buildParentalControlsCard(context, childProvider),
                   ),
                 ),
                 // Wellbeing Section
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   sliver: SliverToBoxAdapter(
                     child: _buildWellbeingCard(context, childProvider),
                   ),
                 ),
-                _buildRecommendedActivitiesSection(
-                    context, childProvider, activityProvider),
                 SliverPadding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   sliver: SliverToBoxAdapter(
                     child: ChildrenListWidget(
                       children: children,
                       onChildTap: (child) {
-                        // Select the child when tapped
                         unawaited(childProvider.selectChild(child));
                       },
                       onChildEdit: (child) {
-                        // Navigate to edit child screen
                         context.push(RouteNames.parentEditChild, extra: child);
                       },
                       onChildSetupLogin: (child) {
-                        // Navigate to appropriate auth setup screen
                         if (child.ageGroup == AgeGroup.junior) {
-                          context.push(RouteNames.juniorAuthSetup,
-                              extra: child);
+                          context.push(RouteNames.juniorAuthSetup, extra: child);
                         } else {
-                          context.push(RouteNames.brightAuthSetup,
-                              extra: child);
+                          context.push(RouteNames.brightAuthSetup, extra: child);
                         }
                       },
                       onChildDelete: (child) async {
-                        // Delete the child profile
-                        final success =
-                            await childProvider.deleteChild(child.id);
+                        final success = await childProvider.deleteChild(child.id);
                         if (context.mounted) {
                           if (success) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(
-                                    '${child.name}\'s profile deleted successfully'),
+                                content: Text('${child.name}\'s profile deleted successfully'),
                                 backgroundColor: Colors.green,
                               ),
                             );
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(childProvider.error ??
-                                    'Failed to delete child profile'),
+                                content: Text(childProvider.error ?? 'Failed to delete child profile'),
                                 backgroundColor: Colors.red,
                               ),
                             );
@@ -210,12 +203,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     ),
                   ),
                 ),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-                  sliver: const SliverToBoxAdapter(
-                    child: ActivityTimelineWidget(),
-                  ),
-                ),
+                const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
               ],
             );
           },
@@ -225,154 +213,287 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         onPressed: () => context.push(RouteNames.parentAddChild),
         icon: const Icon(Icons.person_add_alt_1),
         label: const Text('Add Child'),
+        backgroundColor: SafePlayColors.brandTeal500,
+        foregroundColor: Colors.white,
       ),
     );
   }
 
-  Widget _buildWelcomeSection(
-    BuildContext context,
-    UserProfile? user,
-    int childCount,
-  ) {
+  Widget _buildWelcomeSection(BuildContext context, UserProfile? user, int childCount) {
     final greeting = _greetingForNow();
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '$greeting, ${user?.name ?? 'Parent'}!',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              childCount == 0
-                  ? "Let's add your children so you can monitor their progress."
-                  : "Here's the latest on your ${childCount == 1 ? 'child' : 'children'} today.",
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            SafePlayColors.brandTeal500,
+            SafePlayColors.brandTeal600,
           ],
         ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: SafePlayColors.brandTeal500.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$greeting,',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  user?.name ?? 'Parent',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  childCount == 0
+                      ? "Let's add your children to get started."
+                      : "Managing ${childCount == 1 ? '1 child' : '$childCount children'}",
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(Icons.family_restroom, color: Colors.white, size: 32),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildChildSelectorCard(
-      BuildContext context, ChildProvider childProvider) {
+  Widget _buildChildSelectorCard(BuildContext context, ChildProvider childProvider) {
     if (childProvider.children.isEmpty) {
-      return Card(
-        elevation: 0,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'No child profiles yet',
-                style: Theme.of(context).textTheme.titleMedium,
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: SafePlayColors.brandOrange50,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: SafePlayColors.brandOrange500.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: SafePlayColors.brandOrange500.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Add a child to begin tracking activity and wellbeing.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: SafePlayColors.neutral700,
-                    ),
+              child: const Icon(Icons.child_care, color: SafePlayColors.brandOrange500, size: 28),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'No children added yet',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Add a child to start monitoring their safety.',
+                    style: TextStyle(color: SafePlayColors.neutral600, fontSize: 13),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     }
 
     final selectedChild = childProvider.selectedChild;
-    return Card(
-      elevation: 1,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Active child',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              value: selectedChild?.id,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.child_care_outlined),
-                border: OutlineInputBorder(),
-                labelText: 'Choose a child',
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.person_pin_circle, color: SafePlayColors.brandTeal500, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Active Child',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
+              if (selectedChild != null) ...[
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: SafePlayColors.success.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: SafePlayColors.success,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Selected',
+                        style: TextStyle(
+                          color: SafePlayColors.success,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            decoration: BoxDecoration(
+              color: SafePlayColors.neutral50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: SafePlayColors.neutral200),
+            ),
+            child: DropdownButtonFormField<String>(
+              value: selectedChild?.id,
+              decoration: InputDecoration(
+                prefixIcon: Icon(
+                  Icons.child_care,
+                  color: selectedChild != null ? SafePlayColors.brandTeal500 : SafePlayColors.neutral400,
+                ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                hintText: 'Select a child',
+                hintStyle: TextStyle(color: SafePlayColors.neutral400),
+              ),
+              dropdownColor: Colors.white,
+              borderRadius: BorderRadius.circular(12),
               items: childProvider.children
-                  .map(
-                    (child) => DropdownMenuItem(
-                      value: child.id,
-                      child: Text(child.name),
-                    ),
-                  )
+                  .map((child) => DropdownMenuItem(
+                        value: child.id,
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 14,
+                              backgroundColor: child.ageGroup == AgeGroup.junior
+                                  ? SafePlayColors.juniorPurple.withOpacity(0.2)
+                                  : SafePlayColors.brightIndigo.withOpacity(0.2),
+                              child: Text(
+                                child.name[0].toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: child.ageGroup == AgeGroup.junior
+                                      ? SafePlayColors.juniorPurple
+                                      : SafePlayColors.brightIndigo,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(child.name),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: child.ageGroup == AgeGroup.junior
+                                    ? SafePlayColors.juniorPurple.withOpacity(0.1)
+                                    : SafePlayColors.brightIndigo.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                child.ageGroup == AgeGroup.junior ? 'Junior' : 'Bright',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: child.ageGroup == AgeGroup.junior
+                                      ? SafePlayColors.juniorPurple
+                                      : SafePlayColors.brightIndigo,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ))
                   .toList(),
               onChanged: (value) {
                 if (value == null) {
                   unawaited(childProvider.deselectChild());
                   return;
                 }
-                final child =
-                    childProvider.children.firstWhere((c) => c.id == value);
+                final child = childProvider.children.firstWhere((c) => c.id == value);
                 unawaited(childProvider.selectChild(child));
               },
             ),
-            if (selectedChild != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                'Viewing ${selectedChild.name}\'s data',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildStatsRow(
-    BuildContext context,
-    int childCount,
-    ChildProfile? activeChild,
-  ) {
+  Widget _buildStatsRow(BuildContext context, int childCount, ChildProfile? activeChild) {
     return Row(
       children: [
         Expanded(
           child: _buildStatCard(
-            context,
             label: 'Children',
             value: childCount.toString(),
-            icon: Icons.family_restroom,
+            icon: Icons.people_alt_rounded,
             color: SafePlayColors.brandTeal500,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         Expanded(
           child: _buildStatCard(
-            context,
-            label: 'Active child',
-            value: activeChild?.name ?? 'None selected',
-            icon: Icons.assignment_ind,
+            label: 'Streak',
+            value: activeChild == null ? '-' : '${activeChild.streakDays}d',
+            icon: Icons.local_fire_department_rounded,
             color: SafePlayColors.brandOrange500,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         Expanded(
           child: _buildStatCard(
-            context,
-            label: 'Streak',
-            value: activeChild == null ? '-' : '${activeChild.streakDays} days',
-            icon: Icons.local_fire_department,
+            label: 'Safety',
+            value: '100%',
+            icon: Icons.verified_user_rounded,
             color: SafePlayColors.success,
           ),
         ),
@@ -380,117 +501,445 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
+  Widget _buildStatCard({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 24, color: color),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: SafePlayColors.neutral500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============ RECENT ACTIVITIES CARD ============
+  Widget _buildRecentActivitiesCard(BuildContext context, ChildProvider childProvider, ActivityProvider activityProvider) {
+    final selectedChild = childProvider.selectedChild;
+    final hasChild = childProvider.children.isNotEmpty;
+    
+    // Generate mock activities for selected child
+    List<Map<String, dynamic>> activities = [];
+    if (selectedChild != null) {
+      activities = [
+        {
+          'title': 'Letter Sound Adventure',
+          'score': 85,
+          'time': DateTime.now().subtract(const Duration(hours: 2)),
+          'subject': 'English',
+        },
+        {
+          'title': 'Number Counting Fun',
+          'score': 100,
+          'time': DateTime.now().subtract(const Duration(hours: 5)),
+          'subject': 'Math',
+        },
+        {
+          'title': 'Animal Discovery',
+          'score': 90,
+          'time': DateTime.now().subtract(const Duration(days: 1)),
+          'subject': 'Science',
+        },
+      ];
+    }
+    
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      SafePlayColors.brightIndigo.withOpacity(0.15),
+                      SafePlayColors.brightIndigo.withOpacity(0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.history_rounded, color: SafePlayColors.brightIndigo, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Recent Activities',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    if (selectedChild != null)
+                      Row(
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: SafePlayColors.success,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${selectedChild.name}\'s activity',
+                            style: TextStyle(color: SafePlayColors.success, fontSize: 12, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      )
+                    else
+                      Text(
+                        hasChild ? 'Select a child above' : 'Add a child first',
+                        style: TextStyle(color: SafePlayColors.neutral400, fontSize: 12),
+                      ),
+                  ],
+                ),
+              ),
+              if (selectedChild != null && activities.isNotEmpty)
+                TextButton(
+                  onPressed: () {
+                    // View all activities
+                  },
+                  child: Text(
+                    'View All',
+                    style: TextStyle(
+                      color: SafePlayColors.brightIndigo,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (!hasChild)
+            _buildEmptyStateMessage(
+              'Add a child to see their recent activities.',
+              Icons.child_care_rounded,
+              SafePlayColors.brandOrange500,
+            )
+          else if (selectedChild == null)
+            _buildEmptyStateMessage(
+              'Select a child from the dropdown to view their activities.',
+              Icons.touch_app_rounded,
+              SafePlayColors.brandTeal500,
+            )
+          else if (activities.isEmpty)
+            _buildEmptyStateMessage(
+              'No activities yet for ${selectedChild.name}.',
+              Icons.hourglass_empty_rounded,
+              SafePlayColors.neutral400,
+            )
+          else
+            ...activities.map((activity) => _buildActivityItem(activity)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityItem(Map<String, dynamic> activity) {
+    final score = activity['score'] as int;
+    final color = score >= 80
+        ? SafePlayColors.success
+        : score >= 60
+            ? SafePlayColors.brandOrange500
+            : SafePlayColors.error;
+    
+    final subjectColors = {
+      'English': SafePlayColors.juniorPurple,
+      'Math': SafePlayColors.brandOrange500,
+      'Science': SafePlayColors.brandTeal500,
+    };
+    final subjectColor = subjectColors[activity['subject']] ?? SafePlayColors.brightIndigo;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: SafePlayColors.neutral50,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: subjectColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(Icons.school_rounded, color: subjectColor, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  activity['title'] as String,
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: subjectColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        activity['subject'] as String,
+                        style: TextStyle(
+                          color: subjectColor,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _formatTime(activity['time'] as DateTime),
+                      style: TextStyle(color: SafePlayColors.neutral400, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              '$score%',
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatTime(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else {
+      return '${difference.inDays}d ago';
+    }
+  }
+
   // ============ PARENTAL CONTROLS CARD ============
   Widget _buildParentalControlsCard(BuildContext context, ChildProvider childProvider) {
     final selectedChild = childProvider.selectedChild;
+    final hasChild = childProvider.children.isNotEmpty;
     
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          childrenPadding: EdgeInsets.zero,
           leading: Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: SafePlayColors.brightIndigo.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+              gradient: LinearGradient(
+                colors: [
+                  SafePlayColors.brightIndigo.withOpacity(0.15),
+                  SafePlayColors.brightIndigo.withOpacity(0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.shield_outlined, color: SafePlayColors.brightIndigo),
+            child: const Icon(Icons.shield_rounded, color: SafePlayColors.brightIndigo, size: 24),
           ),
           title: const Text(
-            'Browser Parental Controls',
-            style: TextStyle(fontWeight: FontWeight.bold),
+            'Browser Controls',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
-          subtitle: Text(
-            selectedChild != null 
-                ? 'Settings for ${selectedChild.name}'
-                : 'Select a child to configure',
-            style: TextStyle(color: SafePlayColors.neutral600, fontSize: 12),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Row(
+              children: [
+                if (selectedChild != null) ...[
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: SafePlayColors.success,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    selectedChild.name,
+                    style: TextStyle(color: SafePlayColors.success, fontSize: 12, fontWeight: FontWeight.w500),
+                  ),
+                ] else
+                  Text(
+                    hasChild ? 'Select a child above' : 'Add a child first',
+                    style: TextStyle(color: SafePlayColors.neutral400, fontSize: 12),
+                  ),
+              ],
+            ),
           ),
           children: [
-            if (childProvider.children.isEmpty)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    const Icon(Icons.info_outline, color: SafePlayColors.warning),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Add a child first to configure their browser settings.',
-                        style: TextStyle(color: SafePlayColors.neutral700),
-                      ),
-                    ),
-                  ],
-                ),
+            if (!hasChild)
+              _buildEmptyStateMessage(
+                'Add a child to configure their browser settings.',
+                Icons.child_care_rounded,
+                SafePlayColors.brandOrange500,
               )
             else if (selectedChild == null)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    const Icon(Icons.touch_app, color: SafePlayColors.brandTeal500),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Select a child from the dropdown above to configure their settings.',
-                        style: TextStyle(color: SafePlayColors.neutral700),
-                      ),
-                    ),
-                  ],
-                ),
+              _buildEmptyStateMessage(
+                'Select a child from the dropdown to manage their browser settings.',
+                Icons.touch_app_rounded,
+                SafePlayColors.brandTeal500,
               )
             else ...[
               // Safe Search Toggle
-              SwitchListTile(
-                title: const Text('Safe Search'),
-                subtitle: const Text('Filter inappropriate content from searches'),
-                value: _safeSearchEnabled,
-                onChanged: (value) => setState(() => _safeSearchEnabled = value),
-                activeColor: SafePlayColors.brandTeal500,
+              _buildControlToggle(
+                'Safe Search',
+                'Filter inappropriate content',
+                Icons.search_rounded,
+                _safeSearchEnabled,
+                (v) => setState(() => _safeSearchEnabled = v),
               ),
-              const Divider(height: 1),
+              
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Divider(height: 1),
+              ),
               
               // Content Filters
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.filter_alt_outlined, size: 20, color: SafePlayColors.brightIndigo),
+                        Icon(Icons.filter_alt_rounded, size: 18, color: SafePlayColors.brightIndigo),
                         const SizedBox(width: 8),
-                        Text(
-                          'Content Filters',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                        ),
+                        const Text('Content Filters', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    _buildFilterChip('Block Ads', _blockAds, (v) => setState(() => _blockAds = v)),
-                    _buildFilterChip('Block Social Media', _blockSocialMedia, (v) => setState(() => _blockSocialMedia = v)),
-                    _buildFilterChip('Block Gambling', _blockGambling, (v) => setState(() => _blockGambling = v)),
-                    _buildFilterChip('Block Violence', _blockViolence, (v) => setState(() => _blockViolence = v)),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildFilterChip('Ads', _blockAds, (v) => setState(() => _blockAds = v)),
+                        _buildFilterChip('Social Media', _blockSocialMedia, (v) => setState(() => _blockSocialMedia = v)),
+                        _buildFilterChip('Gambling', _blockGambling, (v) => setState(() => _blockGambling = v)),
+                        _buildFilterChip('Violence', _blockViolence, (v) => setState(() => _blockViolence = v)),
+                      ],
+                    ),
                   ],
                 ),
               ),
-              const Divider(height: 1),
+              
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Divider(height: 1),
+              ),
               
               // Blocked Keywords
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.block, size: 20, color: SafePlayColors.error),
+                        Icon(Icons.block_rounded, size: 18, color: SafePlayColors.error),
                         const SizedBox(width: 8),
-                        Text(
-                          'Blocked Keywords',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                        const Text('Blocked Keywords', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: _showAddKeywordDialog,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: SafePlayColors.error.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.add, size: 14, color: SafePlayColors.error),
+                                const SizedBox(width: 4),
+                                Text('Add', style: TextStyle(color: SafePlayColors.error, fontSize: 12, fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -498,81 +947,122 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: [
-                        ..._blockedKeywords.map((keyword) => Chip(
-                          label: Text(keyword),
-                          deleteIcon: const Icon(Icons.close, size: 16),
-                          onDeleted: () => setState(() => _blockedKeywords.remove(keyword)),
-                          backgroundColor: SafePlayColors.error.withOpacity(0.1),
-                          labelStyle: const TextStyle(color: SafePlayColors.error),
-                        )),
-                        ActionChip(
-                          avatar: const Icon(Icons.add, size: 16),
-                          label: const Text('Add'),
-                          onPressed: () => _showAddKeywordDialog(),
+                      children: _blockedKeywords.map((keyword) => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: SafePlayColors.error.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: SafePlayColors.error.withOpacity(0.2)),
                         ),
-                      ],
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(keyword, style: TextStyle(color: SafePlayColors.error, fontSize: 13)),
+                            const SizedBox(width: 6),
+                            GestureDetector(
+                              onTap: () => setState(() => _blockedKeywords.remove(keyword)),
+                              child: Icon(Icons.close, size: 14, color: SafePlayColors.error),
+                            ),
+                          ],
+                        ),
+                      )).toList(),
                     ),
                   ],
                 ),
               ),
-              const Divider(height: 1),
+              
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Divider(height: 1),
+              ),
               
               // Allowed Sites
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.verified_outlined, size: 20, color: SafePlayColors.success),
+                        Icon(Icons.verified_rounded, size: 18, color: SafePlayColors.success),
                         const SizedBox(width: 8),
-                        Text(
-                          'Allowed Websites',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                        const Text('Allowed Sites', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: _showAddSiteDialog,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: SafePlayColors.success.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.add, size: 14, color: SafePlayColors.success),
+                                const SizedBox(width: 4),
+                                Text('Add', style: TextStyle(color: SafePlayColors.success, fontSize: 12, fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    ..._allowedSites.map((site) => ListTile(
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.language, color: SafePlayColors.success, size: 20),
-                      title: Text(site),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.remove_circle_outline, color: SafePlayColors.error, size: 20),
-                        onPressed: () => setState(() => _allowedSites.remove(site)),
+                    ..._allowedSites.map((site) => Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: SafePlayColors.success.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: SafePlayColors.success.withOpacity(0.15)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.language, color: SafePlayColors.success, size: 18),
+                          const SizedBox(width: 10),
+                          Expanded(child: Text(site, style: const TextStyle(fontSize: 13))),
+                          GestureDetector(
+                            onTap: () => setState(() => _allowedSites.remove(site)),
+                            child: Icon(Icons.remove_circle_outline, color: SafePlayColors.error.withOpacity(0.7), size: 18),
+                          ),
+                        ],
                       ),
                     )),
-                    TextButton.icon(
-                      onPressed: () => _showAddSiteDialog(),
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add Website'),
-                    ),
                   ],
                 ),
               ),
               
               // Save Button
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                 child: SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
+                  child: ElevatedButton.icon(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Settings saved for ${selectedChild.name}'),
+                          content: Row(
+                            children: [
+                              const Icon(Icons.check_circle, color: Colors.white, size: 20),
+                              const SizedBox(width: 10),
+                              Text('Settings saved for ${selectedChild.name}'),
+                            ],
+                          ),
                           backgroundColor: SafePlayColors.success,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                       );
                     },
+                    icon: const Icon(Icons.save_rounded, size: 18),
+                    label: const Text('Save Settings'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: SafePlayColors.brandTeal500,
                       foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('Save Settings'),
                   ),
                 ),
               ),
@@ -583,17 +1073,101 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
-  Widget _buildFilterChip(String label, bool value, Function(bool) onChanged) {
+  Widget _buildControlToggle(String title, String subtitle, IconData icon, bool value, Function(bool) onChanged) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: SafePlayColors.brandTeal500.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 18, color: SafePlayColors.brandTeal500),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                Text(subtitle, style: TextStyle(color: SafePlayColors.neutral500, fontSize: 12)),
+              ],
+            ),
+          ),
           Switch(
             value: value,
             onChanged: onChanged,
             activeColor: SafePlayColors.brandTeal500,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, bool value, Function(bool) onChanged) {
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: value ? SafePlayColors.brightIndigo : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: value ? SafePlayColors.brightIndigo : SafePlayColors.neutral200,
+          ),
+          boxShadow: value ? [
+            BoxShadow(
+              color: SafePlayColors.brightIndigo.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ] : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              value ? Icons.check_circle : Icons.circle_outlined,
+              size: 16,
+              color: value ? Colors.white : SafePlayColors.neutral400,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: value ? Colors.white : SafePlayColors.neutral600,
+                fontWeight: FontWeight.w500,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyStateMessage(String message, IconData icon, Color color) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(color: SafePlayColors.neutral600, fontSize: 14),
+            ),
           ),
         ],
       ),
@@ -605,18 +1179,30 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add Blocked Keyword'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.block_rounded, color: SafePlayColors.error, size: 24),
+            const SizedBox(width: 10),
+            const Text('Add Blocked Keyword'),
+          ],
+        ),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
+          autofocus: true,
+          decoration: InputDecoration(
             hintText: 'Enter keyword to block',
-            border: OutlineInputBorder(),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: SafePlayColors.error, width: 2),
+            ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text('Cancel', style: TextStyle(color: SafePlayColors.neutral500)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -625,7 +1211,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               }
               Navigator.pop(context);
             },
-            child: const Text('Add'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: SafePlayColors.error,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Add', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -637,18 +1227,30 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add Allowed Website'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.verified_rounded, color: SafePlayColors.success, size: 24),
+            const SizedBox(width: 10),
+            const Text('Add Allowed Site'),
+          ],
+        ),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
+          autofocus: true,
+          decoration: InputDecoration(
             hintText: 'e.g., example.com',
-            border: OutlineInputBorder(),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: SafePlayColors.success, width: 2),
+            ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text('Cancel', style: TextStyle(color: SafePlayColors.neutral500)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -657,7 +1259,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               }
               Navigator.pop(context);
             },
-            child: const Text('Add'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: SafePlayColors.success,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Add', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -667,142 +1273,143 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   // ============ WELLBEING CARD ============
   Widget _buildWellbeingCard(BuildContext context, ChildProvider childProvider) {
     final selectedChild = childProvider.selectedChild;
+    final hasChild = childProvider.children.isNotEmpty;
     
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          childrenPadding: EdgeInsets.zero,
           leading: Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: SafePlayColors.juniorPink.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+              gradient: LinearGradient(
+                colors: [
+                  SafePlayColors.juniorPink.withOpacity(0.15),
+                  SafePlayColors.juniorPink.withOpacity(0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.favorite_outline, color: SafePlayColors.juniorPink),
+            child: const Icon(Icons.favorite_rounded, color: SafePlayColors.juniorPink, size: 24),
           ),
           title: const Text(
             'Wellbeing Reports',
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
-          subtitle: Text(
-            selectedChild != null 
-                ? '${selectedChild.name}\'s emotional health'
-                : 'Select a child to view',
-            style: TextStyle(color: SafePlayColors.neutral600, fontSize: 12),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Row(
+              children: [
+                if (selectedChild != null) ...[
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: SafePlayColors.success,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${selectedChild.name}\'s mood',
+                    style: TextStyle(color: SafePlayColors.success, fontSize: 12, fontWeight: FontWeight.w500),
+                  ),
+                ] else
+                  Text(
+                    hasChild ? 'Select a child above' : 'Add a child first',
+                    style: TextStyle(color: SafePlayColors.neutral400, fontSize: 12),
+                  ),
+              ],
+            ),
           ),
           children: [
-            if (childProvider.children.isEmpty)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    const Icon(Icons.info_outline, color: SafePlayColors.warning),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Add a child first to view their wellbeing reports.',
-                        style: TextStyle(color: SafePlayColors.neutral700),
-                      ),
-                    ),
-                  ],
-                ),
+            if (!hasChild)
+              _buildEmptyStateMessage(
+                'Add a child to view their wellbeing reports.',
+                Icons.child_care_rounded,
+                SafePlayColors.brandOrange500,
               )
             else if (selectedChild == null)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    const Icon(Icons.touch_app, color: SafePlayColors.brandTeal500),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Select a child from the dropdown above to view their wellbeing.',
-                        style: TextStyle(color: SafePlayColors.neutral700),
-                      ),
-                    ),
-                  ],
-                ),
+              _buildEmptyStateMessage(
+                'Select a child from the dropdown to view their emotional health.',
+                Icons.touch_app_rounded,
+                SafePlayColors.brandTeal500,
               )
             else ...[
-              // Weekly Mood Summary
+              // Overall Score Banner
               Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.calendar_today, size: 20, color: SafePlayColors.juniorPink),
-                        const SizedBox(width: 8),
-                        Text(
-                          'This Week\'s Mood',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildMoodDay('Mon', '🤩', SafePlayColors.success),
-                        _buildMoodDay('Tue', '🙂', SafePlayColors.brandTeal500),
-                        _buildMoodDay('Wed', '🙂', SafePlayColors.brandTeal500),
-                        _buildMoodDay('Thu', '😐', SafePlayColors.warning),
-                        _buildMoodDay('Fri', '🤩', SafePlayColors.success),
-                        _buildMoodDay('Sat', '—', SafePlayColors.neutral300),
-                        _buildMoodDay('Sun', '—', SafePlayColors.neutral300),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              
-              // Overall Score
-              Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: SafePlayColors.success.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    gradient: LinearGradient(
+                      colors: [SafePlayColors.success, SafePlayColors.success.withOpacity(0.8)],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: SafePlayColors.success.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
-                      const Text('😊', style: TextStyle(fontSize: 40)),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text('😊', style: TextStyle(fontSize: 32)),
+                      ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               'Overall Wellbeing',
-                              style: TextStyle(color: SafePlayColors.neutral600, fontSize: 12),
+                              style: TextStyle(color: Colors.white70, fontSize: 12),
                             ),
+                            const SizedBox(height: 2),
                             const Text(
                               'Good',
                               style: TextStyle(
+                                color: Colors.white,
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
-                                color: SafePlayColors.success,
                               ),
                             ),
                           ],
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
-                          color: SafePlayColors.success,
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Text(
                           '85%',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: SafePlayColors.success,
                             fontWeight: FontWeight.bold,
+                            fontSize: 16,
                           ),
                         ),
                       ),
@@ -810,22 +1417,53 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   ),
                 ),
               ),
-              const Divider(height: 1),
               
-              // Recent Check-ins
+              // Weekly Mood
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.history, size: 20, color: SafePlayColors.brightIndigo),
+                        Icon(Icons.calendar_month_rounded, size: 18, color: SafePlayColors.juniorPink),
                         const SizedBox(width: 8),
-                        Text(
-                          'Recent Check-ins',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                        ),
+                        const Text('This Week', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildMoodDay('Mon', '🤩', SafePlayColors.success),
+                        _buildMoodDay('Tue', '🙂', SafePlayColors.brandTeal500),
+                        _buildMoodDay('Wed', '🙂', SafePlayColors.brandTeal500),
+                        _buildMoodDay('Thu', '😐', SafePlayColors.warning),
+                        _buildMoodDay('Fri', '🤩', SafePlayColors.success),
+                        _buildMoodDay('Sat', '—', SafePlayColors.neutral200),
+                        _buildMoodDay('Sun', '—', SafePlayColors.neutral200),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Divider(height: 1),
+              ),
+              
+              // Recent Check-ins
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.history_rounded, size: 18, color: SafePlayColors.brightIndigo),
+                        const SizedBox(width: 8),
+                        const Text('Recent Check-ins', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -848,19 +1486,18 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         Text(
           day,
           style: TextStyle(
-            color: SafePlayColors.neutral500,
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
+            color: SafePlayColors.neutral400,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 6),
         Container(
-          width: 36,
-          height: 36,
+          width: 38,
+          height: 38,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: color.withOpacity(0.3)),
+            color: color.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Center(
             child: Text(emoji, style: const TextStyle(fontSize: 18)),
@@ -872,15 +1509,29 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
 
   Widget _buildCheckinItem(String date, String emoji, String mood, String note) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: SafePlayColors.neutral100,
-        borderRadius: BorderRadius.circular(8),
+        color: SafePlayColors.neutral50,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 28)),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Text(emoji, style: const TextStyle(fontSize: 24)),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -889,147 +1540,21 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      mood,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      date,
-                      style: TextStyle(color: SafePlayColors.neutral500, fontSize: 12),
-                    ),
+                    Text(mood, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    Text(date, style: TextStyle(color: SafePlayColors.neutral400, fontSize: 11)),
                   ],
                 ),
                 const SizedBox(height: 2),
                 Text(
                   note,
-                  style: TextStyle(color: SafePlayColors.neutral600, fontSize: 13),
+                  style: TextStyle(color: SafePlayColors.neutral600, fontSize: 12),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  SliverPadding _buildRecommendedActivitiesSection(
-    BuildContext context,
-    ChildProvider childProvider,
-    ActivityProvider activityProvider,
-  ) {
-    if (childProvider.children.isEmpty) {
-      return const SliverPadding(padding: EdgeInsets.zero);
-    }
-
-    final selectedChild = childProvider.selectedChild;
-    final activities = activityProvider.activities;
-    final isLoading = activityProvider.isLoading;
-
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      sliver: SliverToBoxAdapter(
-        child: Card(
-          elevation: 1,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.school,
-                        color: SafePlayColors.brightIndigo),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Recommended activities',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                if (isLoading)
-                  const LinearProgressIndicator()
-                else if (selectedChild == null)
-                  Text(
-                    'Select a child to preview recommended activities.',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  )
-                else if (activities.isEmpty)
-                  Text(
-                    'No activities available for ${selectedChild.name} yet. Check back soon.',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  )
-                else ...[
-                  ...activities.take(4).map(
-                        (activity) => ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: CircleAvatar(
-                            backgroundColor: SafePlayColors.neutral200,
-                            child: Icon(
-                              Icons.auto_stories,
-                              color: SafePlayColors.brandTeal500,
-                            ),
-                          ),
-                          title: Text(activity.title),
-                          subtitle: Text(
-                            '${activity.subject.displayName} - ${activity.durationMinutes} min - ${activity.points} XP',
-                          ),
-                        ),
-                      ),
-                  if (activities.length > 4)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          '+${activities.length - 4} more activities',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: SafePlayColors.brightIndigo,
-                                  ),
-                        ),
-                      ),
-                    ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatCard(
-    BuildContext context, {
-    required String label,
-    required String value,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Card(
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Icon(icon, size: 26, color: color),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-        ),
       ),
     );
   }
