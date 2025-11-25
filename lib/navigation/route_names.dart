@@ -6,6 +6,8 @@ class RouteNames {
   // Root routes
   static const String splash = '/';
   static const String onboarding = '/onboarding';
+  static const String childOnboarding = '/child-onboarding';
+  static const String parentOnboarding = '/parent-onboarding';
 
   // Authentication routes
   static const String login = '/login';

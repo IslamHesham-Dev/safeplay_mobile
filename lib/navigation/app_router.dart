@@ -25,6 +25,8 @@ import '../screens/teacher/teacher_login_screen.dart';
 import '../screens/teacher/teacher_signup_screen.dart';
 import '../models/user_profile.dart';
 import '../screens/splash_screen.dart';
+import '../screens/onboarding/child_onboarding_screen.dart';
+import '../screens/onboarding/parent_onboarding_screen.dart';
 import 'route_names.dart';
 
 /// Main app router configuration
@@ -51,6 +53,14 @@ class AppRouter {
           GoRoute(
             path: RouteNames.login,
             builder: (context, state) => const SafePlayPortalLoginScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.childOnboarding,
+            builder: (context, state) => const ChildOnboardingScreen(),
+          ),
+          GoRoute(
+            path: RouteNames.parentOnboarding,
+            builder: (context, state) => const ParentOnboardingScreen(),
           ),
           GoRoute(
             path: RouteNames.parentLogin,
@@ -292,5 +302,7 @@ class AppRouter {
     RouteNames.deleteAccount,
     RouteNames.childSelector,
     RouteNames.unifiedChildLogin,
+    RouteNames.childOnboarding,
+    RouteNames.parentOnboarding,
   };
 }
