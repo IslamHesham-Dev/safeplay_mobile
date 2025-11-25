@@ -143,6 +143,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         return 'Browser Controls';
       case 2:
         return 'Wellbeing Reports';
+      case 3:
+        return 'Messaging Safety';
       default:
         return 'Parent Dashboard';
     }
@@ -162,13 +164,14 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(0, Icons.home_rounded, 'Home'),
               _buildNavItem(1, Icons.shield_rounded, 'Controls'),
               _buildNavItem(2, Icons.favorite_rounded, 'Wellbeing'),
+              _buildNavItem(3, Icons.security_rounded, 'Alerts'),
             ],
           ),
         ),
@@ -221,6 +224,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         return _buildParentalControlsScreen(childProvider);
       case 2:
         return _buildWellbeingScreen(childProvider);
+      case 3:
+        return _buildMessagingAlertsScreen(childProvider);
       default:
         return _buildHomeScreen(authProvider, childProvider, activityProvider);
     }
@@ -252,21 +257,14 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             child: _buildStatsRow(context, children.length, selectedChild),
           ),
         ),
-        // Recent Activities Section
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          sliver: SliverToBoxAdapter(
-            child: _buildRecentActivitiesCard(context, childProvider, activityProvider),
-          ),
-        ),
-        // Messaging Safety Alerts Section
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          sliver: SliverToBoxAdapter(
-            child: _buildMessagingSafetyCard(context, childProvider),
-          ),
-        ),
-        SliverPadding(
+                // Recent Activities Section
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  sliver: SliverToBoxAdapter(
+                    child: _buildRecentActivitiesCard(context, childProvider, activityProvider),
+                  ),
+                ),
+                SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           sliver: SliverToBoxAdapter(
             child: ChildrenListWidget(
@@ -489,23 +487,28 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             child: DropdownButtonFormField<String>(
               value: selectedChild?.id,
               decoration: InputDecoration(
-                prefixIcon: selectedChild != null
-                    ? Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: _buildChildAvatar(selectedChild.gender, 24),
-                      )
-                    : const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: Icon(Icons.child_care, color: SafePlayColors.neutral400, size: 24),
-                      ),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 hintText: 'Select a child',
                 hintStyle: TextStyle(color: SafePlayColors.neutral400),
               ),
               dropdownColor: Colors.white,
               borderRadius: BorderRadius.circular(12),
               isExpanded: true,
+              selectedItemBuilder: (context) {
+                return childProvider.children.map((child) {
+                  return Row(
+                    children: [
+                      _buildChildAvatar(child.gender, 28),
+                      const SizedBox(width: 12),
+                      Text(
+                        child.name,
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  );
+                }).toList();
+              },
               items: childProvider.children
                   .map((child) => DropdownMenuItem(
                         value: child.id,
@@ -897,435 +900,6 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     } else {
       return '${difference.inDays}d ago';
     }
-  }
-
-  // ============ MESSAGING SAFETY CARD ============
-  Widget _buildMessagingSafetyCard(BuildContext context, ChildProvider childProvider) {
-    final selectedChild = childProvider.selectedChild;
-    final hasChild = childProvider.children.isNotEmpty;
-    
-    final List<Map<String, dynamic>> alerts = selectedChild != null ? [
-      {
-        'type': 'profanity',
-        'severity': 'medium',
-        'message': 'Mild inappropriate language detected',
-        'contact': 'Teacher Sarah',
-        'time': DateTime.now().subtract(const Duration(hours: 3)),
-        'reviewed': false,
-      },
-      {
-        'type': 'bullying',
-        'severity': 'high',
-        'message': 'Potential bullying language flagged',
-        'contact': 'Student Mike',
-        'time': DateTime.now().subtract(const Duration(days: 1)),
-        'reviewed': true,
-      },
-    ] : [];
-    
-    final unreviewedCount = alerts.where((a) => a['reviewed'] == false).length;
-    
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          childrenPadding: EdgeInsets.zero,
-          leading: Stack(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      SafePlayColors.error.withOpacity(0.15),
-                      SafePlayColors.error.withOpacity(0.05),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.security_rounded, color: SafePlayColors.error, size: 24),
-              ),
-              if (unreviewedCount > 0)
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: SafePlayColors.error,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      unreviewedCount.toString(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          title: const Text(
-            'Messaging Safety',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Row(
-              children: [
-                if (selectedChild != null) ...[
-                  if (unreviewedCount > 0) ...[
-                    Icon(Icons.warning_amber_rounded, size: 14, color: SafePlayColors.warning),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$unreviewedCount alert${unreviewedCount > 1 ? 's' : ''} to review',
-                      style: TextStyle(color: SafePlayColors.warning, fontSize: 12, fontWeight: FontWeight.w500),
-                    ),
-                  ] else ...[
-                    Icon(Icons.check_circle_rounded, size: 14, color: SafePlayColors.success),
-                    const SizedBox(width: 4),
-                    Text(
-                      'All clear',
-                      style: TextStyle(color: SafePlayColors.success, fontSize: 12, fontWeight: FontWeight.w500),
-                    ),
-                  ],
-                ] else
-                  Text(
-                    hasChild ? 'Select a child above' : 'Add a child first',
-                    style: TextStyle(color: SafePlayColors.neutral400, fontSize: 12),
-                  ),
-              ],
-            ),
-          ),
-          children: [
-            if (!hasChild)
-              _buildEmptyStateMessage(
-                'Add a child to monitor their messaging safety.',
-                Icons.child_care_rounded,
-                SafePlayColors.brandOrange500,
-              )
-            else if (selectedChild == null)
-              _buildEmptyStateMessage(
-                'Select a child from the dropdown to view their messaging alerts.',
-                Icons.touch_app_rounded,
-                SafePlayColors.brandTeal500,
-              )
-            else ...[
-              // AI Safety Banner
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        SafePlayColors.brightIndigo.withOpacity(0.1),
-                        SafePlayColors.brightDeepPurple.withOpacity(0.05),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: SafePlayColors.brightIndigo.withOpacity(0.2)),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: SafePlayColors.brightIndigo.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.smart_toy_rounded, color: SafePlayColors.brightIndigo, size: 22),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'AI Safety Guard Active',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Real-time monitoring for ${selectedChild.name}\'s messages',
-                              style: TextStyle(color: SafePlayColors.neutral600, fontSize: 11),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: SafePlayColors.success,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Text(
-                          'ON',
-                          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              
-              // What AI Monitors
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.visibility_rounded, size: 16, color: SafePlayColors.brightIndigo),
-                        const SizedBox(width: 8),
-                        const Text('What we monitor', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _buildMonitorChip('Profanity', Icons.report_rounded, SafePlayColors.error),
-                        _buildMonitorChip('Bullying', Icons.warning_rounded, SafePlayColors.warning),
-                        _buildMonitorChip('Sensitive Topics', Icons.psychology_rounded, SafePlayColors.juniorPurple),
-                        _buildMonitorChip('Stranger Danger', Icons.person_off_rounded, SafePlayColors.brandOrange500),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Divider(height: 1),
-              ),
-              
-              // Recent Alerts
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.notifications_active_rounded, size: 16, color: SafePlayColors.error),
-                        const SizedBox(width: 8),
-                        const Text('Recent Alerts', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                        const Spacer(),
-                        if (alerts.isNotEmpty)
-                          TextButton(
-                            onPressed: () {},
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: Text(
-                              'View All',
-                              style: TextStyle(color: SafePlayColors.brightIndigo, fontSize: 12, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    if (alerts.isEmpty)
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: SafePlayColors.success.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: SafePlayColors.success.withOpacity(0.2)),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.verified_rounded, color: SafePlayColors.success, size: 28),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'All Clear!',
-                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                  ),
-                                  Text(
-                                    'No safety concerns detected in recent messages.',
-                                    style: TextStyle(color: SafePlayColors.neutral600, fontSize: 12),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else
-                      ...alerts.map((alert) => _buildSafetyAlertItem(alert)),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMonitorChip(String label, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSafetyAlertItem(Map<String, dynamic> alert) {
-    final severity = alert['severity'] as String;
-    final reviewed = alert['reviewed'] as bool;
-    final time = alert['time'] as DateTime;
-    
-    Color severityColor;
-    IconData severityIcon;
-    switch (severity) {
-      case 'high':
-        severityColor = SafePlayColors.error;
-        severityIcon = Icons.error_rounded;
-        break;
-      case 'medium':
-        severityColor = SafePlayColors.warning;
-        severityIcon = Icons.warning_rounded;
-        break;
-      default:
-        severityColor = SafePlayColors.brandOrange500;
-        severityIcon = Icons.info_rounded;
-    }
-    
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: reviewed ? SafePlayColors.neutral50 : severityColor.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: reviewed ? SafePlayColors.neutral200 : severityColor.withOpacity(0.3),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: severityColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(severityIcon, color: severityColor, size: 18),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      alert['message'] as String,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                        color: reviewed ? SafePlayColors.neutral600 : SafePlayColors.neutral900,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'With ${alert['contact']} • ${_formatTime(time)}',
-                      style: TextStyle(color: SafePlayColors.neutral500, fontSize: 11),
-                    ),
-                  ],
-                ),
-              ),
-              if (!reviewed)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: severityColor,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'NEW',
-                    style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
-                  ),
-                )
-              else
-                Icon(Icons.check_circle_rounded, color: SafePlayColors.success, size: 20),
-            ],
-          ),
-          if (!reviewed) ...[
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.visibility_rounded, size: 16),
-                    label: const Text('View Message'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: SafePlayColors.brightIndigo,
-                      side: BorderSide(color: SafePlayColors.brightIndigo.withOpacity(0.3)),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.check_rounded, size: 16),
-                    label: const Text('Mark Reviewed'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: SafePlayColors.success,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
   }
 
   Widget _buildEmptyStateMessage(String message, IconData icon, Color color) {
@@ -1957,42 +1531,77 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             ),
             const SizedBox(height: 24),
             
-            // Overall Score
+            // Overall Score - Wide Banner
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                gradient: LinearGradient(
+                  colors: [SafePlayColors.success, SafePlayColors.success.withOpacity(0.8)],
+                ),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    color: SafePlayColors.success.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
-              child: Column(
+              child: Row(
                 children: [
-                  const Text('😊', style: TextStyle(fontSize: 64)),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Overall: Good',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
-                  ),
-                  const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: SafePlayColors.success.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    child: Text(
-                      '85% Wellbeing Score',
-                      style: TextStyle(
-                        color: SafePlayColors.success,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                    child: const Text('😊', style: TextStyle(fontSize: 40)),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Overall Wellbeing',
+                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Good',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 28,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          '85%',
+                          style: TextStyle(
+                            color: SafePlayColors.success,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
+                          ),
+                        ),
+                        Text(
+                          'Score',
+                          style: TextStyle(
+                            color: SafePlayColors.success.withOpacity(0.7),
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -2171,6 +1780,651 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============ MESSAGING ALERTS SCREEN ============
+  Widget _buildMessagingAlertsScreen(ChildProvider childProvider) {
+    final selectedChild = childProvider.selectedChild;
+    final hasChild = childProvider.children.isNotEmpty;
+    
+    // Detailed mock alerts data
+    final List<Map<String, dynamic>> alerts = selectedChild != null ? [
+      {
+        'id': '1',
+        'type': 'profanity',
+        'severity': 'medium',
+        'title': 'Inappropriate Language Detected',
+        'message': 'A mild inappropriate word was used in the conversation.',
+        'contact': 'Teacher Sarah',
+        'contactRole': 'Math Teacher',
+        'time': DateTime.now().subtract(const Duration(hours: 3)),
+        'reviewed': false,
+        'flaggedText': '"I hate this stupid homework"',
+        'context': 'During a homework help conversation about math problems.',
+        'aiConfidence': 87,
+      },
+      {
+        'id': '2',
+        'type': 'bullying',
+        'severity': 'high',
+        'title': 'Potential Bullying Language',
+        'message': 'Language that could be considered bullying was detected.',
+        'contact': 'Student Mike',
+        'contactRole': 'Classmate',
+        'time': DateTime.now().subtract(const Duration(days: 1)),
+        'reviewed': true,
+        'flaggedText': '"You\'re so dumb, nobody likes you"',
+        'context': 'Message received from another student during group chat.',
+        'aiConfidence': 94,
+      },
+      {
+        'id': '3',
+        'type': 'sensitive',
+        'severity': 'low',
+        'title': 'Sensitive Topic Mentioned',
+        'message': 'A potentially sensitive topic was discussed.',
+        'contact': 'Counselor Amy',
+        'contactRole': 'School Counselor',
+        'time': DateTime.now().subtract(const Duration(days: 2)),
+        'reviewed': true,
+        'flaggedText': '"I\'ve been feeling really sad lately"',
+        'context': 'During a scheduled check-in with the school counselor.',
+        'aiConfidence': 72,
+      },
+    ] : [];
+    
+    final unreviewedCount = alerts.where((a) => a['reviewed'] == false).length;
+    
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Child Selector
+          _buildChildSelectorCard(context, childProvider),
+          const SizedBox(height: 20),
+          
+          if (!hasChild)
+            _buildFullEmptyState(
+              'Add a child first',
+              'You need to add a child before viewing messaging alerts.',
+              Icons.child_care_rounded,
+              SafePlayColors.brandOrange500,
+            )
+          else if (selectedChild == null)
+            _buildFullEmptyState(
+              'Select a child',
+              'Choose a child from the dropdown above to view their messaging safety alerts.',
+              Icons.touch_app_rounded,
+              SafePlayColors.brandTeal500,
+            )
+          else ...[
+            // Header
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [SafePlayColors.error, SafePlayColors.error.withOpacity(0.8)],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: SafePlayColors.error.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(Icons.security_rounded, color: Colors.white, size: 32),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${selectedChild.name}\'s Messages',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'AI-powered safety monitoring',
+                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (unreviewedCount > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            unreviewedCount.toString(),
+                            style: TextStyle(
+                              color: SafePlayColors.error,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                            ),
+                          ),
+                          Text(
+                            'New',
+                            style: TextStyle(
+                              color: SafePlayColors.error.withOpacity(0.7),
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            
+            // AI Safety Status
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: SafePlayColors.brightIndigo.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.smart_toy_rounded, color: SafePlayColors.brightIndigo, size: 24),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('AI Safety Guard', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                        Text('Monitoring all messages in real-time', style: TextStyle(color: SafePlayColors.neutral500, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: SafePlayColors.success,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.check_circle, color: Colors.white, size: 16),
+                        SizedBox(width: 4),
+                        Text('Active', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            // What We Monitor
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: SafePlayColors.juniorPurple.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.visibility_rounded, color: SafePlayColors.juniorPurple, size: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'What We Monitor',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(child: _buildMonitorItem('Profanity', Icons.report_rounded, SafePlayColors.error)),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildMonitorItem('Bullying', Icons.warning_rounded, SafePlayColors.warning)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(child: _buildMonitorItem('Sensitive Topics', Icons.psychology_rounded, SafePlayColors.juniorPurple)),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildMonitorItem('Stranger Danger', Icons.person_off_rounded, SafePlayColors.brandOrange500)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            
+            // Alerts List
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: SafePlayColors.error.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.notifications_active_rounded, color: SafePlayColors.error, size: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'Safety Alerts',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: SafePlayColors.neutral100,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${alerts.length} total',
+                          style: TextStyle(color: SafePlayColors.neutral600, fontSize: 12, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  if (alerts.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: SafePlayColors.success.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: SafePlayColors.success.withOpacity(0.2)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.verified_rounded, color: SafePlayColors.success, size: 40),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'All Clear!',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'No safety concerns detected in ${selectedChild.name}\'s recent messages.',
+                                  style: TextStyle(color: SafePlayColors.neutral600, fontSize: 13),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    ...alerts.map((alert) => _buildDetailedAlertItem(alert)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 100),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonitorItem(String label, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withOpacity(0.15)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailedAlertItem(Map<String, dynamic> alert) {
+    final severity = alert['severity'] as String;
+    final reviewed = alert['reviewed'] as bool;
+    final time = alert['time'] as DateTime;
+    final aiConfidence = alert['aiConfidence'] as int;
+    
+    Color severityColor;
+    IconData severityIcon;
+    String severityLabel;
+    switch (severity) {
+      case 'high':
+        severityColor = SafePlayColors.error;
+        severityIcon = Icons.error_rounded;
+        severityLabel = 'High Priority';
+        break;
+      case 'medium':
+        severityColor = SafePlayColors.warning;
+        severityIcon = Icons.warning_rounded;
+        severityLabel = 'Medium Priority';
+        break;
+      default:
+        severityColor = SafePlayColors.brandOrange500;
+        severityIcon = Icons.info_rounded;
+        severityLabel = 'Low Priority';
+    }
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: reviewed ? SafePlayColors.neutral50 : severityColor.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: reviewed ? SafePlayColors.neutral200 : severityColor.withOpacity(0.3),
+          width: reviewed ? 1 : 2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: reviewed ? SafePlayColors.neutral100 : severityColor.withOpacity(0.08),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(14),
+                topRight: Radius.circular(14),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: severityColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(severityIcon, color: severityColor, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        alert['title'] as String,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: reviewed ? SafePlayColors.neutral600 : SafePlayColors.neutral900,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: severityColor.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              severityLabel,
+                              style: TextStyle(color: severityColor, fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _formatTime(time),
+                            style: TextStyle(color: SafePlayColors.neutral500, fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                if (!reviewed)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: severityColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'NEW',
+                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                  )
+                else
+                  Icon(Icons.check_circle_rounded, color: SafePlayColors.success, size: 24),
+              ],
+            ),
+          ),
+          
+          // Content
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Contact Info
+                Row(
+                  children: [
+                    Icon(Icons.person_rounded, size: 16, color: SafePlayColors.neutral500),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${alert['contact']}',
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: SafePlayColors.brightIndigo.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        alert['contactRole'] as String,
+                        style: TextStyle(color: SafePlayColors.brightIndigo, fontSize: 10, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                
+                // Flagged Text
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: severityColor.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: severityColor.withOpacity(0.15)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.format_quote_rounded, size: 14, color: severityColor),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Flagged Message',
+                            style: TextStyle(color: severityColor, fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        alert['flaggedText'] as String,
+                        style: TextStyle(
+                          color: SafePlayColors.neutral900,
+                          fontSize: 14,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                
+                // Context
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline_rounded, size: 16, color: SafePlayColors.neutral500),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        alert['context'] as String,
+                        style: TextStyle(color: SafePlayColors.neutral600, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                
+                // AI Confidence
+                Row(
+                  children: [
+                    Icon(Icons.smart_toy_rounded, size: 16, color: SafePlayColors.brightIndigo),
+                    const SizedBox(width: 6),
+                    Text(
+                      'AI Confidence: ',
+                      style: TextStyle(color: SafePlayColors.neutral600, fontSize: 12),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: SafePlayColors.brightIndigo.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '$aiConfidence%',
+                        style: TextStyle(
+                          color: SafePlayColors.brightIndigo,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                
+                if (!reviewed) ...[
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {},
+                          icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
+                          label: const Text('View Full Chat'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: SafePlayColors.brightIndigo,
+                            side: BorderSide(color: SafePlayColors.brightIndigo.withOpacity(0.3)),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {},
+                          icon: const Icon(Icons.check_rounded, size: 16),
+                          label: const Text('Mark Reviewed'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: SafePlayColors.success,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
