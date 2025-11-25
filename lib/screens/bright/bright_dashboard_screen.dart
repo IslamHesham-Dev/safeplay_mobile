@@ -41,6 +41,7 @@ import '../../widgets/junior/web_game_card.dart';
 import '../junior/web_game_detail_screen.dart';
 import 'messaging_screen.dart';
 import '../safety/safe_search_screen.dart';
+import '../safety/wellbeing_check_screen.dart';
 
 /// Bright (9-12) dashboard screen that reuses the junior UI for consistency
 class BrightDashboardScreen extends StatefulWidget {
@@ -1451,6 +1452,19 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     return Column(
       children: [
         _buildDailyTasksProgress(),
+        const SizedBox(height: JuniorTheme.spacingLarge),
+        // Wellbeing Check Widget
+        WellbeingCheckWidget(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const Scaffold(
+                  body: WellbeingCheckScreen(),
+                ),
+              ),
+            );
+          },
+        ),
         const SizedBox(height: JuniorTheme.spacingLarge),
         _buildTodaysTasksSection(),
         const SizedBox(height: JuniorTheme.spacingLarge),

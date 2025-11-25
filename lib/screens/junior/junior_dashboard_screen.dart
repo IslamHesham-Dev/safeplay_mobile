@@ -39,6 +39,7 @@ import '../../services/web_game_service.dart';
 import '../../widgets/junior/web_game_card.dart';
 import 'web_game_detail_screen.dart';
 import '../safety/safe_search_screen.dart';
+import '../safety/wellbeing_check_screen.dart';
 
 /// Junior (6-8) specific dashboard screen with age-appropriate UI
 class JuniorDashboardScreen extends StatefulWidget {
@@ -1481,6 +1482,19 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     return Column(
       children: [
         _buildDailyTasksProgress(),
+        const SizedBox(height: JuniorTheme.spacingLarge),
+        // Wellbeing Check Widget
+        WellbeingCheckWidget(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const Scaffold(
+                  body: WellbeingCheckScreen(),
+                ),
+              ),
+            );
+          },
+        ),
         const SizedBox(height: JuniorTheme.spacingLarge),
         _buildTodaysTasksSection(),
         const SizedBox(height: JuniorTheme.spacingLarge),

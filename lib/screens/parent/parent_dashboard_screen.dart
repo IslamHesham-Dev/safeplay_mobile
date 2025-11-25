@@ -29,6 +29,15 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   String? _lastLoadedChildId;
   bool _isSyncingChild = false;
 
+  // Parental controls state (UI only)
+  bool _safeSearchEnabled = true;
+  bool _blockAds = true;
+  bool _blockSocialMedia = true;
+  bool _blockGambling = true;
+  bool _blockViolence = true;
+  final List<String> _blockedKeywords = ['violence', 'gambling', 'adult'];
+  final List<String> _allowedSites = ['wikipedia.org', 'nationalgeographic.com', 'nasa.gov'];
+
   @override
   void initState() {
     super.initState();
@@ -132,6 +141,20 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   sliver: SliverToBoxAdapter(
                     child:
                         _buildStatsRow(context, children.length, selectedChild),
+                  ),
+                ),
+                // Parental Controls Section
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  sliver: SliverToBoxAdapter(
+                    child: _buildParentalControlsCard(context, childProvider),
+                  ),
+                ),
+                // Wellbeing Section
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  sliver: SliverToBoxAdapter(
+                    child: _buildWellbeingCard(context, childProvider),
                   ),
                 ),
                 _buildRecommendedActivitiesSection(
@@ -354,6 +377,538 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  // ============ PARENTAL CONTROLS CARD ============
+  Widget _buildParentalControlsCard(BuildContext context, ChildProvider childProvider) {
+    final selectedChild = childProvider.selectedChild;
+    
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: SafePlayColors.brightIndigo.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.shield_outlined, color: SafePlayColors.brightIndigo),
+          ),
+          title: const Text(
+            'Browser Parental Controls',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          subtitle: Text(
+            selectedChild != null 
+                ? 'Settings for ${selectedChild.name}'
+                : 'Select a child to configure',
+            style: TextStyle(color: SafePlayColors.neutral600, fontSize: 12),
+          ),
+          children: [
+            if (childProvider.children.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline, color: SafePlayColors.warning),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Add a child first to configure their browser settings.',
+                        style: TextStyle(color: SafePlayColors.neutral700),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else if (selectedChild == null)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    const Icon(Icons.touch_app, color: SafePlayColors.brandTeal500),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Select a child from the dropdown above to configure their settings.',
+                        style: TextStyle(color: SafePlayColors.neutral700),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else ...[
+              // Safe Search Toggle
+              SwitchListTile(
+                title: const Text('Safe Search'),
+                subtitle: const Text('Filter inappropriate content from searches'),
+                value: _safeSearchEnabled,
+                onChanged: (value) => setState(() => _safeSearchEnabled = value),
+                activeColor: SafePlayColors.brandTeal500,
+              ),
+              const Divider(height: 1),
+              
+              // Content Filters
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.filter_alt_outlined, size: 20, color: SafePlayColors.brightIndigo),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Content Filters',
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _buildFilterChip('Block Ads', _blockAds, (v) => setState(() => _blockAds = v)),
+                    _buildFilterChip('Block Social Media', _blockSocialMedia, (v) => setState(() => _blockSocialMedia = v)),
+                    _buildFilterChip('Block Gambling', _blockGambling, (v) => setState(() => _blockGambling = v)),
+                    _buildFilterChip('Block Violence', _blockViolence, (v) => setState(() => _blockViolence = v)),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              
+              // Blocked Keywords
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.block, size: 20, color: SafePlayColors.error),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Blocked Keywords',
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        ..._blockedKeywords.map((keyword) => Chip(
+                          label: Text(keyword),
+                          deleteIcon: const Icon(Icons.close, size: 16),
+                          onDeleted: () => setState(() => _blockedKeywords.remove(keyword)),
+                          backgroundColor: SafePlayColors.error.withOpacity(0.1),
+                          labelStyle: const TextStyle(color: SafePlayColors.error),
+                        )),
+                        ActionChip(
+                          avatar: const Icon(Icons.add, size: 16),
+                          label: const Text('Add'),
+                          onPressed: () => _showAddKeywordDialog(),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              
+              // Allowed Sites
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.verified_outlined, size: 20, color: SafePlayColors.success),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Allowed Websites',
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    ..._allowedSites.map((site) => ListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.language, color: SafePlayColors.success, size: 20),
+                      title: Text(site),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.remove_circle_outline, color: SafePlayColors.error, size: 20),
+                        onPressed: () => setState(() => _allowedSites.remove(site)),
+                      ),
+                    )),
+                    TextButton.icon(
+                      onPressed: () => _showAddSiteDialog(),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add Website'),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Save Button
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Settings saved for ${selectedChild.name}'),
+                          backgroundColor: SafePlayColors.success,
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: SafePlayColors.brandTeal500,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Save Settings'),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, bool value, Function(bool) onChanged) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: SafePlayColors.brandTeal500,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddKeywordDialog() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Blocked Keyword'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: 'Enter keyword to block',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.isNotEmpty) {
+                setState(() => _blockedKeywords.add(controller.text));
+              }
+              Navigator.pop(context);
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddSiteDialog() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Allowed Website'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: 'e.g., example.com',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.text.isNotEmpty) {
+                setState(() => _allowedSites.add(controller.text));
+              }
+              Navigator.pop(context);
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============ WELLBEING CARD ============
+  Widget _buildWellbeingCard(BuildContext context, ChildProvider childProvider) {
+    final selectedChild = childProvider.selectedChild;
+    
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: SafePlayColors.juniorPink.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.favorite_outline, color: SafePlayColors.juniorPink),
+          ),
+          title: const Text(
+            'Wellbeing Reports',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          subtitle: Text(
+            selectedChild != null 
+                ? '${selectedChild.name}\'s emotional health'
+                : 'Select a child to view',
+            style: TextStyle(color: SafePlayColors.neutral600, fontSize: 12),
+          ),
+          children: [
+            if (childProvider.children.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline, color: SafePlayColors.warning),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Add a child first to view their wellbeing reports.',
+                        style: TextStyle(color: SafePlayColors.neutral700),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else if (selectedChild == null)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    const Icon(Icons.touch_app, color: SafePlayColors.brandTeal500),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Select a child from the dropdown above to view their wellbeing.',
+                        style: TextStyle(color: SafePlayColors.neutral700),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else ...[
+              // Weekly Mood Summary
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_today, size: 20, color: SafePlayColors.juniorPink),
+                        const SizedBox(width: 8),
+                        Text(
+                          'This Week\'s Mood',
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildMoodDay('Mon', '🤩', SafePlayColors.success),
+                        _buildMoodDay('Tue', '🙂', SafePlayColors.brandTeal500),
+                        _buildMoodDay('Wed', '🙂', SafePlayColors.brandTeal500),
+                        _buildMoodDay('Thu', '😐', SafePlayColors.warning),
+                        _buildMoodDay('Fri', '🤩', SafePlayColors.success),
+                        _buildMoodDay('Sat', '—', SafePlayColors.neutral300),
+                        _buildMoodDay('Sun', '—', SafePlayColors.neutral300),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              
+              // Overall Score
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: SafePlayColors.success.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Text('😊', style: TextStyle(fontSize: 40)),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Overall Wellbeing',
+                              style: TextStyle(color: SafePlayColors.neutral600, fontSize: 12),
+                            ),
+                            const Text(
+                              'Good',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: SafePlayColors.success,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: SafePlayColors.success,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          '85%',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Divider(height: 1),
+              
+              // Recent Check-ins
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.history, size: 20, color: SafePlayColors.brightIndigo),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Recent Check-ins',
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _buildCheckinItem('Today', '🤩', 'Awesome', 'Had a great day at school!'),
+                    _buildCheckinItem('Yesterday', '🙂', 'Good', 'Played with friends'),
+                    _buildCheckinItem('2 days ago', '😐', 'Okay', 'Felt a bit tired'),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMoodDay(String day, String emoji, Color color) {
+    return Column(
+      children: [
+        Text(
+          day,
+          style: TextStyle(
+            color: SafePlayColors.neutral500,
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: color.withOpacity(0.3)),
+          ),
+          child: Center(
+            child: Text(emoji, style: const TextStyle(fontSize: 18)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCheckinItem(String date, String emoji, String mood, String note) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: SafePlayColors.neutral100,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 28)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      mood,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      date,
+                      style: TextStyle(color: SafePlayColors.neutral500, fontSize: 12),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  note,
+                  style: TextStyle(color: SafePlayColors.neutral600, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
