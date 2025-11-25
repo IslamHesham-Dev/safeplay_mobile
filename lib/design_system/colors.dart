@@ -4,6 +4,7 @@ class SafePlayColors {
   // Brand - Teal
   static const Color brandTeal50 = Color(0xFFE6F7F7);
   static const Color brandTeal100 = Color(0xFFB3E8E8);
+  static const Color brandTeal200 = Color(0xFF80CBC4);
   static const Color brandTeal500 = Color(0xFF00A8A8);
   static const Color brandTeal600 = Color(0xFF008F8F);
   static const Color brandTeal700 = Color(0xFF007676);

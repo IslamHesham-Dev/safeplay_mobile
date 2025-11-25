@@ -39,6 +39,8 @@ import '../../models/web_game.dart';
 import '../../services/web_game_service.dart';
 import '../../widgets/junior/web_game_card.dart';
 import '../junior/web_game_detail_screen.dart';
+import 'messaging_screen.dart';
+import '../safety/safe_search_screen.dart';
 
 /// Bright (9-12) dashboard screen that reuses the junior UI for consistency
 class BrightDashboardScreen extends StatefulWidget {
@@ -477,6 +479,58 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
+    
+    // For Messages and Search, show full-screen content with navbar
+    if (_currentBottomNavIndex == 1 || _currentBottomNavIndex == 2) {
+      return Scaffold(
+        backgroundColor: JuniorTheme.backgroundLight,
+        body: Stack(
+          children: [
+            // Full-screen content for Messages or Search
+            Positioned.fill(
+              bottom: 80, // Leave space for nav bar
+              child: SafeArea(
+                bottom: false,
+                child: _currentBottomNavIndex == 1
+                    ? const MessagingScreen()
+                    : const SafeSearchScreen(),
+              ),
+            ),
+            // Floating navigation bar
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: SafeArea(
+                child: JuniorBottomNavigation(
+                  currentIndex: _currentBottomNavIndex,
+                  onTap: _handleBottomNavTap,
+                  items: const [
+                    JuniorNavigationItem(
+                      icon: Icons.home,
+                      activeIcon: Icons.home,
+                      label: 'Home',
+                    ),
+                    JuniorNavigationItem(
+                      icon: Icons.chat_bubble_outline,
+                      activeIcon: Icons.chat_bubble,
+                      label: 'Messages',
+                    ),
+                    JuniorNavigationItem(
+                      icon: Icons.public,
+                      activeIcon: Icons.public,
+                      label: 'Search',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    // Default Home dashboard layout
     return Scaffold(
       backgroundColor: JuniorTheme.backgroundLight,
       body: Stack(
@@ -655,14 +709,14 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                     label: 'Home',
                   ),
                   JuniorNavigationItem(
-                    icon: Icons.notifications,
-                    activeIcon: Icons.notifications,
-                    label: 'Notifications',
+                    icon: Icons.chat_bubble_outline,
+                    activeIcon: Icons.chat_bubble,
+                    label: 'Messages',
                   ),
                   JuniorNavigationItem(
-                    icon: Icons.card_giftcard,
-                    activeIcon: Icons.card_giftcard,
-                    label: 'Rewards',
+                    icon: Icons.public,
+                    activeIcon: Icons.public,
+                    label: 'Search',
                   ),
                 ],
               ),
@@ -1387,62 +1441,34 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   void _handleBottomNavTap(int index) {
     _playClickSound();
     setState(() {
-      // Map: 0 = Home, 1 = Notifications (Achievements), 2 = Rewards
+      // Map: 0 = Home, 1 = Messaging, 2 = Search
       _currentBottomNavIndex = index;
     });
   }
 
   Widget _buildCurrentScreen() {
-    switch (_currentBottomNavIndex) {
-      case 0: // Home - Dashboard
-        return Column(
-          children: [
-            _buildDailyTasksProgress(),
-            const SizedBox(height: JuniorTheme.spacingLarge),
-            _buildTodaysTasksSection(),
-            const SizedBox(height: JuniorTheme.spacingLarge),
-            _buildScienceGamesSection(),
-            const SizedBox(height: JuniorTheme.spacingMedium),
-            _buildScienceSimulationsSection(),
-            const SizedBox(height: JuniorTheme.spacingLarge),
-            _buildMathGamesSection(),
-            const SizedBox(height: JuniorTheme.spacingMedium),
-            _buildMathSimulationsSection(),
-            const SizedBox(height: JuniorTheme.spacingLarge),
-            _buildEnglishGamesSection(),
-            const SizedBox(height: JuniorTheme.spacingLarge),
-            _buildBooksSection(),
-            const SizedBox(
-                height: 80), // Extra space at bottom for floating nav bar
-          ],
-        );
-      case 1: // Notifications - Show Achievements
-        return _buildAchievementsScreen();
-      case 2: // Rewards - Show Rewards screen
-        return _buildRewardsScreen();
-      default:
-        return Column(
-          children: [
-            _buildDailyTasksProgress(),
-            const SizedBox(height: JuniorTheme.spacingLarge),
-            _buildTodaysTasksSection(),
-            const SizedBox(height: JuniorTheme.spacingLarge),
-            _buildScienceGamesSection(),
-            const SizedBox(height: JuniorTheme.spacingMedium),
-            _buildScienceSimulationsSection(),
-            const SizedBox(height: JuniorTheme.spacingLarge),
-            _buildMathGamesSection(),
-            const SizedBox(height: JuniorTheme.spacingMedium),
-            _buildMathSimulationsSection(),
-            const SizedBox(height: JuniorTheme.spacingLarge),
-            _buildEnglishGamesSection(),
-            const SizedBox(height: JuniorTheme.spacingLarge),
-            _buildBooksSection(),
-            const SizedBox(
-                height: 80), // Extra space at bottom for floating nav bar
-          ],
-        );
-    }
+    // Home dashboard content (Messages and Search are handled in build())
+    return Column(
+      children: [
+        _buildDailyTasksProgress(),
+        const SizedBox(height: JuniorTheme.spacingLarge),
+        _buildTodaysTasksSection(),
+        const SizedBox(height: JuniorTheme.spacingLarge),
+        _buildScienceGamesSection(),
+        const SizedBox(height: JuniorTheme.spacingMedium),
+        _buildScienceSimulationsSection(),
+        const SizedBox(height: JuniorTheme.spacingLarge),
+        _buildMathGamesSection(),
+        const SizedBox(height: JuniorTheme.spacingMedium),
+        _buildMathSimulationsSection(),
+        const SizedBox(height: JuniorTheme.spacingLarge),
+        _buildEnglishGamesSection(),
+        const SizedBox(height: JuniorTheme.spacingLarge),
+        _buildBooksSection(),
+        const SizedBox(
+            height: 80), // Extra space at bottom for floating nav bar
+      ],
+    );
   }
 
   String _getCategoryIcon(String category) {
