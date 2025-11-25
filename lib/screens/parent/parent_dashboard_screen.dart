@@ -31,7 +31,6 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
 
   // Parental controls state (UI only)
   bool _safeSearchEnabled = true;
-  bool _blockAds = true;
   bool _blockSocialMedia = true;
   bool _blockGambling = true;
   bool _blockViolence = true;
@@ -1057,7 +1056,6 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  _buildFilterToggle('Block Ads', _blockAds, (v) => setState(() => _blockAds = v)),
                   _buildFilterToggle('Block Social Media', _blockSocialMedia, (v) => setState(() => _blockSocialMedia = v)),
                   _buildFilterToggle('Block Gambling Sites', _blockGambling, (v) => setState(() => _blockGambling = v)),
                   _buildFilterToggle('Block Violence', _blockViolence, (v) => setState(() => _blockViolence = v)),

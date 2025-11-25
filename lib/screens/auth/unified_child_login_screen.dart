@@ -339,7 +339,7 @@ class _UnifiedChildLoginScreenState extends State<UnifiedChildLoginScreen>
               Row(
                 children: [
                   IconButton(
-                    onPressed: () => context.pop(),
+                    onPressed: () => context.go(RouteNames.login),
                     icon: const Icon(Icons.arrow_back),
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.white,

@@ -108,6 +108,10 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Parent Login'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go(RouteNames.login),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(

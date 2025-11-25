@@ -51,7 +51,7 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
       color: const Color(0xFF7E57C2),
       highlights: [
         'Safe search filtering enabled by default',
-        'Block ads, social media, and harmful content',
+        'Block social media and harmful content',
         'Custom blocked keywords',
         'Whitelist trusted websites',
       ],
@@ -109,7 +109,7 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
         'Add your first child profile',
         'Configure safety settings',
         'Monitor progress anytime',
-        'Support available 24/7',
+        'View activity reports',
       ],
       isLast: true,
     ),
@@ -523,9 +523,9 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
         children: [
           _buildToggleRow('Safe Search', true, page.color),
           const Divider(height: 24),
-          _buildToggleRow('Block Ads', true, page.color),
-          const Divider(height: 24),
           _buildToggleRow('Block Social Media', true, page.color),
+          const Divider(height: 24),
+          _buildToggleRow('Block Violence', true, page.color),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(12),
