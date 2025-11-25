@@ -29,7 +29,7 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
       features: [
         FeatureItem('🎯', 'Fun Games', 'Play exciting learning games'),
         FeatureItem('🪙', 'Earn Coins', 'Collect coins as you play'),
-        FeatureItem('🏆', 'Win Badges', 'Get cool badges for achievements'),
+        FeatureItem('📚', 'Read Books', 'Discover amazing stories'),
       ],
     ),
     OnboardingPage(
@@ -47,6 +47,20 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
       mockupType: MockupType.gameCategories,
     ),
     OnboardingPage(
+      title: 'Try Cool Simulations! 🧪',
+      subtitle: 'Experiment freely and learn by doing!',
+      description: 'Play with real science simulations! Balance scales, mix states of matter, explore electricity, and more—all by yourself!',
+      emoji: '⚗️',
+      color: const Color(0xFF00BCD4),
+      secondaryColor: const Color(0xFF4DD0E1),
+      features: [
+        FeatureItem('⚖️', 'Balance Scale', 'Make equations equal'),
+        FeatureItem('💧', 'States of Matter', 'See atoms move in solids, liquids & gases'),
+        FeatureItem('⚡', 'Static Electricity', 'Watch charges push and pull'),
+      ],
+      mockupType: MockupType.simulations,
+    ),
+    OnboardingPage(
       title: 'Stay Safe Online 🛡️',
       subtitle: 'We keep you protected!',
       description: 'SafePlay makes sure everything you see and do is safe and fun.',
@@ -61,7 +75,7 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
       mockupType: MockupType.safetyFeatures,
     ),
     OnboardingPage(
-      title: 'Earn Coins & Badges 🪙',
+      title: 'Earn Coins! 🪙',
       subtitle: 'See how awesome you are!',
       description: 'Complete games to earn coins! The more you play, the more coins you collect.',
       emoji: '🚀',
@@ -69,8 +83,8 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
       secondaryColor: const Color(0xFF81C784),
       features: [
         FeatureItem('🪙', 'Coins', 'Earn coins for every game'),
-        FeatureItem('🏅', 'Badges', 'Unlock special badges'),
         FeatureItem('🎯', 'Goals', 'Complete daily tasks'),
+        FeatureItem('⬆️', 'Level Up', 'Get better and grow'),
       ],
       mockupType: MockupType.progressTracking,
     ),
@@ -448,6 +462,8 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
     switch (page.mockupType) {
       case MockupType.gameCategories:
         return _buildGameCategoriesMockup(page);
+      case MockupType.simulations:
+        return _buildSimulationsMockup(page);
       case MockupType.safetyFeatures:
         return _buildSafetyMockup(page);
       case MockupType.progressTracking:
@@ -520,6 +536,139 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSimulationsMockup(OnboardingPage page) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: page.color.withOpacity(0.15),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [page.color, page.secondaryColor],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('🧪', style: TextStyle(fontSize: 20)),
+                SizedBox(width: 8),
+                Text(
+                  'Try it yourself!',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Simulation cards
+          _buildSimulationCard(
+            '⚖️',
+            'Equality Explorer',
+            'Balance the scale to solve equations!',
+            const Color(0xFF5B9BD5),
+          ),
+          const SizedBox(height: 10),
+          _buildSimulationCard(
+            '💧',
+            'States of Matter',
+            'Watch atoms move in solids, liquids & gases!',
+            const Color(0xFF4CAF50),
+          ),
+          const SizedBox(height: 10),
+          _buildSimulationCard(
+            '🎈',
+            'Static Electricity',
+            'Rub balloons and see charges move!',
+            const Color(0xFFFF9800),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSimulationCard(String emoji, String title, String description, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Center(child: Text(emoji, style: const TextStyle(fontSize: 22))),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: SafePlayColors.neutral600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Text(
+              'FREE',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -647,56 +796,95 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
             ),
           ),
           const SizedBox(height: 20),
-          // Badges row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildBadgeItem('🎯', 'First Task', true),
-              _buildBadgeItem('🧮', 'Math Star', true),
-              _buildBadgeItem('📚', 'Reader', false),
-            ],
+          // Level progress
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: page.color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: page.color.withOpacity(0.3)),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: page.color,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text('⬆️', style: TextStyle(fontSize: 16)),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Level 5',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: page.color,
+                              ),
+                            ),
+                            Text(
+                              '75 coins to next level',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: SafePlayColors.neutral500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: page.color,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        '75%',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Progress bar
+                Container(
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: SafePlayColors.neutral200,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: 0.75,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [page.color, page.secondaryColor],
+                        ),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildBadgeItem(String emoji, String label, bool earned) {
-    return Column(
-      children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: earned ? const Color(0xFFFFF3E0) : SafePlayColors.neutral100,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: earned ? const Color(0xFFFFB300) : SafePlayColors.neutral300,
-              width: 2,
-            ),
-          ),
-          child: Center(
-            child: Text(
-              emoji,
-              style: TextStyle(
-                fontSize: 24,
-                color: earned ? null : Colors.grey,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: earned ? SafePlayColors.neutral700 : SafePlayColors.neutral400,
-          ),
-        ),
-        if (earned)
-          const Icon(Icons.check_circle, size: 14, color: Color(0xFF4CAF50)),
-      ],
     );
   }
 
@@ -793,6 +981,7 @@ class FeatureItem {
 
 enum MockupType {
   gameCategories,
+  simulations,
   safetyFeatures,
   progressTracking,
   wellbeing,
