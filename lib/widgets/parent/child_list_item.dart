@@ -114,22 +114,18 @@ class ChildListItem extends StatelessWidget {
                         ],
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _buildStatChip(
-                          Icons.star,
-                          'Level ${child.level}',
-                          SafePlayColors.brandOrange500,
-                        ),
-                        const SizedBox(width: 8),
-                        _buildStatChip(
-                          Icons.local_fire_department,
-                          '${child.streakDays} day streak',
-                          SafePlayColors.success,
-                        ),
-                      ],
-                    ),
+                    if (child.streakDays > 0) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          _buildStatChip(
+                            Icons.local_fire_department,
+                            '${child.streakDays} day streak',
+                            SafePlayColors.success,
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
