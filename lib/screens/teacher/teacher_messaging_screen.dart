@@ -526,6 +526,7 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
   ];
   List<StudentMessage> _studentMessages = [];
   List<TeacherBroadcastMessage> _recentBroadcasts = [];
+  List<TeacherInboxMessage> _recentTeacherReplies = []; // Track private replies to students
 
   final List<Map<String, String>> _mockSentMessages = [
     {
@@ -1341,14 +1342,47 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
   }
 
   Widget _buildSentMessagesSection() {
-    final sentMessages = [
-      ..._recentBroadcasts.map((msg) => {
-            'message': msg.message,
-            'time': _formatTimestamp(msg.createdAt),
-            'group': msg.audience == AgeGroup.junior ? 'Junior' : 'Bright',
-          }),
-      ..._mockSentMessages,
-    ];
+    final sentMessages = <Map<String, dynamic>>[];
+    
+    // Broadcast messages
+    for (final msg in _recentBroadcasts) {
+      sentMessages.add({
+        'message': msg.message,
+        'time': _formatTimestamp(msg.createdAt),
+        'timestamp': msg.createdAt.millisecondsSinceEpoch,
+        'group': msg.audience == AgeGroup.junior ? 'Junior' : 'Bright',
+        'type': 'broadcast',
+      });
+    }
+    
+    // Private replies to students
+    for (final msg in _recentTeacherReplies) {
+      sentMessages.add({
+        'message': msg.body,
+        'time': _formatTimestamp(msg.createdAt),
+        'timestamp': msg.createdAt.millisecondsSinceEpoch,
+        'group': 'To ${msg.childName}',
+        'type': 'private',
+      });
+    }
+    
+    // Add mock messages (they don't have timestamps, so add them at the end)
+    for (final msg in _mockSentMessages) {
+      sentMessages.add({
+        'message': msg['message'],
+        'time': msg['time'],
+        'timestamp': 0, // Mock messages go to the end
+        'group': msg['group'],
+        'type': 'mock',
+      });
+    }
+    
+    // Sort by timestamp (most recent first)
+    sentMessages.sort((a, b) {
+      final timestampA = a['timestamp'] as int;
+      final timestampB = b['timestamp'] as int;
+      return timestampB.compareTo(timestampA);
+    });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1806,12 +1840,23 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
         Expanded(
           child: _studentMessages.isEmpty
               ? _buildEmptyStudentMessages()
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _studentMessages.length,
-                  itemBuilder: (context, index) {
-                    return _buildStudentMessageCard(_studentMessages[index]);
+              : RefreshIndicator(
+                  onRefresh: () async {
+                    // Refresh student messages
+                    final auth = context.read<AuthProvider>();
+                    final teacherId = auth.currentUser?.id;
+                    if (teacherId != null) {
+                      _subscribeToInbox();
+                      await Future.delayed(const Duration(milliseconds: 500));
+                    }
                   },
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _studentMessages.length,
+                    itemBuilder: (context, index) {
+                      return _buildStudentMessageCard(_studentMessages[index]);
+                    },
+                  ),
                 ),
         ),
       ],
@@ -2355,7 +2400,29 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                   relatedInboxMessageId: message.inboxMessageId,
                 );
 
+                // Add to recent replies for "Recently Sent" section
                 if (context.mounted) {
+                  setState(() {
+                    _recentTeacherReplies.insert(0, TeacherInboxMessage(
+                      id: 'temp-${DateTime.now().millisecondsSinceEpoch}',
+                      teacherId: teacher.id,
+                      teacherName: teacher.name,
+                      teacherAvatar: teacher.avatarUrl,
+                      childId: message.childId,
+                      childName: message.studentName,
+                      childAvatar: message.studentAvatar,
+                      ageGroup: ageGroup,
+                      body: replyText,
+                      createdAt: DateTime.now(),
+                      isRead: false,
+                      relatedBroadcastId: message.inboxMessageId,
+                    ));
+                    // Keep only the last 10 replies
+                    if (_recentTeacherReplies.length > 10) {
+                      _recentTeacherReplies = _recentTeacherReplies.take(10).toList();
+                    }
+                  });
+                  
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(

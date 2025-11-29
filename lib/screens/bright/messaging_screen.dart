@@ -225,7 +225,17 @@ class _MessagingScreenState extends State<MessagingScreen> {
         reply.teacherId,
         reply.teacherName,
         reply.teacherAvatar,
-        (summary) => summary.addReply(reply),
+        (summary) => summary.addChildReply(reply),
+      );
+    }
+
+    // Add teacher replies to the summary
+    for (final reply in _teacherReplies) {
+      ensureSummary(
+        reply.teacherId,
+        reply.teacherName,
+        reply.teacherAvatar,
+        (summary) => summary.addTeacherReply(reply),
       );
     }
 
@@ -318,7 +328,14 @@ class _MessagingScreenState extends State<MessagingScreen> {
               })
           .toList();
     });
-    _scrollToBottom();
+    // Scroll to bottom after messages are loaded
+    // Use multiple post-frame callbacks to ensure ListView is fully rendered
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToBottom();
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToBottom();
+    });
   }
 
   void _openFirebaseConversation(Map<String, dynamic> conversation, int index) {
@@ -331,6 +348,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
       _showConversationList = false;
     });
     _refreshActiveChat();
+    // Scroll to bottom after opening conversation - _refreshActiveChat already handles scrolling
   }
 
   void _handleSendMessage() {
@@ -365,6 +383,20 @@ class _MessagingScreenState extends State<MessagingScreen> {
     }
 
     setState(() => _sendingReply = true);
+    
+    // Optimistically add the message to the UI immediately
+    final optimisticMessage = {
+      'text': text,
+      'isMe': true,
+      'time': 'Now',
+      'senderName': 'You',
+    };
+    setState(() {
+      _messages.add(optimisticMessage);
+    });
+    _messageController.clear();
+    _scrollToBottom();
+    
     try {
       await _messagingService.sendChildReply(
         teacherId: teacherId,
@@ -376,11 +408,15 @@ class _MessagingScreenState extends State<MessagingScreen> {
         teacherAvatar: _currentConversationAvatar(teacherId),
         childAvatar: _childAvatarEmoji(child),
       );
-      _messageController.clear();
-      _scrollToBottom();
+      // The stream will update the message with the actual timestamp
+      // No need to remove the optimistic message as it will be replaced
     } catch (error, stackTrace) {
       debugPrint('MessagingScreen reply error: $error');
       debugPrint('$stackTrace');
+      // Remove the optimistic message on error
+      setState(() {
+        _messages.remove(optimisticMessage);
+      });
       _showSnack('Unable to send message right now. Please try again.');
     } finally {
       if (mounted) {
@@ -396,15 +432,34 @@ class _MessagingScreenState extends State<MessagingScreen> {
     return avatar is String ? avatar : null;
   }
 
-  void _scrollToBottom() {
-    Future.delayed(const Duration(milliseconds: 120), () {
-      if (!_scrollController.hasClients) return;
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    });
+  void _scrollToBottom({bool animate = true}) {
+    // Try multiple times to ensure the ListView is fully built
+    void attemptScroll() {
+      if (!_scrollController.hasClients) {
+        // Retry after a delay if not ready
+        Future.delayed(const Duration(milliseconds: 100), attemptScroll);
+        return;
+      }
+      
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      if (maxScroll > 0) {
+        if (animate) {
+          _scrollController.animateTo(
+            maxScroll,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        } else {
+          _scrollController.jumpTo(maxScroll);
+        }
+      } else {
+        // If maxScrollExtent is 0, the ListView might not be fully rendered yet
+        // Retry after a short delay
+        Future.delayed(const Duration(milliseconds: 50), attemptScroll);
+      }
+    }
+    
+    Future.delayed(const Duration(milliseconds: 50), attemptScroll);
   }
 
   String _childAvatarEmoji(ChildProfile child) {
@@ -642,18 +697,16 @@ class _MessagingScreenState extends State<MessagingScreen> {
                     color: JuniorTheme.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  _showConversationList
-                      ? 'Chat with your teachers'
-                      : (_conversations[_selectedConversation]['online']
-                          ? '🟢 Online'
-                          : '⚪ Offline'),
-                  style: JuniorTheme.bodySmall.copyWith(
-                    color: JuniorTheme.textSecondary,
-                    fontSize: 14,
+                if (_showConversationList) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    'Chat with your teachers',
+                    style: JuniorTheme.bodySmall.copyWith(
+                      color: JuniorTheme.textSecondary,
+                      fontSize: 14,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -736,13 +789,24 @@ class _MessagingScreenState extends State<MessagingScreen> {
   }
 
   Widget _buildConversationList() {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: _conversations.length,
-      itemBuilder: (context, index) {
-        final conversation = _conversations[index];
-        return _buildConversationTile(conversation, index);
+    return RefreshIndicator(
+      onRefresh: () async {
+        // Refresh conversations by reloading data
+        if (_childProfile != null) {
+          _listenToReplies(_childProfile!.id);
+        }
+        _subscribeToBroadcasts();
+        // Wait a bit for data to load
+        await Future.delayed(const Duration(milliseconds: 500));
       },
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _conversations.length,
+        itemBuilder: (context, index) {
+          final conversation = _conversations[index];
+          return _buildConversationTile(conversation, index);
+        },
+      ),
     );
   }
 
@@ -1215,7 +1279,11 @@ class _TeacherConversationSummary {
     _update(message.createdAt, message.message);
   }
 
-  void addReply(TeacherInboxMessage message) {
+  void addChildReply(TeacherInboxMessage message) {
+    _update(message.createdAt, message.body);
+  }
+
+  void addTeacherReply(TeacherInboxMessage message) {
     _update(message.createdAt, message.body);
   }
 
