@@ -11,6 +11,7 @@ import '../../models/teacher_inbox_message.dart';
 import '../../models/user_type.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/messaging_service.dart';
+import '../../services/game_navigation_service.dart';
 
 class MessagingScreen extends StatefulWidget {
   const MessagingScreen({super.key});
@@ -45,6 +46,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
       'gameName': 'States of Matter',
       'ctaLabel': 'Explore States of Matter',
       'emoji': '💧',
+      'gameType': 'simulation',
     },
   ];
   List<Map<String, dynamic>> _messages = [];
@@ -248,12 +250,17 @@ class _MessagingScreenState extends State<MessagingScreen> {
     if (teacherId == null) return;
 
     final entries = <_ChatEntry>[];
-    for (final broadcast
-        in _broadcastMessages.where((msg) => msg.teacherId == teacherId)) {
+    final broadcastList = _broadcastMessages.where((msg) => msg.teacherId == teacherId).toList();
+    for (final broadcast in broadcastList) {
       entries.add(_ChatEntry(
         text: broadcast.message,
         isMe: false,
         timestamp: broadcast.createdAt,
+        gameId: broadcast.gameId,
+        gameName: broadcast.gameName,
+        ctaLabel: broadcast.ctaLabel,
+        emoji: broadcast.emoji,
+        gameType: broadcast.gameType,
       ));
     }
     for (final reply
@@ -273,6 +280,11 @@ class _MessagingScreenState extends State<MessagingScreen> {
                 'text': entry.text,
                 'isMe': entry.isMe,
                 'time': DateFormat('h:mm a').format(entry.timestamp),
+                if (entry.gameId != null) 'gameId': entry.gameId,
+                if (entry.gameName != null) 'gameName': entry.gameName,
+                if (entry.ctaLabel != null) 'ctaLabel': entry.ctaLabel,
+                if (entry.emoji != null) 'emoji': entry.emoji,
+                if (entry.gameType != null) 'gameType': entry.gameType,
               })
           .toList();
     });
@@ -443,32 +455,18 @@ class _MessagingScreenState extends State<MessagingScreen> {
     required String gameName,
     required String ctaLabel,
     required String emoji,
+    String? gameType, // 'web' or 'simulation'
   }) {
+    final gameNavService = GameNavigationService();
     return GestureDetector(
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Text(emoji, style: const TextStyle(fontSize: 18)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Opening $gameName...',
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: JuniorTheme.primaryBlue,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            duration: const Duration(seconds: 2),
-          ),
+      onTap: () async {
+        // Navigate to the actual game/simulation
+        await gameNavService.navigateToGame(
+          context,
+          gameId,
+          'bright',
+          gameType ?? 'web',
         );
-        // TODO: Navigate to the actual game when integrated
       },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
@@ -894,6 +892,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
                   gameName: message['gameName'] as String?,
                   ctaLabel: message['ctaLabel'] as String?,
                   emoji: message['emoji'] as String?,
+                  gameType: message['gameType'] as String?,
                 );
               },
             ),
@@ -912,6 +911,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
     String? gameName,
     String? ctaLabel,
     String? emoji,
+    String? gameType,
   }) {
     // Check if this message contains game-related content
     final hasGameLink = !isMe && gameId != null && ctaLabel != null;
@@ -973,10 +973,11 @@ class _MessagingScreenState extends State<MessagingScreen> {
                   if (hasGameLink) ...[
                     const SizedBox(height: 12),
                     _buildInlineGameButton(
-                      gameId: gameId,
+                      gameId: gameId!,
                       gameName: gameName ?? 'Game',
-                      ctaLabel: ctaLabel,
+                      ctaLabel: ctaLabel!,
                       emoji: emoji ?? '🎮',
+                      gameType: gameType,
                     ),
                   ],
                 ],
@@ -1149,11 +1150,21 @@ class _ChatEntry {
     required this.text,
     required this.isMe,
     required this.timestamp,
+    this.gameId,
+    this.gameName,
+    this.ctaLabel,
+    this.emoji,
+    this.gameType,
   });
 
   final String text;
   final bool isMe;
   final DateTime timestamp;
+  final String? gameId;
+  final String? gameName;
+  final String? ctaLabel;
+  final String? emoji;
+  final String? gameType;
 }
 
 class _TeacherConversationSummary {

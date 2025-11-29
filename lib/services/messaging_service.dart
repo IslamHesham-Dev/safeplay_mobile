@@ -31,6 +31,7 @@ class MessagingService {
     String? gameRoute,
     String? gameLocation,
     String? ctaLabel,
+    String? gameType,
   }) async {
     await _firestore.collection(teacherBroadcastsCollection).add({
       'teacherId': teacherId,
@@ -48,6 +49,7 @@ class MessagingService {
       'gameRoute': gameRoute,
       'gameLocation': gameLocation,
       'ctaLabel': ctaLabel,
+      'gameType': gameType,
       'createdAt': FieldValue.serverTimestamp(),
     });
   }

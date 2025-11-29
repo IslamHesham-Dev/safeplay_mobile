@@ -7,6 +7,7 @@ import '../../design_system/junior_theme.dart';
 import '../../models/teacher_broadcast_message.dart';
 import '../../models/user_type.dart';
 import '../../services/messaging_service.dart';
+import '../../services/game_navigation_service.dart';
 
 /// Child Messages Screen - Receives broadcast messages from teachers (read-only)
 class ChildMessagesScreen extends StatefulWidget {
@@ -37,6 +38,7 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
       gameName: 'Food Chains',
       gameLocation: 'Science Interactive Games',
       ctaLabel: 'Play Food Chains',
+      gameType: 'web',
     ),
     TeacherMessage(
       id: '2',
@@ -53,6 +55,7 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
       gameName: 'Microorganisms',
       gameLocation: 'Science Interactive Games',
       ctaLabel: 'Explore Microorganisms',
+      gameType: 'web',
     ),
     TeacherMessage(
       id: '3',
@@ -81,6 +84,7 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
       gameName: 'Human Body Health & Growth',
       gameLocation: 'Science Interactive Games',
       ctaLabel: 'Play Health & Growth',
+      gameType: 'web',
     ),
     TeacherMessage(
       id: '5',
@@ -97,6 +101,7 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
       gameName: 'Reading Corner',
       gameLocation: 'Books section',
       ctaLabel: 'Open Reading Corner',
+      gameType: 'web',
     ),
     TeacherMessage(
       id: '6',
@@ -163,6 +168,11 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
       category: message.category,
       color: message.color,
       isNew: isNew,
+      gameId: message.gameId,
+      gameName: message.gameName,
+      gameLocation: message.gameLocation,
+      ctaLabel: message.ctaLabel,
+      gameType: message.gameType,
     );
   }
 
@@ -583,6 +593,11 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
           category: message.category,
           color: message.color,
           isNew: false,
+          gameId: message.gameId,
+          gameName: message.gameName,
+          gameLocation: message.gameLocation,
+          ctaLabel: message.ctaLabel,
+          gameType: message.gameType,
         );
       }
     });
@@ -793,33 +808,17 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
   }
 
   Widget _buildGameButton(TeacherMessage message) {
+    final gameNavService = GameNavigationService();
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         Navigator.pop(context);
-        // Show snackbar indicating game would open
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Text(message.emoji, style: const TextStyle(fontSize: 20)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Opening ${message.gameName}...',
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: message.color,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            duration: const Duration(seconds: 2),
-          ),
+        // Navigate to the actual game
+        await gameNavService.navigateToGame(
+          context,
+          message.gameId!,
+          'junior', // Junior students
+          message.gameType ?? 'web', // Use gameType from message, default to 'web'
         );
-        // TODO: Navigate to the actual game when integrated
       },
       child: Container(
         width: double.infinity,
@@ -951,6 +950,7 @@ class TeacherMessage {
   final String? gameName;
   final String? gameLocation;
   final String? ctaLabel;
+  final String? gameType; // 'web' or 'simulation'
 
   const TeacherMessage({
     required this.id,
@@ -966,5 +966,6 @@ class TeacherMessage {
     this.gameName,
     this.gameLocation,
     this.ctaLabel,
+    this.gameType,
   });
 }

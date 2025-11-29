@@ -47,6 +47,7 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       gameRoute: RouteNames.juniorDashboard,
       ctaLabel: 'Play Food Chains',
       ageGroup: 'junior',
+      gameType: 'web',
     ),
     QuickMessage(
       id: 'microorganisms',
@@ -62,6 +63,7 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       gameRoute: RouteNames.juniorDashboard,
       ctaLabel: 'Explore Microorganisms',
       ageGroup: 'junior',
+      gameType: 'web',
     ),
     QuickMessage(
       id: 'health-growth',
@@ -77,6 +79,7 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       gameRoute: RouteNames.juniorDashboard,
       ctaLabel: 'Play Health & Growth',
       ageGroup: 'junior',
+      gameType: 'web',
     ),
     QuickMessage(
       id: 'teeth-eating',
@@ -92,6 +95,88 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       gameRoute: RouteNames.juniorDashboard,
       ctaLabel: 'Explore Teeth & Eating',
       ageGroup: 'junior',
+      gameType: 'web',
+    ),
+    QuickMessage(
+      id: 'plants-animals',
+      emoji: '🌱',
+      title: 'Discover Plants & Animals!',
+      message:
+          'Spot plants and animals in an outdoor scene! 🌿 Discover where they live and learn how different habitats suit different living things. Find it under Science Interactive Games.',
+      category: 'Science',
+      color: const Color(0xFF8BC34A),
+      gameId: 'plants-animals',
+      gameName: 'Plants & Animals',
+      gameLocation: 'Science Interactive Games section',
+      gameRoute: RouteNames.juniorDashboard,
+      ctaLabel: 'Explore Plants & Animals',
+      ageGroup: 'junior',
+      gameType: 'web',
+    ),
+    QuickMessage(
+      id: 'how-plants-grow',
+      emoji: '🌻',
+      title: 'Watch Plants Grow!',
+      message:
+          'Learn how plants need water, light, and soil to grow! 🌱 Experiment with different conditions and see what happens. Find How Plants Grow under Science Interactive Games.',
+      category: 'Science',
+      color: const Color(0xFF4CAF50),
+      gameId: 'how-plants-grow',
+      gameName: 'How Plants Grow',
+      gameLocation: 'Science Interactive Games section',
+      gameRoute: RouteNames.juniorDashboard,
+      ctaLabel: 'Grow Plants',
+      ageGroup: 'junior',
+      gameType: 'web',
+    ),
+    // Math Games - Junior
+    QuickMessage(
+      id: 'addition-junior',
+      emoji: '➕',
+      title: 'Add It Up!',
+      message:
+          'Practice your addition skills! ➕ Solve fun math problems and become a number wizard! Find Addition games under Math Interactive Games in your dashboard.',
+      category: 'Math',
+      color: const Color(0xFF5B9BD5),
+      gameId: 'addition',
+      gameName: 'Addition',
+      gameLocation: 'Math Interactive Games section',
+      gameRoute: RouteNames.juniorDashboard,
+      ctaLabel: 'Play Addition',
+      ageGroup: 'junior',
+      gameType: 'web',
+    ),
+    QuickMessage(
+      id: 'subtraction-junior',
+      emoji: '➖',
+      title: 'Subtract & Solve!',
+      message:
+          'Master subtraction with fun games! ➖ Take away numbers and find the answer. Find Subtraction games under Math Interactive Games.',
+      category: 'Math',
+      color: const Color(0xFFE91E63),
+      gameId: 'subtraction',
+      gameName: 'Subtraction',
+      gameLocation: 'Math Interactive Games section',
+      gameRoute: RouteNames.juniorDashboard,
+      ctaLabel: 'Play Subtraction',
+      ageGroup: 'junior',
+      gameType: 'web',
+    ),
+    QuickMessage(
+      id: 'shapes-junior',
+      emoji: '🔷',
+      title: 'Shape Explorer!',
+      message:
+          'Discover circles, squares, triangles and more! 🔷 Learn about shapes and their properties. Find Shapes under Math Interactive Games.',
+      category: 'Math',
+      color: const Color(0xFFFF9800),
+      gameId: 'shapes',
+      gameName: 'Shapes',
+      gameLocation: 'Math Interactive Games section',
+      gameRoute: RouteNames.juniorDashboard,
+      ctaLabel: 'Explore Shapes',
+      ageGroup: 'junior',
+      gameType: 'web',
     ),
     // Science Games - Bright
     QuickMessage(
@@ -102,12 +187,13 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
           'Ready to become an electricity expert? 💡 Build circuits, connect batteries and bulbs, and see what happens! Find the Electricity game under Science Interactive Games in your Bright dashboard.',
       category: 'Science',
       color: const Color(0xFFFF9800),
-      gameId: 'electricity',
-      gameName: 'Electricity',
+      gameId: 'electricity-circuits',
+      gameName: 'Electricity & Circuits',
       gameLocation: 'Science Interactive Games section',
       gameRoute: RouteNames.brightDashboard,
       ctaLabel: 'Build Circuits',
       ageGroup: 'bright',
+      gameType: 'web',
     ),
     QuickMessage(
       id: 'earth-sun-moon',
@@ -123,6 +209,88 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       gameRoute: RouteNames.brightDashboard,
       ctaLabel: 'Explore Space',
       ageGroup: 'bright',
+      gameType: 'web',
+    ),
+    QuickMessage(
+      id: 'forces-action',
+      emoji: '💨',
+      title: 'Forces in Action!',
+      message:
+          'Discover how forces make things move! 💨 Push, pull, and see what happens. Find Forces in Action under Science Interactive Games.',
+      category: 'Science',
+      color: const Color(0xFF9C27B0),
+      gameId: 'forces-action',
+      gameName: 'Forces in Action',
+      gameLocation: 'Science Interactive Games section',
+      gameRoute: RouteNames.brightDashboard,
+      ctaLabel: 'Explore Forces',
+      ageGroup: 'bright',
+      gameType: 'web',
+    ),
+    QuickMessage(
+      id: 'magnets-springs',
+      emoji: '🧲',
+      title: 'Magnets & Springs!',
+      message:
+          'Explore the power of magnets! 🧲 See how they attract and repel. Learn about springs too! Find Magnets & Springs under Science Interactive Games.',
+      category: 'Science',
+      color: const Color(0xFFE91E63),
+      gameId: 'magnets-springs',
+      gameName: 'Magnets & Springs',
+      gameLocation: 'Science Interactive Games section',
+      gameRoute: RouteNames.brightDashboard,
+      ctaLabel: 'Play with Magnets',
+      ageGroup: 'bright',
+      gameType: 'web',
+    ),
+    // Math Games - Bright
+    QuickMessage(
+      id: 'multiplication-bright',
+      emoji: '✖️',
+      title: 'Master Multiplication!',
+      message:
+          'Become a multiplication master! ✖️ Practice your times tables and solve fun problems. Find Multiplication under Math Interactive Games.',
+      category: 'Math',
+      color: const Color(0xFF5B9BD5),
+      gameId: 'multiplication',
+      gameName: 'Multiplication',
+      gameLocation: 'Math Interactive Games section',
+      gameRoute: RouteNames.brightDashboard,
+      ctaLabel: 'Play Multiplication',
+      ageGroup: 'bright',
+      gameType: 'web',
+    ),
+    QuickMessage(
+      id: 'fractions-bright',
+      emoji: '🍕',
+      title: 'Fraction Fun!',
+      message:
+          'Learn about fractions with fun activities! 🍕 Understand parts of a whole and how to compare fractions. Find Fractions under Math Interactive Games.',
+      category: 'Math',
+      color: const Color(0xFFE91E63),
+      gameId: 'fractions',
+      gameName: 'Fractions',
+      gameLocation: 'Math Interactive Games section',
+      gameRoute: RouteNames.brightDashboard,
+      ctaLabel: 'Explore Fractions',
+      ageGroup: 'bright',
+      gameType: 'web',
+    ),
+    QuickMessage(
+      id: 'decimals-bright',
+      emoji: '🔢',
+      title: 'Decimal Discovery!',
+      message:
+          'Master decimals and see how they work! 🔢 Learn to add, subtract, and compare decimal numbers. Find Decimals under Math Interactive Games.',
+      category: 'Math',
+      color: const Color(0xFF00BCD4),
+      gameId: 'decimals',
+      gameName: 'Decimals',
+      gameLocation: 'Math Interactive Games section',
+      gameRoute: RouteNames.brightDashboard,
+      ctaLabel: 'Play with Decimals',
+      ageGroup: 'bright',
+      gameType: 'web',
     ),
     // Math Simulations - Bright
     QuickMessage(
@@ -133,12 +301,13 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
           'Can you make both sides equal? ⚖️ Use the balance scale to solve equations and become a math champion! Find Equality Explorer under Math Simulations in your dashboard.',
       category: 'Math',
       color: const Color(0xFF5B9BD5),
-      gameId: 'equality-explorer',
+      gameId: 'equality-explorer-basics',
       gameName: 'Equality Explorer',
       gameLocation: 'Math Simulations section',
       gameRoute: RouteNames.brightDashboard,
       ctaLabel: 'Balance the Scale',
       ageGroup: 'bright',
+      gameType: 'simulation',
     ),
     QuickMessage(
       id: 'area-model',
@@ -148,12 +317,29 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
           'Rectangles are everywhere! 📏 Learn how to find area using the Area Model - break numbers into parts and see multiplication come alive! Find it under Math Simulations.',
       category: 'Math',
       color: const Color(0xFFE91E63),
-      gameId: 'area-model-algebra',
-      gameName: 'Area Model Algebra',
+      gameId: 'area-model-introduction',
+      gameName: 'Area Model Introduction',
       gameLocation: 'Math Simulations section',
       gameRoute: RouteNames.brightDashboard,
       ctaLabel: 'Try Area Model',
       ageGroup: 'bright',
+      gameType: 'simulation',
+    ),
+    QuickMessage(
+      id: 'mean-share',
+      emoji: '📊',
+      title: 'Find the Mean!',
+      message:
+          'What does "average" really mean? 🤔 Share and balance numbers to discover the mean - it\'s like making everything fair! Find Mean: Share and Balance under Math Simulations.',
+      category: 'Math',
+      color: const Color(0xFF00BCD4),
+      gameId: 'mean-share-and-balance',
+      gameName: 'Mean: Share and Balance',
+      gameLocation: 'Math Simulations section',
+      gameRoute: RouteNames.brightDashboard,
+      ctaLabel: 'Explore the Mean',
+      ageGroup: 'bright',
+      gameType: 'simulation',
     ),
     // Science Simulations - Bright
     QuickMessage(
@@ -170,6 +356,7 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       gameRoute: RouteNames.brightDashboard,
       ctaLabel: 'Explore States of Matter',
       ageGroup: 'bright',
+      gameType: 'simulation',
     ),
     QuickMessage(
       id: 'static-electricity',
@@ -179,12 +366,29 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
           'Rub a balloon and watch the magic happen! ✨ Learn about static electricity and see charges push and pull! Find Balloons and Static Electricity under Science Simulations.',
       category: 'Simulation',
       color: const Color(0xFFFF5722),
-      gameId: 'balloons-static',
+      gameId: 'balloons-static-electricity',
       gameName: 'Balloons and Static Electricity',
       gameLocation: 'Science Simulations section',
       gameRoute: RouteNames.brightDashboard,
       ctaLabel: 'Play with Static',
       ageGroup: 'bright',
+      gameType: 'simulation',
+    ),
+    QuickMessage(
+      id: 'density',
+      emoji: '🌊',
+      title: 'Density Discovery!',
+      message:
+          'Why do some things float and others sink? 🌊 Explore density and see how it affects objects in water! Find Density under Science Simulations.',
+      category: 'Simulation',
+      color: const Color(0xFF2196F3),
+      gameId: 'density',
+      gameName: 'Density',
+      gameLocation: 'Science Simulations section',
+      gameRoute: RouteNames.brightDashboard,
+      ctaLabel: 'Explore Density',
+      ageGroup: 'bright',
+      gameType: 'simulation',
     ),
     // English/Reading
     QuickMessage(
@@ -201,6 +405,7 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       gameRoute: RouteNames.juniorDashboard,
       ctaLabel: 'Open Reading Corner',
       ageGroup: 'both',
+      gameType: 'web',
     ),
     // Motivation & Wellbeing
     QuickMessage(
@@ -482,6 +687,12 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
         category: category,
         color: color,
         quickMessageId: quickMessage?.id,
+        gameId: quickMessage?.gameId,
+        gameName: quickMessage?.gameName,
+        gameRoute: quickMessage?.gameRoute,
+        gameLocation: quickMessage?.gameLocation,
+        ctaLabel: quickMessage?.ctaLabel,
+        gameType: quickMessage?.gameType,
       );
       if (quickMessage == null) {
         _customMessageController.clear();
@@ -2174,6 +2385,7 @@ class QuickMessage {
   final String? gameRoute;
   final String? ctaLabel;
   final String? ageGroup; // 'junior', 'bright', or 'both'
+  final String? gameType; // 'web' or 'simulation'
 
   const QuickMessage({
     required this.id,
@@ -2188,6 +2400,7 @@ class QuickMessage {
     this.gameRoute,
     this.ctaLabel,
     this.ageGroup,
+    this.gameType,
   });
 }
 

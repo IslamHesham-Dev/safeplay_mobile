@@ -56,6 +56,7 @@ class TeacherBroadcastMessage {
   final String? gameRoute;
   final String? gameLocation;
   final String? ctaLabel;
+  final String? gameType; // 'web' or 'simulation'
   final DateTime createdAt;
 
   const TeacherBroadcastMessage({
@@ -76,6 +77,7 @@ class TeacherBroadcastMessage {
     this.gameRoute,
     this.gameLocation,
     this.ctaLabel,
+    this.gameType,
   });
 
   factory TeacherBroadcastMessage.fromFirestore(
@@ -108,6 +110,7 @@ class TeacherBroadcastMessage {
       gameRoute: data['gameRoute']?.toString(),
       gameLocation: data['gameLocation']?.toString(),
       ctaLabel: data['ctaLabel']?.toString(),
+      gameType: data['gameType']?.toString(),
       createdAt: _parseTimestamp(data['createdAt']),
     );
   }
@@ -129,6 +132,7 @@ class TeacherBroadcastMessage {
       'gameRoute': gameRoute,
       'gameLocation': gameLocation,
       'ctaLabel': ctaLabel,
+      'gameType': gameType,
       'createdAt': createdAt,
     };
   }
