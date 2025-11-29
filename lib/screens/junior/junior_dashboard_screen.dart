@@ -40,6 +40,7 @@ import '../../widgets/junior/web_game_card.dart';
 import 'web_game_detail_screen.dart';
 import '../safety/safe_search_screen.dart';
 import '../safety/wellbeing_check_screen.dart';
+import '../child/child_messages_screen.dart';
 
 /// Junior (6-8) specific dashboard screen with age-appropriate UI
 class JuniorDashboardScreen extends StatefulWidget {
@@ -432,6 +433,51 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
     
+    // For Messages (Notifications), show full-screen content with navbar
+    if (_currentBottomNavIndex == 1) {
+      return Scaffold(
+        backgroundColor: JuniorTheme.backgroundLight,
+        body: Stack(
+          children: [
+            // Full-screen content for Messages
+            Positioned.fill(
+              bottom: 80, // Leave space for nav bar
+              child: const ChildMessagesScreen(),
+            ),
+            // Floating navigation bar
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: SafeArea(
+                child: JuniorBottomNavigation(
+                  currentIndex: _currentBottomNavIndex,
+                  onTap: _handleBottomNavTap,
+                  items: const [
+                    JuniorNavigationItem(
+                      icon: Icons.home,
+                      activeIcon: Icons.home,
+                      label: 'Home',
+                    ),
+                    JuniorNavigationItem(
+                      icon: Icons.mail,
+                      activeIcon: Icons.mail,
+                      label: 'Messages',
+                    ),
+                    JuniorNavigationItem(
+                      icon: Icons.public,
+                      activeIcon: Icons.public,
+                      label: 'Search',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
     // For Search, show full-screen content with navbar
     if (_currentBottomNavIndex == 2) {
       return Scaffold(
@@ -462,9 +508,9 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
                       label: 'Home',
                     ),
                     JuniorNavigationItem(
-                      icon: Icons.notifications,
-                      activeIcon: Icons.notifications,
-                      label: 'Notifications',
+                      icon: Icons.mail,
+                      activeIcon: Icons.mail,
+                      label: 'Messages',
                     ),
                     JuniorNavigationItem(
                       icon: Icons.public,
@@ -480,7 +526,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
       );
     }
     
-    // Default Home and Notifications dashboard layout
+    // Default Home dashboard layout
     return Scaffold(
       backgroundColor: JuniorTheme.backgroundLight,
       body: Stack(
@@ -659,9 +705,9 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
                     label: 'Home',
                   ),
                   JuniorNavigationItem(
-                    icon: Icons.notifications,
-                    activeIcon: Icons.notifications,
-                    label: 'Notifications',
+                    icon: Icons.mail,
+                    activeIcon: Icons.mail,
+                    label: 'Messages',
                   ),
                   JuniorNavigationItem(
                     icon: Icons.public,
@@ -990,8 +1036,8 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   }
 
   Widget _buildAchievementsScreen() {
-    // Empty notification/achievements page
-    return const SizedBox.shrink();
+    // Messages from teachers screen
+    return const ChildMessagesScreen();
   }
 
   Future<void> _exportQuestionsFromDatabase() async {
