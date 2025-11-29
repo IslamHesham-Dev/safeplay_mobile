@@ -16,6 +16,7 @@ import '../../design_system/colors.dart';
 import 'activity_builder_screen.dart';
 import 'activity_creation_wizard_screen.dart';
 import 'teacher_activities_management_screen.dart';
+import 'teacher_messaging_screen.dart';
 // Populate Questions screen import removed - button removed from UI (logic code kept in PopulateQuestionsScreen)
 
 class EnhancedTeacherDashboard extends StatefulWidget {
@@ -242,6 +243,15 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
       );
     }
 
+    // Messaging screen has its own full layout
+    if (_currentIndex == 4) {
+      return Scaffold(
+        backgroundColor: Colors.grey[50],
+        body: const TeacherMessagingScreen(),
+        bottomNavigationBar: _buildBottomNavigationBar(),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: Column(
@@ -293,6 +303,8 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
         return _buildMyActivitiesTab();
       case 3:
         return _buildTemplatesTab();
+      case 4:
+        return const TeacherMessagingScreen();
       default:
         return _buildDashboardTab();
     }
@@ -364,6 +376,11 @@ class _EnhancedTeacherDashboardState extends State<EnhancedTeacherDashboard> {
             icon: Icon(Icons.library_books_outlined),
             activeIcon: Icon(Icons.library_books),
             label: 'Templates',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.campaign_outlined),
+            activeIcon: Icon(Icons.campaign),
+            label: 'Messages',
           ),
         ],
       ),
