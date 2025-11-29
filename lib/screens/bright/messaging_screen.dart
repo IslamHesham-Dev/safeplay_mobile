@@ -1,5 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+
 import '../../design_system/junior_theme.dart';
+import '../../models/child_profile.dart';
+import '../../models/teacher_broadcast_message.dart';
+import '../../models/teacher_inbox_message.dart';
+import '../../models/user_type.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/messaging_service.dart';
 
 class MessagingScreen extends StatefulWidget {
   const MessagingScreen({super.key});
@@ -11,7 +22,7 @@ class MessagingScreen extends StatefulWidget {
 class _MessagingScreenState extends State<MessagingScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<Map<String, dynamic>> _messages = [
+  final List<Map<String, dynamic>> _mockMessages = [
     {
       'text': 'Hello! How are you finding the new science module?',
       'isMe': false,
@@ -25,15 +36,17 @@ class _MessagingScreenState extends State<MessagingScreen> {
       'senderName': 'You',
     },
     {
-      'text': 'That\'s great to hear! Remember to check the safety guidelines before starting the next experiment. 🔬',
+      'text':
+          'That\'s great to hear! Remember to check the safety guidelines before starting the next experiment. 🔬',
       'isMe': false,
       'time': '10:06 AM',
       'senderName': 'Ms. Sarah',
     },
   ];
+  List<Map<String, dynamic>> _messages = [];
 
   // Mock conversations list
-  final List<Map<String, dynamic>> _conversations = [
+  final List<Map<String, dynamic>> _mockConversations = [
     {
       'name': 'Ms. Sarah',
       'avatar': '👩‍🏫',
@@ -59,9 +72,328 @@ class _MessagingScreenState extends State<MessagingScreen> {
       'online': true,
     },
   ];
+  List<Map<String, dynamic>> _conversations = [];
+
+  late final MessagingService _messagingService;
+  StreamSubscription<List<TeacherBroadcastMessage>>? _broadcastSubscription;
+  StreamSubscription<List<TeacherInboxMessage>>? _replySubscription;
+  ChildProfile? _childProfile;
+  List<TeacherBroadcastMessage> _broadcastMessages = [];
+  List<TeacherInboxMessage> _childReplies = [];
+  bool _isFirebaseConversation = false;
+  String? _activeTeacherId;
+  String? _activeTeacherName;
+  bool _sendingReply = false;
 
   bool _showConversationList = true;
   int _selectedConversation = 0;
+  int _selectedMockIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _messagingService = MessagingService();
+    _messages = List<Map<String, dynamic>>.from(_mockMessages);
+    _conversations = List<Map<String, dynamic>>.from(_mockConversations);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _loadChildProfile();
+      _subscribeToBroadcasts();
+    });
+  }
+
+  @override
+  void dispose() {
+    _broadcastSubscription?.cancel();
+    _replySubscription?.cancel();
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _loadChildProfile() {
+    final auth = context.read<AuthProvider>();
+    ChildProfile? child;
+    final currentUser = auth.currentUser;
+    final currentChild = auth.currentChild;
+
+    if (currentUser is ChildProfile &&
+        currentUser.ageGroup == AgeGroup.bright) {
+      child = currentUser;
+    } else if (currentChild != null &&
+        currentChild.ageGroup == AgeGroup.bright) {
+      child = currentChild;
+    }
+
+    setState(() => _childProfile = child);
+    if (child != null) {
+      _listenToReplies(child.id);
+    }
+  }
+
+  void _subscribeToBroadcasts() {
+    _broadcastSubscription?.cancel();
+    _broadcastSubscription = _messagingService
+        .listenToBroadcasts(audience: AgeGroup.bright, limit: 25)
+        .listen((messages) {
+      if (!mounted) return;
+      _broadcastMessages = messages;
+      _refreshConversations();
+      if (_isFirebaseConversation) {
+        _refreshActiveChat();
+      }
+    }, onError: (error) {
+      debugPrint('MessagingScreen broadcast stream error: $error');
+    });
+  }
+
+  void _listenToReplies(String childId) {
+    _replySubscription?.cancel();
+    _replySubscription = _messagingService
+        .listenToChildReplies(childId: childId, limit: 40)
+        .listen((messages) {
+      if (!mounted) return;
+      _childReplies = messages
+          .where((msg) => msg.ageGroup == AgeGroup.bright)
+          .toList(growable: false);
+      _refreshConversations();
+      if (_isFirebaseConversation) {
+        _refreshActiveChat();
+      }
+    }, onError: (error) {
+      debugPrint('MessagingScreen reply stream error: $error');
+    });
+  }
+
+  void _refreshConversations() {
+    final summaries = <String, _TeacherConversationSummary>{};
+
+    void ensureSummary(
+      String teacherId,
+      String teacherName,
+      String? avatar,
+      void Function(_TeacherConversationSummary summary) updater,
+    ) {
+      final summary = summaries.putIfAbsent(
+        teacherId,
+        () => _TeacherConversationSummary(
+          teacherId: teacherId,
+          teacherName: teacherName,
+          avatar: avatar,
+        ),
+      );
+      updater(summary);
+    }
+
+    for (final broadcast in _broadcastMessages) {
+      ensureSummary(
+        broadcast.teacherId,
+        broadcast.teacherName,
+        broadcast.teacherAvatar,
+        (summary) => summary.addBroadcast(broadcast),
+      );
+    }
+
+    for (final reply in _childReplies) {
+      ensureSummary(
+        reply.teacherId,
+        reply.teacherName,
+        reply.teacherAvatar,
+        (summary) => summary.addReply(reply),
+      );
+    }
+
+    final tiles = summaries.values
+        .map((summary) => summary.toTile(_formatConversationTime))
+        .toList()
+      ..sort((a, b) =>
+          (b['sortTimestamp'] as int).compareTo(a['sortTimestamp'] as int));
+
+    final cleanedTiles = tiles.map((tile) {
+      final copy = Map<String, dynamic>.from(tile);
+      copy.remove('sortTimestamp');
+      return copy;
+    }).toList(growable: true);
+
+    final combined = [
+      ...cleanedTiles,
+      ..._mockConversations,
+    ];
+
+    int selectedIndex;
+    if (_isFirebaseConversation && _activeTeacherId != null) {
+      final matchIndex =
+          combined.indexWhere((c) => c['teacherId'] == _activeTeacherId);
+      selectedIndex = matchIndex >= 0 ? matchIndex : 0;
+    } else {
+      final mockOffset = cleanedTiles.length;
+      final mockIndex =
+          _selectedMockIndex.clamp(0, _mockConversations.length - 1);
+      selectedIndex = mockOffset + mockIndex;
+    }
+
+    setState(() {
+      _conversations = combined;
+      _selectedConversation =
+          combined.isNotEmpty ? selectedIndex.clamp(0, combined.length - 1) : 0;
+    });
+  }
+
+  void _refreshActiveChat() {
+    final teacherId = _activeTeacherId;
+    if (teacherId == null) return;
+
+    final entries = <_ChatEntry>[];
+    for (final broadcast
+        in _broadcastMessages.where((msg) => msg.teacherId == teacherId)) {
+      entries.add(_ChatEntry(
+        text: broadcast.message,
+        isMe: false,
+        timestamp: broadcast.createdAt,
+      ));
+    }
+    for (final reply
+        in _childReplies.where((msg) => msg.teacherId == teacherId)) {
+      entries.add(_ChatEntry(
+        text: reply.body,
+        isMe: true,
+        timestamp: reply.createdAt,
+      ));
+    }
+    entries.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
+    setState(() {
+      _isFirebaseConversation = true;
+      _messages = entries
+          .map((entry) => {
+                'text': entry.text,
+                'isMe': entry.isMe,
+                'time': DateFormat('h:mm a').format(entry.timestamp),
+              })
+          .toList();
+    });
+    _scrollToBottom();
+  }
+
+  void _openFirebaseConversation(Map<String, dynamic> conversation, int index) {
+    final teacherId = conversation['teacherId'] as String?;
+    if (teacherId == null) return;
+    setState(() {
+      _activeTeacherId = teacherId;
+      _activeTeacherName = conversation['name'] as String?;
+      _selectedConversation = index;
+      _showConversationList = false;
+    });
+    _refreshActiveChat();
+  }
+
+  void _handleSendMessage() {
+    final text = _messageController.text.trim();
+    if (text.isEmpty) {
+      return;
+    }
+
+    if (_isFirebaseConversation) {
+      _sendReply(text);
+    } else {
+      setState(() {
+        _messages.add({
+          'text': text,
+          'isMe': true,
+          'time': 'Now',
+          'senderName': 'You',
+        });
+        _messageController.clear();
+      });
+      _scrollToBottom();
+    }
+  }
+
+  Future<void> _sendReply(String text) async {
+    if (_sendingReply) return;
+    final child = _childProfile;
+    final teacherId = _activeTeacherId;
+    if (child == null || teacherId == null) {
+      _showSnack('Please sign in as a Bright student to send messages.');
+      return;
+    }
+
+    setState(() => _sendingReply = true);
+    try {
+      await _messagingService.sendChildReply(
+        teacherId: teacherId,
+        teacherName: _activeTeacherName ?? 'Teacher',
+        childId: child.id,
+        childName: child.name,
+        ageGroup: child.ageGroup ?? AgeGroup.bright,
+        message: text,
+        teacherAvatar: _currentConversationAvatar(teacherId),
+        childAvatar: _childAvatarEmoji(child),
+      );
+      _messageController.clear();
+      _scrollToBottom();
+    } catch (error, stackTrace) {
+      debugPrint('MessagingScreen reply error: $error');
+      debugPrint('$stackTrace');
+      _showSnack('Unable to send message right now. Please try again.');
+    } finally {
+      if (mounted) {
+        setState(() => _sendingReply = false);
+      }
+    }
+  }
+
+  String? _currentConversationAvatar(String teacherId) {
+    final match = _conversations.firstWhere((c) => c['teacherId'] == teacherId,
+        orElse: () => {});
+    final avatar = match['avatar'];
+    return avatar is String ? avatar : null;
+  }
+
+  void _scrollToBottom() {
+    Future.delayed(const Duration(milliseconds: 120), () {
+      if (!_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
+  }
+
+  String _childAvatarEmoji(ChildProfile child) {
+    final gender = child.gender?.toLowerCase();
+    if (gender == 'male' || gender == 'boy') {
+      return '👦';
+    }
+    if (gender == 'female' || gender == 'girl') {
+      return '👧';
+    }
+    return '🧑';
+  }
+
+  String _formatConversationTime(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d';
+    }
+    return DateFormat('MMM d').format(timestamp);
+  }
+
+  void _showSnack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: JuniorTheme.primaryOrange,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -280,10 +612,25 @@ class _MessagingScreenState extends State<MessagingScreen> {
   Widget _buildConversationTile(Map<String, dynamic> conversation, int index) {
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _selectedConversation = index;
-          _showConversationList = false;
-        });
+        final teacherId = conversation['teacherId'] as String?;
+        if (teacherId != null) {
+          _openFirebaseConversation(conversation, index);
+        } else {
+          final firebaseCount =
+              _conversations.length - _mockConversations.length;
+          final mockIndex = index - firebaseCount;
+          _selectedMockIndex = mockIndex >= 0
+              ? mockIndex.clamp(0, _mockConversations.length - 1)
+              : 0;
+          setState(() {
+            _selectedConversation = index;
+            _showConversationList = false;
+            _isFirebaseConversation = false;
+            _activeTeacherId = null;
+            _activeTeacherName = null;
+            _messages = List<Map<String, dynamic>>.from(_mockMessages);
+          });
+        }
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -572,24 +919,8 @@ class _MessagingScreenState extends State<MessagingScreen> {
             const SizedBox(width: 12),
             GestureDetector(
               onTap: () {
-                if (_messageController.text.isNotEmpty) {
-                  setState(() {
-                    _messages.add({
-                      'text': _messageController.text,
-                      'isMe': true,
-                      'time': 'Now',
-                      'senderName': 'You',
-                    });
-                    _messageController.clear();
-                  });
-                  Future.delayed(const Duration(milliseconds: 100), () {
-                    _scrollController.animateTo(
-                      _scrollController.position.maxScrollExtent,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOut,
-                    );
-                  });
-                }
+                if (_sendingReply && _isFirebaseConversation) return;
+                _handleSendMessage();
               },
               child: Container(
                 padding: const EdgeInsets.all(14),
@@ -609,16 +940,82 @@ class _MessagingScreenState extends State<MessagingScreen> {
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.send_rounded,
-                  color: Colors.white,
-                  size: 22,
-                ),
+                child: _sendingReply && _isFirebaseConversation
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Icon(
+                        Icons.send_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+}
+
+class _ChatEntry {
+  const _ChatEntry({
+    required this.text,
+    required this.isMe,
+    required this.timestamp,
+  });
+
+  final String text;
+  final bool isMe;
+  final DateTime timestamp;
+}
+
+class _TeacherConversationSummary {
+  _TeacherConversationSummary({
+    required this.teacherId,
+    required this.teacherName,
+    this.avatar,
+  });
+
+  final String teacherId;
+  final String teacherName;
+  final String? avatar;
+
+  DateTime? _lastTimestamp;
+  String? _lastMessagePreview;
+
+  void addBroadcast(TeacherBroadcastMessage message) {
+    _update(message.createdAt, message.message);
+  }
+
+  void addReply(TeacherInboxMessage message) {
+    _update(message.createdAt, message.body);
+  }
+
+  void _update(DateTime timestamp, String preview) {
+    if (_lastTimestamp == null || timestamp.isAfter(_lastTimestamp!)) {
+      _lastTimestamp = timestamp;
+      _lastMessagePreview = preview;
+    }
+  }
+
+  Map<String, dynamic> toTile(String Function(DateTime) timeFormatter) {
+    final timestamp = _lastTimestamp ?? DateTime.now();
+    return {
+      'teacherId': teacherId,
+      'name': teacherName,
+      'avatar': avatar ?? '??',
+      'lastMessage': _lastMessagePreview ?? 'Say hi to your teacher!',
+      'time': timeFormatter(timestamp),
+      'unread': 0,
+      'online': false,
+      'sortTimestamp': timestamp.millisecondsSinceEpoch,
+    };
   }
 }

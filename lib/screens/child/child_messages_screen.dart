@@ -1,6 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import '../../design_system/junior_theme.dart';
+
 import '../../design_system/colors.dart';
+import '../../design_system/junior_theme.dart';
+import '../../models/teacher_broadcast_message.dart';
+import '../../models/user_type.dart';
+import '../../services/messaging_service.dart';
 
 /// Child Messages Screen - Receives broadcast messages from teachers (read-only)
 class ChildMessagesScreen extends StatefulWidget {
@@ -11,13 +17,17 @@ class ChildMessagesScreen extends StatefulWidget {
 }
 
 class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
+  late final MessagingService _messagingService;
+  StreamSubscription<List<TeacherBroadcastMessage>>? _subscription;
+
   // Mock messages from teachers
-  final List<TeacherMessage> _messages = [
+  final List<TeacherMessage> _mockMessages = [
     TeacherMessage(
       id: '1',
       emoji: '🦁',
       title: 'Explore Food Chains!',
-      message: 'Hey explorers! 🌿 Ready to discover who eats what in nature? Jump into the Food Chains game and learn about animals, plants, and how they all connect!',
+      message:
+          'Hey explorers! 🌿 Ready to discover who eats what in nature? Jump into the Food Chains game and learn about animals, plants, and how they all connect!',
       teacherName: 'Ms. Johnson',
       timestamp: DateTime.now().subtract(const Duration(hours: 2)),
       category: 'Science',
@@ -28,7 +38,8 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
       id: '2',
       emoji: '⚖️',
       title: 'Balance the Scale!',
-      message: 'Can you make both sides equal? ⚖️ Use the balance scale to solve equations and become a math champion!',
+      message:
+          'Can you make both sides equal? ⚖️ Use the balance scale to solve equations and become a math champion!',
       teacherName: 'Mr. Smith',
       timestamp: DateTime.now().subtract(const Duration(hours: 5)),
       category: 'Math',
@@ -39,7 +50,8 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
       id: '3',
       emoji: '🎯',
       title: 'Daily Goal Reminder',
-      message: 'You\'re doing amazing! 🌟 Remember to complete your daily tasks and earn those coins. Every game counts!',
+      message:
+          'You\'re doing amazing! 🌟 Remember to complete your daily tasks and earn those coins. Every game counts!',
       teacherName: 'Ms. Johnson',
       timestamp: DateTime.now().subtract(const Duration(days: 1)),
       category: 'Motivation',
@@ -50,7 +62,8 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
       id: '4',
       emoji: '💧',
       title: 'States of Matter Magic!',
-      message: 'Watch atoms dance! 💃 See how solids, liquids, and gases behave differently. Heat things up or cool them down - what happens?',
+      message:
+          'Watch atoms dance! 💃 See how solids, liquids, and gases behave differently. Heat things up or cool them down - what happens?',
       teacherName: 'Mr. Smith',
       timestamp: DateTime.now().subtract(const Duration(days: 1, hours: 3)),
       category: 'Simulation',
@@ -61,7 +74,8 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
       id: '5',
       emoji: '📚',
       title: 'Story Time!',
-      message: 'A new adventure awaits in the library! 📖 Pick a book, read along, and discover amazing stories. What will you read today?',
+      message:
+          'A new adventure awaits in the library! 📖 Pick a book, read along, and discover amazing stories. What will you read today?',
       teacherName: 'Ms. Johnson',
       timestamp: DateTime.now().subtract(const Duration(days: 2)),
       category: 'English',
@@ -72,7 +86,8 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
       id: '6',
       emoji: '💖',
       title: 'Check-in Time',
-      message: 'How are you feeling today? 😊 Take a moment to share your mood. We care about how you\'re doing!',
+      message:
+          'How are you feeling today? 😊 Take a moment to share your mood. We care about how you\'re doing!',
       teacherName: 'Mr. Smith',
       timestamp: DateTime.now().subtract(const Duration(days: 3)),
       category: 'Wellbeing',
@@ -80,6 +95,60 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
       isNew: false,
     ),
   ];
+  List<TeacherMessage> _messages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _messagingService = MessagingService();
+    _messages = List<TeacherMessage>.from(_mockMessages);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _subscribeToBroadcasts();
+    });
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
+  }
+
+  void _subscribeToBroadcasts() {
+    _subscription?.cancel();
+    _subscription = _messagingService
+        .listenToBroadcasts(audience: AgeGroup.junior, limit: 25)
+        .listen((messages) {
+      final firebaseMessages =
+          messages.map(_mapBroadcastToTeacherMessage).toList(growable: false);
+      if (!mounted) return;
+      setState(() {
+        _messages = [
+          ...firebaseMessages,
+          ..._mockMessages,
+        ];
+      });
+    }, onError: (error) {
+      debugPrint('ChildMessagesScreen stream error: $error');
+    });
+  }
+
+  TeacherMessage _mapBroadcastToTeacherMessage(
+      TeacherBroadcastMessage message) {
+    final isNew = DateTime.now().difference(message.createdAt) <=
+        const Duration(hours: 24);
+    return TeacherMessage(
+      id: message.id,
+      emoji: message.emoji,
+      title: message.title,
+      message: message.message,
+      teacherName: message.teacherName,
+      timestamp: message.createdAt,
+      category: message.category,
+      color: message.color,
+      isNew: isNew,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,9 +171,8 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
           children: [
             _buildHeader(newMessagesCount),
             Expanded(
-              child: _messages.isEmpty
-                  ? _buildEmptyState()
-                  : _buildMessagesList(),
+              child:
+                  _messages.isEmpty ? _buildEmptyState() : _buildMessagesList(),
             ),
           ],
         ),
@@ -125,7 +193,10 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
                 height: 56,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [JuniorTheme.primaryPurple, JuniorTheme.primaryPink],
+                    colors: [
+                      JuniorTheme.primaryPurple,
+                      JuniorTheme.primaryPink
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -156,7 +227,8 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
                     const SizedBox(height: 4),
                     if (newCount > 0)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: JuniorTheme.primaryOrange,
                           borderRadius: BorderRadius.circular(12),
@@ -292,7 +364,8 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: Center(
-                            child: Text(message.emoji, style: const TextStyle(fontSize: 26)),
+                            child: Text(message.emoji,
+                                style: const TextStyle(fontSize: 26)),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -319,7 +392,8 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Center(
-                                      child: Text('👩‍🏫', style: TextStyle(fontSize: 10)),
+                                      child: Text('👩‍🏫',
+                                          style: TextStyle(fontSize: 10)),
                                     ),
                                   ),
                                   const SizedBox(width: 6),
@@ -371,7 +445,8 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: message.color.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
@@ -410,7 +485,8 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
                   top: 12,
                   right: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: JuniorTheme.primaryOrange,
                       borderRadius: BorderRadius.circular(8),
@@ -521,7 +597,8 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
                     ],
                   ),
                   child: Center(
-                    child: Text(message.emoji, style: const TextStyle(fontSize: 32)),
+                    child: Text(message.emoji,
+                        style: const TextStyle(fontSize: 32)),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -541,7 +618,8 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
                               color: message.color.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(6),
@@ -637,11 +715,13 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _buildReactionButton('🎉', 'Yay!', JuniorTheme.primaryOrange),
+                  child: _buildReactionButton(
+                      '🎉', 'Yay!', JuniorTheme.primaryOrange),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _buildReactionButton('❤️', 'Love it!', JuniorTheme.primaryPink),
+                  child: _buildReactionButton(
+                      '❤️', 'Love it!', JuniorTheme.primaryPink),
                 ),
               ],
             ),
@@ -669,7 +749,8 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
               ),
               backgroundColor: color,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               duration: const Duration(seconds: 2),
             ),
           );
@@ -742,4 +823,3 @@ class TeacherMessage {
     required this.isNew,
   });
 }
-

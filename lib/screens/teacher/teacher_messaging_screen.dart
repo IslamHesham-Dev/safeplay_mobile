@@ -1,5 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../../design_system/colors.dart';
+import '../../models/teacher_broadcast_message.dart';
+import '../../models/teacher_inbox_message.dart';
+import '../../models/user_type.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/messaging_service.dart';
 
 /// Teacher Messaging Screen - Broadcast messages to students
 class TeacherMessagingScreen extends StatefulWidget {
@@ -13,7 +22,12 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _selectedAgeGroup = 'bright'; // 'junior' or 'bright'
-  final TextEditingController _customMessageController = TextEditingController();
+  final TextEditingController _customMessageController =
+      TextEditingController();
+  late final MessagingService _messagingService;
+  StreamSubscription<List<TeacherInboxMessage>>? _inboxSubscription;
+  StreamSubscription<List<TeacherBroadcastMessage>>? _sentSubscription;
+  bool _sendingBroadcast = false;
 
   // Pre-made friendly nudges/notifications
   final List<QuickMessage> _quickMessages = [
@@ -22,7 +36,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       id: 'food-chains',
       emoji: '🦁',
       title: 'Explore Food Chains!',
-      message: 'Hey explorers! 🌿 Ready to discover who eats what in nature? Jump into the Food Chains game and learn about animals, plants, and how they all connect!',
+      message:
+          'Hey explorers! 🌿 Ready to discover who eats what in nature? Jump into the Food Chains game and learn about animals, plants, and how they all connect!',
       category: 'Science',
       color: const Color(0xFF4CAF50),
     ),
@@ -30,7 +45,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       id: 'microorganisms',
       emoji: '🔬',
       title: 'Tiny World Adventure!',
-      message: 'Did you know there are living things too small to see? 🦠 Explore the world of microorganisms - bacteria, fungi, and algae are waiting for you!',
+      message:
+          'Did you know there are living things too small to see? 🦠 Explore the world of microorganisms - bacteria, fungi, and algae are waiting for you!',
       category: 'Science',
       color: const Color(0xFF9C27B0),
     ),
@@ -38,7 +54,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       id: 'electricity',
       emoji: '⚡',
       title: 'Power Up with Circuits!',
-      message: 'Ready to become an electricity expert? 💡 Build circuits, connect batteries and bulbs, and see what happens when you change things around!',
+      message:
+          'Ready to become an electricity expert? 💡 Build circuits, connect batteries and bulbs, and see what happens when you change things around!',
       category: 'Science',
       color: const Color(0xFFFF9800),
     ),
@@ -46,7 +63,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       id: 'earth-sun-moon',
       emoji: '🌍',
       title: 'Space Explorer Time!',
-      message: 'Blast off into space! 🚀 Learn how Earth, Sun, and Moon dance together in the sky. Discover orbits and why we have day and night!',
+      message:
+          'Blast off into space! 🚀 Learn how Earth, Sun, and Moon dance together in the sky. Discover orbits and why we have day and night!',
       category: 'Science',
       color: const Color(0xFF2196F3),
     ),
@@ -54,7 +72,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       id: 'plants-grow',
       emoji: '🌱',
       title: 'Grow a Plant!',
-      message: 'Become a plant scientist! 🧑‍🔬 Experiment with heat and water to help plants grow. What happens when conditions change?',
+      message:
+          'Become a plant scientist! 🧑‍🔬 Experiment with heat and water to help plants grow. What happens when conditions change?',
       category: 'Science',
       color: const Color(0xFF8BC34A),
     ),
@@ -63,7 +82,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       id: 'equality-explorer',
       emoji: '⚖️',
       title: 'Balance the Scale!',
-      message: 'Can you make both sides equal? ⚖️ Use the balance scale to solve equations and become a math champion!',
+      message:
+          'Can you make both sides equal? ⚖️ Use the balance scale to solve equations and become a math champion!',
       category: 'Math',
       color: const Color(0xFF5B9BD5),
     ),
@@ -71,7 +91,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       id: 'area-model',
       emoji: '📐',
       title: 'Shape Up with Area!',
-      message: 'Rectangles are everywhere! 📏 Learn how to find area using the Area Model - break numbers into parts and see multiplication come alive!',
+      message:
+          'Rectangles are everywhere! 📏 Learn how to find area using the Area Model - break numbers into parts and see multiplication come alive!',
       category: 'Math',
       color: const Color(0xFFE91E63),
     ),
@@ -79,7 +100,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       id: 'mean-balance',
       emoji: '📊',
       title: 'Fair Share Fun!',
-      message: 'What does "average" really mean? 🤔 Share and balance numbers to discover the mean - it\'s like making everything fair!',
+      message:
+          'What does "average" really mean? 🤔 Share and balance numbers to discover the mean - it\'s like making everything fair!',
       category: 'Math',
       color: const Color(0xFF00BCD4),
     ),
@@ -88,7 +110,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       id: 'reading-time',
       emoji: '📚',
       title: 'Story Time!',
-      message: 'A new adventure awaits in the library! 📖 Pick a book, read along, and discover amazing stories. What will you read today?',
+      message:
+          'A new adventure awaits in the library! 📖 Pick a book, read along, and discover amazing stories. What will you read today?',
       category: 'English',
       color: const Color(0xFF673AB7),
     ),
@@ -96,7 +119,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       id: 'spelling-bee',
       emoji: '🐝',
       title: 'Spelling Bee Challenge!',
-      message: 'Can you spell like a champion? 🏆 Practice your spelling words and become a word wizard! Every letter counts!',
+      message:
+          'Can you spell like a champion? 🏆 Practice your spelling words and become a word wizard! Every letter counts!',
       category: 'English',
       color: const Color(0xFFFFEB3B),
     ),
@@ -105,7 +129,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       id: 'states-matter',
       emoji: '💧',
       title: 'States of Matter Magic!',
-      message: 'Watch atoms dance! 💃 See how solids, liquids, and gases behave differently. Heat things up or cool them down - what happens?',
+      message:
+          'Watch atoms dance! 💃 See how solids, liquids, and gases behave differently. Heat things up or cool them down - what happens?',
       category: 'Simulation',
       color: const Color(0xFF00BCD4),
     ),
@@ -113,7 +138,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       id: 'static-electricity',
       emoji: '🎈',
       title: 'Balloon Science!',
-      message: 'Rub a balloon and watch the magic happen! ✨ Learn about static electricity and see charges push and pull!',
+      message:
+          'Rub a balloon and watch the magic happen! ✨ Learn about static electricity and see charges push and pull!',
       category: 'Simulation',
       color: const Color(0xFFFF5722),
     ),
@@ -122,7 +148,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       id: 'daily-goal',
       emoji: '🎯',
       title: 'Daily Goal Reminder',
-      message: 'You\'re doing amazing! 🌟 Remember to complete your daily tasks and earn those coins. Every game counts!',
+      message:
+          'You\'re doing amazing! 🌟 Remember to complete your daily tasks and earn those coins. Every game counts!',
       category: 'Motivation',
       color: const Color(0xFF4CAF50),
     ),
@@ -130,7 +157,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       id: 'wellbeing',
       emoji: '💖',
       title: 'Check-in Time',
-      message: 'How are you feeling today? 😊 Take a moment to share your mood. We care about how you\'re doing!',
+      message:
+          'How are you feeling today? 😊 Take a moment to share your mood. We care about how you\'re doing!',
       category: 'Wellbeing',
       color: const Color(0xFFE91E63),
     ),
@@ -138,7 +166,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       id: 'explore-new',
       emoji: '🗺️',
       title: 'Try Something New!',
-      message: 'Adventure awaits! 🚀 Why not try a game you haven\'t played before? You might discover your new favorite!',
+      message:
+          'Adventure awaits! 🚀 Why not try a game you haven\'t played before? You might discover your new favorite!',
       category: 'Motivation',
       color: const Color(0xFF9C27B0),
     ),
@@ -147,39 +176,42 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
   String _selectedCategory = 'All';
 
   // Mock student messages/questions
-  final List<StudentMessage> _studentMessages = [
+  final List<StudentMessage> _mockStudentMessages = [
     StudentMessage(
-      id: '1',
+      id: 'mock-student-1',
       studentName: 'Emma',
       studentAvatar: '👧',
       ageGroup: 'bright',
-      question: 'Ms. Johnson, I don\'t understand how the food chain works. Can animals be in more than one food chain? 🤔',
+      question:
+          'Ms. Johnson, I don\'t understand how the food chain works. Can animals be in more than one food chain? 🤔',
       timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
       isRead: false,
       relatedGame: 'Food Chains',
     ),
     StudentMessage(
-      id: '2',
+      id: 'mock-student-2',
       studentName: 'Liam',
       studentAvatar: '👦',
       ageGroup: 'bright',
-      question: 'How do I balance the equation in the scale game? I keep getting it wrong 😅',
+      question:
+          'How do I balance the equation in the scale game? I keep getting it wrong 😅',
       timestamp: DateTime.now().subtract(const Duration(hours: 2)),
       isRead: false,
       relatedGame: 'Equality Explorer',
     ),
     StudentMessage(
-      id: '3',
+      id: 'mock-student-3',
       studentName: 'Sophia',
       studentAvatar: '👧',
       ageGroup: 'bright',
-      question: 'The States of Matter simulation is so cool! But why do the atoms move faster when it\'s hot? 🔥',
+      question:
+          'The States of Matter simulation is so cool! But why do the atoms move faster when it\'s hot? 🔥',
       timestamp: DateTime.now().subtract(const Duration(hours: 5)),
       isRead: true,
       relatedGame: 'States of Matter',
     ),
     StudentMessage(
-      id: '4',
+      id: 'mock-student-4',
       studentName: 'Noah',
       studentAvatar: '👦',
       ageGroup: 'bright',
@@ -189,25 +221,55 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       relatedGame: null,
     ),
     StudentMessage(
-      id: '5',
+      id: 'mock-student-5',
       studentName: 'Olivia',
       studentAvatar: '👧',
       ageGroup: 'bright',
-      question: 'Can you explain what happens to water when it freezes? I saw it in the simulation but I want to understand more! ❄️',
+      question:
+          'Can you explain what happens to water when it freezes? I saw it in the simulation but I want to understand more! ❄️',
       timestamp: DateTime.now().subtract(const Duration(days: 1, hours: 3)),
       isRead: true,
       relatedGame: 'States of Matter',
     ),
+  ];
+  List<StudentMessage> _studentMessages = [];
+  List<TeacherBroadcastMessage> _recentBroadcasts = [];
+
+  final List<Map<String, String>> _mockSentMessages = [
+    {
+      'message': 'dYZ% Great job on your math practice today!',
+      'time': '2 hours ago',
+      'group': 'Bright',
+    },
+    {
+      'message': 'dY"s Don\'t forget to check out the new books!',
+      'time': 'Yesterday',
+      'group': 'Junior',
+    },
+    {
+      'message': '?-? Keep up the amazing work everyone!',
+      'time': '2 days ago',
+      'group': 'Bright',
+    },
   ];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _messagingService = MessagingService();
+    _studentMessages = List<StudentMessage>.from(_mockStudentMessages);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _subscribeToInbox();
+      _subscribeToSentHistory();
+    });
   }
 
   @override
   void dispose() {
+    _inboxSubscription?.cancel();
+    _sentSubscription?.cancel();
     _tabController.dispose();
     _customMessageController.dispose();
     super.dispose();
@@ -215,7 +277,138 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
 
   List<QuickMessage> get _filteredMessages {
     if (_selectedCategory == 'All') return _quickMessages;
-    return _quickMessages.where((m) => m.category == _selectedCategory).toList();
+    return _quickMessages
+        .where((m) => m.category == _selectedCategory)
+        .toList();
+  }
+
+  void _subscribeToInbox() {
+    final auth = context.read<AuthProvider>();
+    final teacherId = auth.currentUser?.id;
+    if (teacherId == null) {
+      debugPrint('TeacherMessagingScreen: Missing teacher ID for inbox stream');
+      return;
+    }
+
+    _inboxSubscription?.cancel();
+    _inboxSubscription = _messagingService
+        .listenToTeacherInbox(teacherId: teacherId)
+        .listen((messages) {
+      final firebaseMessages =
+          messages.map(_mapInboxMessage).toList(growable: false);
+      if (!mounted) return;
+      setState(() {
+        _studentMessages = [
+          ...firebaseMessages,
+          ..._mockStudentMessages,
+        ];
+      });
+    }, onError: (error) {
+      debugPrint('Teacher inbox stream error: $error');
+    });
+  }
+
+  void _subscribeToSentHistory() {
+    final auth = context.read<AuthProvider>();
+    final teacherId = auth.currentUser?.id;
+    if (teacherId == null) {
+      debugPrint(
+          'TeacherMessagingScreen: Missing teacher ID for history stream');
+      return;
+    }
+
+    _sentSubscription?.cancel();
+    _sentSubscription = _messagingService
+        .listenToTeacherBroadcasts(teacherId: teacherId, limit: 5)
+        .listen((messages) {
+      if (!mounted) return;
+      setState(() {
+        _recentBroadcasts = messages;
+      });
+    }, onError: (error) {
+      debugPrint('Teacher history stream error: $error');
+    });
+  }
+
+  StudentMessage _mapInboxMessage(TeacherInboxMessage message) {
+    return StudentMessage(
+      id: message.id,
+      studentName: message.childName,
+      studentAvatar: message.childAvatar ?? '🧒',
+      ageGroup: message.ageGroup.name,
+      question: message.body,
+      timestamp: message.createdAt,
+      isRead: message.isRead,
+      relatedGame: message.relatedGame,
+    );
+  }
+
+  void _showSnack(String message, Color backgroundColor) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: backgroundColor,
+      ),
+    );
+  }
+
+  Future<bool> _sendBroadcast(QuickMessage? quickMessage) async {
+    final auth = context.read<AuthProvider>();
+    final teacher = auth.currentUser;
+
+    if (teacher == null) {
+      _showSnack(
+          'Please sign in as a teacher to send messages', SafePlayColors.error);
+      return false;
+    }
+
+    final body =
+        (quickMessage?.message ?? _customMessageController.text).trim();
+    if (body.isEmpty) {
+      _showSnack('Please write a message first', SafePlayColors.warning);
+      return false;
+    }
+
+    final targetAgeGroup =
+        _selectedAgeGroup == 'junior' ? AgeGroup.junior : AgeGroup.bright;
+    final title = quickMessage?.title ?? 'Message from ${teacher.name}';
+    final emoji = quickMessage?.emoji ?? '✉️';
+    final category = quickMessage?.category ?? 'Announcement';
+    final color = quickMessage?.color ??
+        (targetAgeGroup == AgeGroup.junior
+            ? SafePlayColors.juniorPurple
+            : SafePlayColors.brightIndigo);
+
+    setState(() => _sendingBroadcast = true);
+    try {
+      await _messagingService.sendBroadcast(
+        teacherId: teacher.id,
+        teacherName: teacher.name,
+        teacherAvatar: teacher.avatarUrl,
+        audience: targetAgeGroup,
+        title: title,
+        body: body,
+        emoji: emoji,
+        category: category,
+        color: color,
+        quickMessageId: quickMessage?.id,
+      );
+      if (quickMessage == null) {
+        _customMessageController.clear();
+      }
+      return true;
+    } catch (error, stackTrace) {
+      debugPrint('Teacher broadcast send error: $error');
+      debugPrint('$stackTrace');
+      _showSnack(
+          'Unable to send message. Please try again.', SafePlayColors.error);
+      return false;
+    } finally {
+      if (mounted) {
+        setState(() => _sendingBroadcast = false);
+      }
+    }
   }
 
   @override
@@ -271,7 +464,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.campaign_rounded, color: Colors.white, size: 24),
+                child: const Icon(Icons.campaign_rounded,
+                    color: Colors.white, size: 24),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -315,8 +509,10 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
               indicatorPadding: const EdgeInsets.all(4),
               labelColor: SafePlayColors.brandTeal500,
               unselectedLabelColor: Colors.white,
-              labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+              labelStyle:
+                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+              unselectedLabelStyle:
+                  const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
               dividerColor: Colors.transparent,
               tabs: [
                 const Tab(text: '✨ Quick'),
@@ -326,10 +522,13 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Text('📩 Inbox'),
-                      if (_studentMessages.where((m) => !m.isRead).isNotEmpty) ...[
+                      if (_studentMessages
+                          .where((m) => !m.isRead)
+                          .isNotEmpty) ...[
                         const SizedBox(width: 4),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: SafePlayColors.error,
                             borderRadius: BorderRadius.circular(10),
@@ -393,7 +592,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
     );
   }
 
-  Widget _buildAgeGroupButton(String value, String label, String emoji, Color color) {
+  Widget _buildAgeGroupButton(
+      String value, String label, String emoji, Color color) {
     final isSelected = _selectedAgeGroup == value;
     return GestureDetector(
       onTap: () => setState(() => _selectedAgeGroup = value),
@@ -437,7 +637,15 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
   }
 
   Widget _buildCategoryFilter() {
-    final categories = ['All', 'Science', 'Math', 'English', 'Simulation', 'Motivation', 'Wellbeing'];
+    final categories = [
+      'All',
+      'Science',
+      'Math',
+      'English',
+      'Simulation',
+      'Motivation',
+      'Wellbeing'
+    ];
     return SizedBox(
       height: 44,
       child: ListView.builder(
@@ -461,7 +669,9 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
               selectedColor: SafePlayColors.brandTeal500,
               checkmarkColor: Colors.white,
               side: BorderSide(
-                color: isSelected ? SafePlayColors.brandTeal500 : SafePlayColors.neutral200,
+                color: isSelected
+                    ? SafePlayColors.brandTeal500
+                    : SafePlayColors.neutral200,
               ),
               onSelected: (selected) {
                 setState(() => _selectedCategory = category);
@@ -518,7 +728,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
-                        child: Text(message.emoji, style: const TextStyle(fontSize: 24)),
+                        child: Text(message.emoji,
+                            style: const TextStyle(fontSize: 24)),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -536,7 +747,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                           ),
                           const SizedBox(height: 2),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
                               color: message.color.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(6),
@@ -592,7 +804,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: SafePlayColors.brandTeal500.withOpacity(0.3)),
+              border: Border.all(
+                  color: SafePlayColors.brandTeal500.withOpacity(0.3)),
             ),
             child: Row(
               children: [
@@ -602,7 +815,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                     color: SafePlayColors.brandTeal500.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(Icons.info_outline, color: SafePlayColors.brandTeal500, size: 24),
+                  child: Icon(Icons.info_outline,
+                      color: SafePlayColors.brandTeal500, size: 24),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -660,7 +874,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
               maxLines: 6,
               maxLength: 500,
               decoration: InputDecoration(
-                hintText: 'Write a friendly message for your students...\n\nTip: Use emojis to make it fun! 🎉',
+                hintText:
+                    'Write a friendly message for your students...\n\nTip: Use emojis to make it fun! 🎉',
                 hintStyle: TextStyle(color: SafePlayColors.neutral400),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -687,9 +902,20 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: ['🎉', '⭐', '🚀', '💪', '🎯', '📚', '🧠', '💡', '🌟', '👏', '🎮', '🏆']
-                .map((emoji) => _buildEmojiButton(emoji))
-                .toList(),
+            children: [
+              '🎉',
+              '⭐',
+              '🚀',
+              '💪',
+              '🎯',
+              '📚',
+              '🧠',
+              '💡',
+              '🌟',
+              '👏',
+              '🎮',
+              '🏆'
+            ].map((emoji) => _buildEmojiButton(emoji)).toList(),
           ),
           const SizedBox(height: 24),
 
@@ -697,8 +923,18 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () => _showSendConfirmation(null),
-              icon: const Icon(Icons.send_rounded),
+              onPressed:
+                  _sendingBroadcast ? null : () => _showSendConfirmation(null),
+              icon: _sendingBroadcast
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.send_rounded),
               label: Text(
                 'Send to All ${_selectedAgeGroup == 'junior' ? 'Junior' : 'Bright'} Students',
                 style: const TextStyle(fontWeight: FontWeight.bold),
@@ -737,7 +973,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
         );
         _customMessageController.value = TextEditingValue(
           text: newText,
-          selection: TextSelection.collapsed(offset: selection.start + emoji.length),
+          selection:
+              TextSelection.collapsed(offset: selection.start + emoji.length),
         );
       },
       borderRadius: BorderRadius.circular(8),
@@ -754,11 +991,13 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
   }
 
   Widget _buildSentMessagesSection() {
-    // Mock sent messages
     final sentMessages = [
-      {'message': '🎉 Great job on your math practice today!', 'time': '2 hours ago', 'group': 'Bright'},
-      {'message': '📚 Don\'t forget to check out the new books!', 'time': 'Yesterday', 'group': 'Junior'},
-      {'message': '⭐ Keep up the amazing work everyone!', 'time': '2 days ago', 'group': 'Bright'},
+      ..._recentBroadcasts.map((msg) => {
+            'message': msg.message,
+            'time': _formatTimestamp(msg.createdAt),
+            'group': msg.audience == AgeGroup.junior ? 'Junior' : 'Bright',
+          }),
+      ..._mockSentMessages,
     ];
 
     return Column(
@@ -780,65 +1019,69 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
         ),
         const SizedBox(height: 12),
         ...sentMessages.map((msg) => Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: SafePlayColors.neutral100),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      msg['message']!,
-                      style: TextStyle(
-                        color: SafePlayColors.neutral700,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: SafePlayColors.neutral100),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: msg['group'] == 'Junior'
-                                ? SafePlayColors.juniorPurple.withOpacity(0.1)
-                                : SafePlayColors.brightIndigo.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            msg['group']!,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: msg['group'] == 'Junior'
-                                  ? SafePlayColors.juniorPurple
-                                  : SafePlayColors.brightIndigo,
-                            ),
+                        Text(
+                          msg['message'] ?? '',
+                          style: TextStyle(
+                            color: SafePlayColors.neutral700,
+                            fontSize: 14,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          msg['time']!,
-                          style: TextStyle(
-                            color: SafePlayColors.neutral400,
-                            fontSize: 12,
-                          ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: msg['group'] == 'Junior'
+                                    ? SafePlayColors.juniorPurple
+                                        .withOpacity(0.1)
+                                    : SafePlayColors.brightIndigo
+                                        .withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                msg['group'] ?? '',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: msg['group'] == 'Junior'
+                                      ? SafePlayColors.juniorPurple
+                                      : SafePlayColors.brightIndigo,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              msg['time'] ?? '',
+                              style: TextStyle(
+                                color: SafePlayColors.neutral400,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                  Icon(Icons.check_circle,
+                      color: SafePlayColors.success, size: 20),
+                ],
               ),
-              Icon(Icons.check_circle, color: SafePlayColors.success, size: 20),
-            ],
-          ),
-        )),
+            )),
       ],
     );
   }
@@ -881,7 +1124,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Center(
-                    child: Text(message.emoji, style: const TextStyle(fontSize: 28)),
+                    child: Text(message.emoji,
+                        style: const TextStyle(fontSize: 28)),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -901,7 +1145,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
                               color: message.color.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(6),
@@ -982,14 +1227,27 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _showSendConfirmation(message);
-                },
-                icon: const Icon(Icons.send_rounded),
-                label: const Text(
-                  'Send Message',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                onPressed: _sendingBroadcast
+                    ? null
+                    : () {
+                        Navigator.pop(context);
+                        _showSendConfirmation(message);
+                      },
+                icon: _sendingBroadcast
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Icon(Icons.send_rounded),
+                label: Text(
+                  _sendingBroadcast ? 'Sending...' : 'Send Message',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: message.color,
@@ -1009,17 +1267,16 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
     );
   }
 
-  void _showSendConfirmation(QuickMessage? message) {
-    final messageText = message?.message ?? _customMessageController.text;
+  Future<void> _showSendConfirmation(QuickMessage? message) async {
+    final messageText =
+        (message?.message ?? _customMessageController.text).trim();
     if (messageText.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please write a message first'),
-          backgroundColor: SafePlayColors.warning,
-        ),
-      );
+      _showSnack('Please write a message first', SafePlayColors.warning);
       return;
     }
+
+    final sent = await _sendBroadcast(message);
+    if (!sent || !mounted) return;
 
     showDialog(
       context: context,
@@ -1070,9 +1327,6 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              if (message == null) {
-                _customMessageController.clear();
-              }
             },
             child: Text(
               'Done',
@@ -1089,7 +1343,7 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
 
   Widget _buildStudentMessagesTab() {
     final unreadCount = _studentMessages.where((m) => !m.isRead).length;
-    
+
     return Column(
       children: [
         // Header info
@@ -1104,7 +1358,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
               ],
             ),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: SafePlayColors.brightIndigo.withOpacity(0.2)),
+            border:
+                Border.all(color: SafePlayColors.brightIndigo.withOpacity(0.2)),
           ),
           child: Row(
             children: [
@@ -1114,7 +1369,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                   color: SafePlayColors.brightIndigo.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.school_rounded, color: SafePlayColors.brightIndigo, size: 22),
+                child: Icon(Icons.school_rounded,
+                    color: SafePlayColors.brightIndigo, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1131,7 +1387,7 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      unreadCount > 0 
+                      unreadCount > 0
                           ? '$unreadCount new question${unreadCount > 1 ? 's' : ''} from Bright students'
                           : 'Questions from Bright students appear here',
                       style: TextStyle(
@@ -1144,7 +1400,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
               ),
               if (unreadCount > 0)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: SafePlayColors.brightIndigo,
                     borderRadius: BorderRadius.circular(12),
@@ -1223,10 +1480,12 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: message.isRead ? null : Border.all(color: SafePlayColors.brightIndigo, width: 2),
+        border: message.isRead
+            ? null
+            : Border.all(color: SafePlayColors.brightIndigo, width: 2),
         boxShadow: [
           BoxShadow(
-            color: message.isRead 
+            color: message.isRead
                 ? Colors.black.withOpacity(0.05)
                 : SafePlayColors.brightIndigo.withOpacity(0.15),
             blurRadius: message.isRead ? 10 : 16,
@@ -1252,12 +1511,16 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                       height: 48,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [SafePlayColors.brightIndigo, SafePlayColors.brightIndigo.withOpacity(0.7)],
+                          colors: [
+                            SafePlayColors.brightIndigo,
+                            SafePlayColors.brightIndigo.withOpacity(0.7)
+                          ],
                         ),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
-                        child: Text(message.studentAvatar, style: const TextStyle(fontSize: 24)),
+                        child: Text(message.studentAvatar,
+                            style: const TextStyle(fontSize: 24)),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -1277,9 +1540,11 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                               ),
                               const SizedBox(width: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: SafePlayColors.brightIndigo.withOpacity(0.1),
+                                  color: SafePlayColors.brightIndigo
+                                      .withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
@@ -1306,7 +1571,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                     ),
                     if (!message.isRead)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: SafePlayColors.brightIndigo,
                           borderRadius: BorderRadius.circular(8),
@@ -1337,7 +1603,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                 if (message.relatedGame != null) ...[
                   const SizedBox(height: 10),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: SafePlayColors.neutral50,
                       borderRadius: BorderRadius.circular(8),
@@ -1346,7 +1613,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.games_outlined, size: 14, color: SafePlayColors.neutral500),
+                        Icon(Icons.games_outlined,
+                            size: 14, color: SafePlayColors.neutral500),
                         const SizedBox(width: 6),
                         Text(
                           'Related to: ${message.relatedGame}',
@@ -1385,6 +1653,9 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
         );
       }
     });
+    if (!message.id.startsWith('mock-')) {
+      _messagingService.markInboxMessageRead(message.id);
+    }
 
     showModalBottomSheet(
       context: context,
@@ -1420,7 +1691,10 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                   height: 60,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [SafePlayColors.brightIndigo, SafePlayColors.brightIndigo.withOpacity(0.7)],
+                      colors: [
+                        SafePlayColors.brightIndigo,
+                        SafePlayColors.brightIndigo.withOpacity(0.7)
+                      ],
                     ),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
@@ -1432,7 +1706,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                     ],
                   ),
                   child: Center(
-                    child: Text(message.studentAvatar, style: const TextStyle(fontSize: 30)),
+                    child: Text(message.studentAvatar,
+                        style: const TextStyle(fontSize: 30)),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -1452,9 +1727,11 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: SafePlayColors.brightIndigo.withOpacity(0.1),
+                              color:
+                                  SafePlayColors.brightIndigo.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -1489,14 +1766,16 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
               decoration: BoxDecoration(
                 color: SafePlayColors.brightIndigo.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: SafePlayColors.brightIndigo.withOpacity(0.2)),
+                border: Border.all(
+                    color: SafePlayColors.brightIndigo.withOpacity(0.2)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.help_outline, size: 18, color: SafePlayColors.brightIndigo),
+                      Icon(Icons.help_outline,
+                          size: 18, color: SafePlayColors.brightIndigo),
                       const SizedBox(width: 8),
                       Text(
                         'Student\'s Question',
@@ -1530,7 +1809,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.games_rounded, size: 20, color: SafePlayColors.neutral600),
+                    Icon(Icons.games_rounded,
+                        size: 20, color: SafePlayColors.neutral600),
                     const SizedBox(width: 10),
                     Text(
                       'Related to: ${message.relatedGame}',
@@ -1633,7 +1913,7 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
 
   void _showReplyDialog(StudentMessage message) {
     final replyController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -1648,7 +1928,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Center(
-                child: Text(message.studentAvatar, style: const TextStyle(fontSize: 18)),
+                child: Text(message.studentAvatar,
+                    style: const TextStyle(fontSize: 18)),
               ),
             ),
             const SizedBox(width: 12),
@@ -1656,8 +1937,11 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Reply to', style: TextStyle(fontSize: 14, fontWeight: FontWeight.normal)),
-                  Text(message.studentName, style: const TextStyle(fontSize: 16)),
+                  const Text('Reply to',
+                      style: TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.normal)),
+                  Text(message.studentName,
+                      style: const TextStyle(fontSize: 16)),
                 ],
               ),
             ),
@@ -1677,7 +1961,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: SafePlayColors.brightIndigo, width: 2),
+                  borderSide:
+                      BorderSide(color: SafePlayColors.brightIndigo, width: 2),
                 ),
               ),
             ),
@@ -1697,7 +1982,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: SafePlayColors.neutral500)),
+            child: Text('Cancel',
+                style: TextStyle(color: SafePlayColors.neutral500)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -1706,7 +1992,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                 SnackBar(
                   content: Row(
                     children: [
-                      const Icon(Icons.check_circle, color: Colors.white, size: 20),
+                      const Icon(Icons.check_circle,
+                          color: Colors.white, size: 20),
                       const SizedBox(width: 8),
                       Text('Reply sent to ${message.studentName}!'),
                     ],
@@ -1719,7 +2006,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor: SafePlayColors.brightIndigo,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
             child: const Text('Send Reply'),
           ),
@@ -1739,7 +2027,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
         decoration: BoxDecoration(
           color: SafePlayColors.brightIndigo.withOpacity(0.1),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: SafePlayColors.brightIndigo.withOpacity(0.3)),
+          border:
+              Border.all(color: SafePlayColors.brightIndigo.withOpacity(0.3)),
         ),
         child: Text(
           text,
@@ -1810,4 +2099,3 @@ class StudentMessage {
     this.relatedGame,
   });
 }
-
