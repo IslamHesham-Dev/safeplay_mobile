@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/web_game.dart';
 import '../services/web_game_service.dart';
 import '../services/simulation_service.dart';
 import '../screens/junior/web_game_detail_screen.dart';
@@ -50,12 +51,28 @@ class GameNavigationService {
     String gameId,
   ) async {
     try {
-      // Get all bright games
-      final games = await _webGameService.getWebGames(ageGroup: 'bright');
-      final game = games.firstWhere(
-        (g) => g.id == gameId,
-        orElse: () => throw Exception('Game not found: $gameId'),
-      );
+      WebGame game;
+      
+      // First, try to find in Bright games with exact ID
+      final brightGames = await _webGameService.getWebGames(ageGroup: 'bright');
+      try {
+        game = brightGames.firstWhere(
+          (g) => g.id == gameId,
+        );
+      } catch (_) {
+        // If not found, try with "-bright" suffix (Bright games are cloned from Junior with suffix)
+        try {
+          game = brightGames.firstWhere(
+            (g) => g.id == '$gameId-bright',
+          );
+        } catch (_) {
+          // If still not found, try Junior games (Bright students can access Junior games)
+          final juniorGames = await _webGameService.getWebGames(ageGroup: 'junior');
+          game = juniorGames.firstWhere(
+            (g) => g.id == gameId,
+          );
+        }
+      }
 
       // Navigate to the game detail screen
       await Navigator.of(context).push(

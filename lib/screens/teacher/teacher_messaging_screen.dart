@@ -1263,7 +1263,7 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     )
-                  : const Icon(Icons.send_rounded),
+                  : const Icon(Icons.send_rounded, color: Colors.white),
               label: Text(
                 'Send to All ${_selectedAgeGroup == 'junior' ? 'Junior' : 'Bright'} Students',
                 style: const TextStyle(fontWeight: FontWeight.bold),
@@ -1607,7 +1607,7 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                               AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                    : const Icon(Icons.send_rounded),
+                    : const Icon(Icons.send_rounded, color: Colors.white),
                 label: Text(
                   _sendingBroadcast ? 'Sending...' : 'Send Message',
                   style: const TextStyle(
