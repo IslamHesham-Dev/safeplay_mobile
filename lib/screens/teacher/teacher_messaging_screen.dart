@@ -2219,7 +2219,7 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                   Navigator.pop(context);
                   _showReplyDialog(message);
                 },
-                icon: const Icon(Icons.reply_rounded),
+                icon: const Icon(Icons.reply_rounded, color: Colors.white),
                 label: const Text(
                   'Reply to Student',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
