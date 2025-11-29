@@ -146,10 +146,64 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
 
   String _selectedCategory = 'All';
 
+  // Mock student messages/questions
+  final List<StudentMessage> _studentMessages = [
+    StudentMessage(
+      id: '1',
+      studentName: 'Emma',
+      studentAvatar: '👧',
+      ageGroup: 'bright',
+      question: 'Ms. Johnson, I don\'t understand how the food chain works. Can animals be in more than one food chain? 🤔',
+      timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
+      isRead: false,
+      relatedGame: 'Food Chains',
+    ),
+    StudentMessage(
+      id: '2',
+      studentName: 'Liam',
+      studentAvatar: '👦',
+      ageGroup: 'bright',
+      question: 'How do I balance the equation in the scale game? I keep getting it wrong 😅',
+      timestamp: DateTime.now().subtract(const Duration(hours: 2)),
+      isRead: false,
+      relatedGame: 'Equality Explorer',
+    ),
+    StudentMessage(
+      id: '3',
+      studentName: 'Sophia',
+      studentAvatar: '👧',
+      ageGroup: 'bright',
+      question: 'The States of Matter simulation is so cool! But why do the atoms move faster when it\'s hot? 🔥',
+      timestamp: DateTime.now().subtract(const Duration(hours: 5)),
+      isRead: true,
+      relatedGame: 'States of Matter',
+    ),
+    StudentMessage(
+      id: '4',
+      studentName: 'Noah',
+      studentAvatar: '👦',
+      ageGroup: 'bright',
+      question: 'I finished all the math games! What should I try next? ⭐',
+      timestamp: DateTime.now().subtract(const Duration(days: 1)),
+      isRead: true,
+      relatedGame: null,
+    ),
+    StudentMessage(
+      id: '5',
+      studentName: 'Olivia',
+      studentAvatar: '👧',
+      ageGroup: 'bright',
+      question: 'Can you explain what happens to water when it freezes? I saw it in the simulation but I want to understand more! ❄️',
+      timestamp: DateTime.now().subtract(const Duration(days: 1, hours: 3)),
+      isRead: true,
+      relatedGame: 'States of Matter',
+    ),
+  ];
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -179,6 +233,7 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
               children: [
                 _buildQuickMessagesTab(),
                 _buildCustomMessageTab(),
+                _buildStudentMessagesTab(),
               ],
             ),
           ),
@@ -260,12 +315,38 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
               indicatorPadding: const EdgeInsets.all(4),
               labelColor: SafePlayColors.brandTeal500,
               unselectedLabelColor: Colors.white,
-              labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+              labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
               dividerColor: Colors.transparent,
-              tabs: const [
-                Tab(text: '✨ Quick Messages'),
-                Tab(text: '✏️ Custom Message'),
+              tabs: [
+                const Tab(text: '✨ Quick'),
+                const Tab(text: '✏️ Custom'),
+                Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('📩 Inbox'),
+                      if (_studentMessages.where((m) => !m.isRead).isNotEmpty) ...[
+                        const SizedBox(width: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: SafePlayColors.error,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${_studentMessages.where((m) => !m.isRead).length}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -1005,6 +1086,689 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       ),
     );
   }
+
+  Widget _buildStudentMessagesTab() {
+    final unreadCount = _studentMessages.where((m) => !m.isRead).length;
+    
+    return Column(
+      children: [
+        // Header info
+        Container(
+          margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                SafePlayColors.brightIndigo.withOpacity(0.1),
+                SafePlayColors.brightIndigo.withOpacity(0.05),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: SafePlayColors.brightIndigo.withOpacity(0.2)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: SafePlayColors.brightIndigo.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.school_rounded, color: SafePlayColors.brightIndigo, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Student Questions',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: SafePlayColors.brightIndigo,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      unreadCount > 0 
+                          ? '$unreadCount new question${unreadCount > 1 ? 's' : ''} from Bright students'
+                          : 'Questions from Bright students appear here',
+                      style: TextStyle(
+                        color: SafePlayColors.neutral600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (unreadCount > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: SafePlayColors.brightIndigo,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '$unreadCount NEW',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Messages list
+        Expanded(
+          child: _studentMessages.isEmpty
+              ? _buildEmptyStudentMessages()
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _studentMessages.length,
+                  itemBuilder: (context, index) {
+                    return _buildStudentMessageCard(_studentMessages[index]);
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyStudentMessages() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              color: SafePlayColors.brightIndigo.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Center(
+              child: Text('📭', style: TextStyle(fontSize: 48)),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'No student questions yet',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: SafePlayColors.neutral700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'When Bright students send you questions,\nthey will appear here.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: SafePlayColors.neutral500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStudentMessageCard(StudentMessage message) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: message.isRead ? null : Border.all(color: SafePlayColors.brightIndigo, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: message.isRead 
+                ? Colors.black.withOpacity(0.05)
+                : SafePlayColors.brightIndigo.withOpacity(0.15),
+            blurRadius: message.isRead ? 10 : 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showStudentMessageDetail(message),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    // Student avatar
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [SafePlayColors.brightIndigo, SafePlayColors.brightIndigo.withOpacity(0.7)],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Text(message.studentAvatar, style: const TextStyle(fontSize: 24)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                message.studentName,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: SafePlayColors.neutral900,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: SafePlayColors.brightIndigo.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  'Bright',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: SafePlayColors.brightIndigo,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _formatTimestamp(message.timestamp),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: SafePlayColors.neutral500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (!message.isRead)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: SafePlayColors.brightIndigo,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'NEW',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Question text
+                Text(
+                  message.question,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: SafePlayColors.neutral700,
+                    height: 1.4,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (message.relatedGame != null) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: SafePlayColors.neutral50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: SafePlayColors.neutral200),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.games_outlined, size: 14, color: SafePlayColors.neutral500),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Related to: ${message.relatedGame}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: SafePlayColors.neutral600,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showStudentMessageDetail(StudentMessage message) {
+    // Mark as read
+    setState(() {
+      final index = _studentMessages.indexWhere((m) => m.id == message.id);
+      if (index != -1) {
+        _studentMessages[index] = StudentMessage(
+          id: message.id,
+          studentName: message.studentName,
+          studentAvatar: message.studentAvatar,
+          ageGroup: message.ageGroup,
+          question: message.question,
+          timestamp: message.timestamp,
+          isRead: true,
+          relatedGame: message.relatedGame,
+        );
+      }
+    });
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: SafePlayColors.neutral200,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Student info header
+            Row(
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [SafePlayColors.brightIndigo, SafePlayColors.brightIndigo.withOpacity(0.7)],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: SafePlayColors.brightIndigo.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(message.studentAvatar, style: const TextStyle(fontSize: 30)),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        message.studentName,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: SafePlayColors.neutral900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: SafePlayColors.brightIndigo.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'Bright Student',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: SafePlayColors.brightIndigo,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _formatTimestamp(message.timestamp),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: SafePlayColors.neutral500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Question
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: SafePlayColors.brightIndigo.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: SafePlayColors.brightIndigo.withOpacity(0.2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.help_outline, size: 18, color: SafePlayColors.brightIndigo),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Student\'s Question',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: SafePlayColors.brightIndigo,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    message.question,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: SafePlayColors.neutral700,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (message.relatedGame != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: SafePlayColors.neutral50,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.games_rounded, size: 20, color: SafePlayColors.neutral600),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Related to: ${message.relatedGame}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: SafePlayColors.neutral600,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 20),
+            // Reply button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showReplyDialog(message);
+                },
+                icon: const Icon(Icons.reply_rounded),
+                label: const Text(
+                  'Reply to Student',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: SafePlayColors.brightIndigo,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 0,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Mark actions
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Question archived'),
+                          backgroundColor: SafePlayColors.neutral600,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.archive_outlined, size: 18),
+                    label: const Text('Archive'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: SafePlayColors.neutral600,
+                      side: BorderSide(color: SafePlayColors.neutral300),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Question flagged for follow-up'),
+                          backgroundColor: SafePlayColors.warning,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.flag_outlined, size: 18),
+                    label: const Text('Flag'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: SafePlayColors.warning,
+                      side: BorderSide(color: SafePlayColors.warning),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showReplyDialog(StudentMessage message) {
+    final replyController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: SafePlayColors.brightIndigo.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: Text(message.studentAvatar, style: const TextStyle(fontSize: 18)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Reply to', style: TextStyle(fontSize: 14, fontWeight: FontWeight.normal)),
+                  Text(message.studentName, style: const TextStyle(fontSize: 16)),
+                ],
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: replyController,
+              maxLines: 4,
+              decoration: InputDecoration(
+                hintText: 'Type your reply...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: SafePlayColors.neutral200),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: SafePlayColors.brightIndigo, width: 2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Quick replies
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildQuickReplyChip('Great question! 👍', replyController),
+                _buildQuickReplyChip('Let me explain... 📚', replyController),
+                _buildQuickReplyChip('Try the game again! 🎮', replyController),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: SafePlayColors.neutral500)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Row(
+                    children: [
+                      const Icon(Icons.check_circle, color: Colors.white, size: 20),
+                      const SizedBox(width: 8),
+                      Text('Reply sent to ${message.studentName}!'),
+                    ],
+                  ),
+                  backgroundColor: SafePlayColors.success,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: SafePlayColors.brightIndigo,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Send Reply'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickReplyChip(String text, TextEditingController controller) {
+    return InkWell(
+      onTap: () {
+        controller.text = text;
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: SafePlayColors.brightIndigo.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: SafePlayColors.brightIndigo.withOpacity(0.3)),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            color: SafePlayColors.brightIndigo,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} days ago';
+    } else {
+      return '${timestamp.day}/${timestamp.month}';
+    }
+  }
 }
 
 class QuickMessage {
@@ -1022,6 +1786,28 @@ class QuickMessage {
     required this.message,
     required this.category,
     required this.color,
+  });
+}
+
+class StudentMessage {
+  final String id;
+  final String studentName;
+  final String studentAvatar;
+  final String ageGroup;
+  final String question;
+  final DateTime timestamp;
+  final bool isRead;
+  final String? relatedGame;
+
+  const StudentMessage({
+    required this.id,
+    required this.studentName,
+    required this.studentAvatar,
+    required this.ageGroup,
+    required this.question,
+    required this.timestamp,
+    required this.isRead,
+    this.relatedGame,
   });
 }
 
