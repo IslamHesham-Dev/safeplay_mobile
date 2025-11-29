@@ -568,10 +568,29 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
   }
 
   List<QuickMessage> get _filteredMessages {
-    if (_selectedCategory == 'All') return _quickMessages;
-    return _quickMessages
-        .where((m) => m.category == _selectedCategory)
-        .toList();
+    var messages = _quickMessages;
+    
+    // Filter by age group
+    messages = messages.where((m) {
+      // Include messages that match the selected age group or are for both
+      final matchesAgeGroup = m.ageGroup == _selectedAgeGroup || m.ageGroup == 'both';
+      
+      // When Junior is selected, exclude simulation games
+      if (_selectedAgeGroup == 'junior' && m.gameType == 'simulation') {
+        return false;
+      }
+      
+      return matchesAgeGroup;
+    }).toList();
+    
+    // Filter by category if not 'All'
+    if (_selectedCategory != 'All') {
+      messages = messages
+          .where((m) => m.category == _selectedCategory)
+          .toList();
+    }
+    
+    return messages;
   }
 
   void _subscribeToInbox() {
