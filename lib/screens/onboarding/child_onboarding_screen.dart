@@ -245,12 +245,12 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.arrow_back_rounded, size: 20),
-                              SizedBox(width: 8),
-                              Text('Back', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              Icon(Icons.arrow_back_rounded, size: 20, color: _pages[_currentPage].color),
+                              const SizedBox(width: 8),
+                              Text('Back', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _pages[_currentPage].color)),
                             ],
                           ),
                         ),

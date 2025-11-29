@@ -1849,61 +1849,6 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            // Mark actions
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text('Question archived'),
-                          backgroundColor: SafePlayColors.neutral600,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.archive_outlined, size: 18),
-                    label: const Text('Archive'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: SafePlayColors.neutral600,
-                      side: BorderSide(color: SafePlayColors.neutral300),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text('Question flagged for follow-up'),
-                          backgroundColor: SafePlayColors.warning,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.flag_outlined, size: 18),
-                    label: const Text('Flag'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: SafePlayColors.warning,
-                      side: BorderSide(color: SafePlayColors.warning),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
             SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
           ],
         ),

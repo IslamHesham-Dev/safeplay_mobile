@@ -395,6 +395,45 @@ class _MessagingScreenState extends State<MessagingScreen> {
     );
   }
 
+  String _getTeacherInitial(String name) {
+    if (name.isEmpty) return 'T';
+    return name[0].toUpperCase();
+  }
+
+  Widget _buildTeacherInitialAvatar(String name) {
+    final initial = _getTeacherInitial(name);
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            JuniorTheme.primaryBlue,
+            JuniorTheme.primaryPurple,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: JuniorTheme.primaryBlue.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          initial,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -454,30 +493,33 @@ class _MessagingScreenState extends State<MessagingScreen> {
                 ),
               ),
             ),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  JuniorTheme.primaryBlue,
-                  JuniorTheme.primaryPurple,
+          if (!_showConversationList)
+            _buildTeacherInitialAvatar(_conversations[_selectedConversation]['name'] as String? ?? 'T')
+          else
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    JuniorTheme.primaryBlue,
+                    JuniorTheme.primaryPurple,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: JuniorTheme.primaryBlue.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
                 ],
               ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: JuniorTheme.primaryBlue.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              child: const Icon(
+                Icons.chat_bubble_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
             ),
-            child: const Icon(
-              Icons.chat_bubble_rounded,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -507,19 +549,6 @@ class _MessagingScreenState extends State<MessagingScreen> {
               ],
             ),
           ),
-          if (!_showConversationList)
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: JuniorTheme.primaryGreen.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.videocam_rounded,
-                color: JuniorTheme.primaryGreen,
-                size: 22,
-              ),
-            ),
         ],
       ),
     );
@@ -664,8 +693,12 @@ class _MessagingScreenState extends State<MessagingScreen> {
                   ),
                   child: Center(
                     child: Text(
-                      conversation['avatar'],
-                      style: const TextStyle(fontSize: 28),
+                      _getTeacherInitial(conversation['name'] as String? ?? 'T'),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: JuniorTheme.primaryBlue,
+                      ),
                     ),
                   ),
                 ),
@@ -875,89 +908,130 @@ class _MessagingScreenState extends State<MessagingScreen> {
       ),
       child: SafeArea(
         top: false,
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: JuniorTheme.primaryOrange.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(
-                Icons.add_rounded,
-                color: JuniorTheme.primaryOrange,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: JuniorTheme.backgroundLight,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: JuniorTheme.textLight.withOpacity(0.2),
-                  ),
-                ),
-                child: TextField(
-                  controller: _messageController,
-                  style: JuniorTheme.bodyMedium,
-                  decoration: InputDecoration(
-                    hintText: 'Type a message...',
-                    hintStyle: JuniorTheme.bodyMedium.copyWith(
-                      color: JuniorTheme.textLight,
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
-                    ),
-                  ),
-                ),
+            // Quick replies row
+            SizedBox(
+              height: 36,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  _buildQuickReplyChip('Thanks! 👍'),
+                  const SizedBox(width: 8),
+                  _buildQuickReplyChip('I understand 😊'),
+                  const SizedBox(width: 8),
+                  _buildQuickReplyChip('Can you explain more? 🤔'),
+                  const SizedBox(width: 8),
+                  _buildQuickReplyChip('Got it! ✅'),
+                  const SizedBox(width: 8),
+                  _buildQuickReplyChip('I need help 🙋'),
+                ],
               ),
             ),
-            const SizedBox(width: 12),
-            GestureDetector(
-              onTap: () {
-                if (_sendingReply && _isFirebaseConversation) return;
-                _handleSendMessage();
-              },
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      JuniorTheme.primaryBlue,
-                      JuniorTheme.primaryPurple,
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: JuniorTheme.primaryBlue.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: _sendingReply && _isFirebaseConversation
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : const Icon(
-                        Icons.send_rounded,
-                        color: Colors.white,
-                        size: 22,
+            const SizedBox(height: 12),
+            // Input row
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: JuniorTheme.backgroundLight,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: JuniorTheme.textLight.withOpacity(0.2),
                       ),
-              ),
+                    ),
+                    child: TextField(
+                      controller: _messageController,
+                      style: JuniorTheme.bodyMedium,
+                      decoration: InputDecoration(
+                        hintText: 'Type a message...',
+                        hintStyle: JuniorTheme.bodyMedium.copyWith(
+                          color: JuniorTheme.textLight,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () {
+                    if (_sendingReply && _isFirebaseConversation) return;
+                    _handleSendMessage();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          JuniorTheme.primaryBlue,
+                          JuniorTheme.primaryPurple,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: JuniorTheme.primaryBlue.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: _sendingReply && _isFirebaseConversation
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Icon(
+                            Icons.send_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                  ),
+                ),
+              ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickReplyChip(String text) {
+    return GestureDetector(
+      onTap: () {
+        _messageController.text = text;
+        _messageController.selection = TextSelection.fromPosition(
+          TextPosition(offset: text.length),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: JuniorTheme.primaryBlue.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: JuniorTheme.primaryBlue.withOpacity(0.3),
+          ),
+        ),
+        child: Text(
+          text,
+          style: JuniorTheme.bodySmall.copyWith(
+            color: JuniorTheme.primaryBlue,
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
         ),
       ),
     );

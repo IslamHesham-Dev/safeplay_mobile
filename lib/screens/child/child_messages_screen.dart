@@ -658,8 +658,15 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
                       color: message.color.withOpacity(0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Center(
-                      child: Text('👩‍🏫', style: TextStyle(fontSize: 20)),
+                    child: Center(
+                      child: Text(
+                        _getTeacherInitial(message.teacherName),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: message.color,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -797,6 +804,11 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
     } else {
       return '${timestamp.day}/${timestamp.month}';
     }
+  }
+
+  String _getTeacherInitial(String name) {
+    if (name.isEmpty) return 'T';
+    return name[0].toUpperCase();
   }
 }
 
