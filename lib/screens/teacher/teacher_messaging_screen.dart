@@ -2317,22 +2317,71 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                 style: TextStyle(color: SafePlayColors.neutral500)),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      const Icon(Icons.check_circle,
-                          color: Colors.white, size: 20),
-                      const SizedBox(width: 8),
-                      Text('Reply sent to ${message.studentName}!'),
-                    ],
+            onPressed: () async {
+              final replyText = replyController.text.trim();
+              if (replyText.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Please enter a reply message'),
+                    backgroundColor: SafePlayColors.warning,
                   ),
-                  backgroundColor: SafePlayColors.success,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+                );
+                return;
+              }
+
+              final auth = context.read<AuthProvider>();
+              final teacher = auth.currentUser;
+              if (teacher == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Please sign in as a teacher'),
+                    backgroundColor: SafePlayColors.error,
+                  ),
+                );
+                return;
+              }
+
+              try {
+                final ageGroup = AgeGroup.fromString(message.ageGroup) ?? AgeGroup.bright;
+                await _messagingService.sendTeacherReply(
+                  teacherId: teacher.id,
+                  teacherName: teacher.name,
+                  childId: message.childId,
+                  childName: message.studentName,
+                  ageGroup: ageGroup,
+                  message: replyText,
+                  teacherAvatar: teacher.avatarUrl,
+                  childAvatar: message.studentAvatar,
+                  relatedInboxMessageId: message.inboxMessageId,
+                );
+
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          const Icon(Icons.check_circle,
+                              color: Colors.white, size: 20),
+                          const SizedBox(width: 8),
+                          Text('Reply sent to ${message.studentName}!'),
+                        ],
+                      ),
+                      backgroundColor: SafePlayColors.success,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to send reply: ${e.toString()}'),
+                      backgroundColor: SafePlayColors.error,
+                    ),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: SafePlayColors.brightIndigo,

@@ -83,9 +83,11 @@ class _MessagingScreenState extends State<MessagingScreen> {
   late final MessagingService _messagingService;
   StreamSubscription<List<TeacherBroadcastMessage>>? _broadcastSubscription;
   StreamSubscription<List<TeacherInboxMessage>>? _replySubscription;
+  StreamSubscription<List<TeacherInboxMessage>>? _teacherRepliesSubscription;
   ChildProfile? _childProfile;
   List<TeacherBroadcastMessage> _broadcastMessages = [];
   List<TeacherInboxMessage> _childReplies = [];
+  List<TeacherInboxMessage> _teacherReplies = [];
   bool _isFirebaseConversation = false;
   String? _activeTeacherId;
   String? _activeTeacherName;
@@ -112,6 +114,7 @@ class _MessagingScreenState extends State<MessagingScreen> {
   void dispose() {
     _broadcastSubscription?.cancel();
     _replySubscription?.cancel();
+    _teacherRepliesSubscription?.cancel();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -168,6 +171,23 @@ class _MessagingScreenState extends State<MessagingScreen> {
       }
     }, onError: (error) {
       debugPrint('MessagingScreen reply stream error: $error');
+    });
+
+    // Also listen to teacher replies
+    _teacherRepliesSubscription?.cancel();
+    _teacherRepliesSubscription = _messagingService
+        .listenToTeacherReplies(childId: childId, limit: 40)
+        .listen((messages) {
+      if (!mounted) return;
+      _teacherReplies = messages
+          .where((msg) => msg.ageGroup == AgeGroup.bright)
+          .toList(growable: false);
+      _refreshConversations();
+      if (_isFirebaseConversation) {
+        _refreshActiveChat();
+      }
+    }, onError: (error) {
+      debugPrint('MessagingScreen teacher replies stream error: $error');
     });
   }
 
@@ -263,11 +283,21 @@ class _MessagingScreenState extends State<MessagingScreen> {
         gameType: broadcast.gameType,
       ));
     }
+    // Add child replies (messages from child to teacher)
     for (final reply
         in _childReplies.where((msg) => msg.teacherId == teacherId)) {
       entries.add(_ChatEntry(
         text: reply.body,
         isMe: true,
+        timestamp: reply.createdAt,
+      ));
+    }
+    // Add teacher replies (messages from teacher to child)
+    for (final reply
+        in _teacherReplies.where((msg) => msg.teacherId == teacherId)) {
+      entries.add(_ChatEntry(
+        text: reply.body,
+        isMe: false,
         timestamp: reply.createdAt,
       ));
     }

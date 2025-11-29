@@ -14,6 +14,7 @@ class MessagingService {
 
   static const String teacherBroadcastsCollection = 'teacherBroadcasts';
   static const String teacherInboxCollection = 'teacherInboxMessages';
+  static const String childInboxCollection = 'childInboxMessages'; // Teacher replies to children
 
   Future<void> sendBroadcast({
     required String teacherId,
@@ -192,5 +193,49 @@ class MessagingService {
     return snapshot.docs
         .map(TeacherInboxMessage.fromFirestore)
         .toList(growable: false);
+  }
+
+  /// Send a reply from a teacher to a child
+  Future<void> sendTeacherReply({
+    required String teacherId,
+    required String teacherName,
+    required String childId,
+    required String childName,
+    required AgeGroup ageGroup,
+    required String message,
+    String? teacherAvatar,
+    String? childAvatar,
+    String? relatedInboxMessageId,
+  }) async {
+    await _firestore.collection(childInboxCollection).add({
+      'teacherId': teacherId,
+      'teacherName': teacherName,
+      'teacherAvatar': teacherAvatar,
+      'childId': childId,
+      'childName': childName,
+      'childAvatar': childAvatar,
+      'ageGroup': ageGroup.name,
+      'message': message,
+      'relatedInboxMessageId': relatedInboxMessageId,
+      'read': false,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Listen to teacher replies for a specific child
+  Stream<List<TeacherInboxMessage>> listenToTeacherReplies({
+    required String childId,
+    int limit = 50,
+  }) {
+    return _firestore
+        .collection(childInboxCollection)
+        .where('childId', isEqualTo: childId)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map(
+          (snapshot) =>
+              snapshot.docs.map(TeacherInboxMessage.fromFirestore).toList(),
+        );
   }
 }
