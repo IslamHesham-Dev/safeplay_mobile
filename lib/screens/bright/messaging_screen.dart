@@ -37,10 +37,14 @@ class _MessagingScreenState extends State<MessagingScreen> {
     },
     {
       'text':
-          'That\'s great to hear! Remember to check the safety guidelines before starting the next experiment. 🔬',
+          'That\'s great to hear! Try the States of Matter simulation next - you can watch atoms dance! 💃 Find it under Science Simulations in your dashboard.',
       'isMe': false,
       'time': '10:06 AM',
       'senderName': 'Ms. Sarah',
+      'gameId': 'states-of-matter',
+      'gameName': 'States of Matter',
+      'ctaLabel': 'Explore States of Matter',
+      'emoji': '💧',
     },
   ];
   List<Map<String, dynamic>> _messages = [];
@@ -434,6 +438,81 @@ class _MessagingScreenState extends State<MessagingScreen> {
     );
   }
 
+  Widget _buildInlineGameButton({
+    required String gameId,
+    required String gameName,
+    required String ctaLabel,
+    required String emoji,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Text(emoji, style: const TextStyle(fontSize: 18)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Opening $gameName...',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: JuniorTheme.primaryBlue,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        // TODO: Navigate to the actual game when integrated
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              JuniorTheme.primaryBlue,
+              JuniorTheme.primaryPurple,
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: JuniorTheme.primaryBlue.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 16)),
+            const SizedBox(width: 8),
+            Text(
+              ctaLabel,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(width: 6),
+            const Icon(
+              Icons.play_circle_fill_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -494,7 +573,8 @@ class _MessagingScreenState extends State<MessagingScreen> {
               ),
             ),
           if (!_showConversationList)
-            _buildTeacherInitialAvatar(_conversations[_selectedConversation]['name'] as String? ?? 'T')
+            _buildTeacherInitialAvatar(
+                _conversations[_selectedConversation]['name'] as String? ?? 'T')
           else
             Container(
               padding: const EdgeInsets.all(12),
@@ -693,7 +773,8 @@ class _MessagingScreenState extends State<MessagingScreen> {
                   ),
                   child: Center(
                     child: Text(
-                      _getTeacherInitial(conversation['name'] as String? ?? 'T'),
+                      _getTeacherInitial(
+                          conversation['name'] as String? ?? 'T'),
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -809,6 +890,10 @@ class _MessagingScreenState extends State<MessagingScreen> {
                   text: message['text'] as String,
                   isMe: isMe,
                   time: message['time'] as String,
+                  gameId: message['gameId'] as String?,
+                  gameName: message['gameName'] as String?,
+                  ctaLabel: message['ctaLabel'] as String?,
+                  emoji: message['emoji'] as String?,
                 );
               },
             ),
@@ -823,7 +908,14 @@ class _MessagingScreenState extends State<MessagingScreen> {
     required String text,
     required bool isMe,
     required String time,
+    String? gameId,
+    String? gameName,
+    String? ctaLabel,
+    String? emoji,
   }) {
+    // Check if this message contains game-related content
+    final hasGameLink = !isMe && gameId != null && ctaLabel != null;
+    
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -867,13 +959,27 @@ class _MessagingScreenState extends State<MessagingScreen> {
                   ),
                 ],
               ),
-              child: Text(
-                text,
-                style: JuniorTheme.bodyMedium.copyWith(
-                  color: isMe ? Colors.white : JuniorTheme.textPrimary,
-                  fontSize: 15,
-                  height: 1.4,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    text,
+                    style: JuniorTheme.bodyMedium.copyWith(
+                      color: isMe ? Colors.white : JuniorTheme.textPrimary,
+                      fontSize: 15,
+                      height: 1.4,
+                    ),
+                  ),
+                  if (hasGameLink) ...[
+                    const SizedBox(height: 12),
+                    _buildInlineGameButton(
+                      gameId: gameId,
+                      gameName: gameName ?? 'Game',
+                      ctaLabel: ctaLabel,
+                      emoji: emoji ?? '🎮',
+                    ),
+                  ],
+                ],
               ),
             ),
             const SizedBox(height: 6),

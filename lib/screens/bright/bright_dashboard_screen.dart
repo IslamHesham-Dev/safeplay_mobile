@@ -1449,10 +1449,10 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
 
   Widget _buildCurrentScreen() {
     // Home dashboard content (Messages and Search are handled in build())
-    return Column(
-      children: [
-        _buildDailyTasksProgress(),
-        const SizedBox(height: JuniorTheme.spacingLarge),
+        return Column(
+          children: [
+            _buildDailyTasksProgress(),
+            const SizedBox(height: JuniorTheme.spacingLarge),
         // Wellbeing Check Widget
         WellbeingCheckWidget(
           onTap: () {
@@ -1465,24 +1465,24 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
             );
           },
         ),
-        const SizedBox(height: JuniorTheme.spacingLarge),
-        _buildTodaysTasksSection(),
-        const SizedBox(height: JuniorTheme.spacingLarge),
-        _buildScienceGamesSection(),
-        const SizedBox(height: JuniorTheme.spacingMedium),
-        _buildScienceSimulationsSection(),
-        const SizedBox(height: JuniorTheme.spacingLarge),
-        _buildMathGamesSection(),
-        const SizedBox(height: JuniorTheme.spacingMedium),
-        _buildMathSimulationsSection(),
-        const SizedBox(height: JuniorTheme.spacingLarge),
-        _buildEnglishGamesSection(),
-        const SizedBox(height: JuniorTheme.spacingLarge),
-        _buildBooksSection(),
-        const SizedBox(
-            height: 80), // Extra space at bottom for floating nav bar
-      ],
-    );
+            const SizedBox(height: JuniorTheme.spacingLarge),
+            _buildTodaysTasksSection(),
+            const SizedBox(height: JuniorTheme.spacingLarge),
+            _buildScienceGamesSection(),
+            const SizedBox(height: JuniorTheme.spacingMedium),
+            _buildScienceSimulationsSection(),
+            const SizedBox(height: JuniorTheme.spacingLarge),
+            _buildMathGamesSection(),
+            const SizedBox(height: JuniorTheme.spacingMedium),
+            _buildMathSimulationsSection(),
+            const SizedBox(height: JuniorTheme.spacingLarge),
+            _buildEnglishGamesSection(),
+            const SizedBox(height: JuniorTheme.spacingLarge),
+            _buildBooksSection(),
+            const SizedBox(
+                height: 80), // Extra space at bottom for floating nav bar
+          ],
+        );
   }
 
   String _getCategoryIcon(String category) {

@@ -51,6 +51,11 @@ class TeacherBroadcastMessage {
   final String category;
   final Color color;
   final String? quickMessageId;
+  final String? gameId;
+  final String? gameName;
+  final String? gameRoute;
+  final String? gameLocation;
+  final String? ctaLabel;
   final DateTime createdAt;
 
   const TeacherBroadcastMessage({
@@ -66,6 +71,11 @@ class TeacherBroadcastMessage {
     required this.createdAt,
     this.teacherAvatar,
     this.quickMessageId,
+    this.gameId,
+    this.gameName,
+    this.gameRoute,
+    this.gameLocation,
+    this.ctaLabel,
   });
 
   factory TeacherBroadcastMessage.fromFirestore(
@@ -93,6 +103,11 @@ class TeacherBroadcastMessage {
       category: data['category']?.toString() ?? 'Announcement',
       color: _colorFromData(data['colorValue'], audience),
       quickMessageId: data['quickMessageId']?.toString(),
+      gameId: data['gameId']?.toString(),
+      gameName: data['gameName']?.toString(),
+      gameRoute: data['gameRoute']?.toString(),
+      gameLocation: data['gameLocation']?.toString(),
+      ctaLabel: data['ctaLabel']?.toString(),
       createdAt: _parseTimestamp(data['createdAt']),
     );
   }
@@ -109,6 +124,11 @@ class TeacherBroadcastMessage {
       'category': category,
       'colorValue': color.value,
       'quickMessageId': quickMessageId,
+      'gameId': gameId,
+      'gameName': gameName,
+      'gameRoute': gameRoute,
+      'gameLocation': gameLocation,
+      'ctaLabel': ctaLabel,
       'createdAt': createdAt,
     };
   }

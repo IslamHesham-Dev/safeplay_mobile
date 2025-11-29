@@ -20,38 +20,46 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
   late final MessagingService _messagingService;
   StreamSubscription<List<TeacherBroadcastMessage>>? _subscription;
 
-  // Mock messages from teachers
+  // Mock messages from teachers with game links
   final List<TeacherMessage> _mockMessages = [
     TeacherMessage(
       id: '1',
-      emoji: '🦁',
+      emoji: '🌳',
       title: 'Explore Food Chains!',
       message:
-          'Hey explorers! 🌿 Ready to discover who eats what in nature? Jump into the Food Chains game and learn about animals, plants, and how they all connect!',
+          'Hey explorers! 🌿 Ready to discover who eats what in nature? Open the Food Chains game and learn about animals, plants, and how they all connect! You can find it under Science Interactive Games in your dashboard.',
       teacherName: 'Ms. Johnson',
       timestamp: DateTime.now().subtract(const Duration(hours: 2)),
       category: 'Science',
       color: const Color(0xFF4CAF50),
       isNew: true,
+      gameId: 'food-chains',
+      gameName: 'Food Chains',
+      gameLocation: 'Science Interactive Games',
+      ctaLabel: 'Play Food Chains',
     ),
     TeacherMessage(
       id: '2',
-      emoji: '⚖️',
-      title: 'Balance the Scale!',
+      emoji: '🦠',
+      title: 'Tiny World Adventure!',
       message:
-          'Can you make both sides equal? ⚖️ Use the balance scale to solve equations and become a math champion!',
+          'Did you know there are living things too small to see? 🔬 Explore the world of microorganisms - bacteria, fungi, and algae are waiting for you! Find this game under Science Interactive Games.',
       teacherName: 'Mr. Smith',
       timestamp: DateTime.now().subtract(const Duration(hours: 5)),
-      category: 'Math',
-      color: const Color(0xFF5B9BD5),
+      category: 'Science',
+      color: const Color(0xFF9C27B0),
       isNew: true,
+      gameId: 'microorganisms',
+      gameName: 'Microorganisms',
+      gameLocation: 'Science Interactive Games',
+      ctaLabel: 'Explore Microorganisms',
     ),
     TeacherMessage(
       id: '3',
       emoji: '🎯',
       title: 'Daily Goal Reminder',
       message:
-          'You\'re doing amazing! 🌟 Remember to complete your daily tasks and earn those coins. Every game counts!',
+          'You\'re doing amazing! 🌟 Remember to complete your daily tasks and earn those coins. Every game counts! Check your progress at the top of your dashboard.',
       teacherName: 'Ms. Johnson',
       timestamp: DateTime.now().subtract(const Duration(days: 1)),
       category: 'Motivation',
@@ -60,34 +68,42 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
     ),
     TeacherMessage(
       id: '4',
-      emoji: '💧',
-      title: 'States of Matter Magic!',
+      emoji: '🏃',
+      title: 'Stay Healthy & Strong!',
       message:
-          'Watch atoms dance! 💃 See how solids, liquids, and gases behave differently. Heat things up or cool them down - what happens?',
+          'Learn how your body needs water, food, exercise and rest to stay healthy! 💪 Help Ben live a healthy life in the Human Body Health & Growth game. Find it in Science Interactive Games.',
       teacherName: 'Mr. Smith',
       timestamp: DateTime.now().subtract(const Duration(days: 1, hours: 3)),
-      category: 'Simulation',
-      color: const Color(0xFF00BCD4),
+      category: 'Science',
+      color: const Color(0xFFE91E63),
       isNew: false,
+      gameId: 'health-growth',
+      gameName: 'Human Body Health & Growth',
+      gameLocation: 'Science Interactive Games',
+      ctaLabel: 'Play Health & Growth',
     ),
     TeacherMessage(
       id: '5',
       emoji: '📚',
       title: 'Story Time!',
       message:
-          'A new adventure awaits in the library! 📖 Pick a book, read along, and discover amazing stories. What will you read today?',
+          'A new adventure awaits in the library! 📖 Pick a book, read along, and discover amazing stories. You can find books in the Reading section of your dashboard. What will you read today?',
       teacherName: 'Ms. Johnson',
       timestamp: DateTime.now().subtract(const Duration(days: 2)),
       category: 'English',
       color: const Color(0xFF673AB7),
       isNew: false,
+      gameId: 'books',
+      gameName: 'Reading Corner',
+      gameLocation: 'Books section',
+      ctaLabel: 'Open Reading Corner',
     ),
     TeacherMessage(
       id: '6',
       emoji: '💖',
       title: 'Check-in Time',
       message:
-          'How are you feeling today? 😊 Take a moment to share your mood. We care about how you\'re doing!',
+          'How are you feeling today? 😊 Take a moment to share your mood in the Wellbeing Check. We care about how you\'re doing!',
       teacherName: 'Mr. Smith',
       timestamp: DateTime.now().subtract(const Duration(days: 3)),
       category: 'Wellbeing',
@@ -441,7 +457,7 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 12),
-                    // Category tag and tap hint
+                    // Category tag and game button indicator
                     Row(
                       children: [
                         Container(
@@ -460,6 +476,36 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
                             ),
                           ),
                         ),
+                        if (message.gameId != null) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: message.color,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.play_circle_fill_rounded,
+                                  color: Colors.white,
+                                  size: 12,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Game',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                         const Spacer(),
                         Text(
                           'Tap to read more',
@@ -712,7 +758,14 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            
+            // Game button if available
+            if (message.gameId != null && message.ctaLabel != null) ...[
+              const SizedBox(height: 16),
+              _buildGameButton(message),
+            ],
+            
+            const SizedBox(height: 20),
 
             // Fun response (no actual reply, just acknowledgment)
             Row(
@@ -733,6 +786,78 @@ class _ChildMessagesScreenState extends State<ChildMessagesScreen> {
               ],
             ),
             SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGameButton(TeacherMessage message) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pop(context);
+        // Show snackbar indicating game would open
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Text(message.emoji, style: const TextStyle(fontSize: 20)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Opening ${message.gameName}...',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: message.color,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        // TODO: Navigate to the actual game when integrated
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [message.color, message.color.withOpacity(0.8)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: message.color.withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(message.emoji, style: const TextStyle(fontSize: 22)),
+            const SizedBox(width: 12),
+            Text(
+              message.ctaLabel!,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(
+              Icons.play_circle_fill_rounded,
+              color: Colors.white,
+              size: 24,
+            ),
           ],
         ),
       ),
@@ -822,6 +947,10 @@ class TeacherMessage {
   final String category;
   final Color color;
   final bool isNew;
+  final String? gameId;
+  final String? gameName;
+  final String? gameLocation;
+  final String? ctaLabel;
 
   const TeacherMessage({
     required this.id,
@@ -833,5 +962,9 @@ class TeacherMessage {
     required this.category,
     required this.color,
     required this.isNew,
+    this.gameId,
+    this.gameName,
+    this.gameLocation,
+    this.ctaLabel,
   });
 }

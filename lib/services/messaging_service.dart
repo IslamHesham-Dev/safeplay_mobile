@@ -26,6 +26,11 @@ class MessagingService {
     required Color color,
     String? teacherAvatar,
     String? quickMessageId,
+    String? gameId,
+    String? gameName,
+    String? gameRoute,
+    String? gameLocation,
+    String? ctaLabel,
   }) async {
     await _firestore.collection(teacherBroadcastsCollection).add({
       'teacherId': teacherId,
@@ -38,6 +43,11 @@ class MessagingService {
       'category': category,
       'colorValue': color.value,
       'quickMessageId': quickMessageId,
+      'gameId': gameId,
+      'gameName': gameName,
+      'gameRoute': gameRoute,
+      'gameLocation': gameLocation,
+      'ctaLabel': ctaLabel,
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
@@ -135,5 +145,50 @@ class MessagingService {
         .collection(teacherInboxCollection)
         .doc(messageId)
         .set({'read': true}, SetOptions(merge: true));
+  }
+
+  Future<List<TeacherInboxMessage>> fetchTeacherInboxOnce({
+    required String teacherId,
+    int limit = 30,
+  }) async {
+    final snapshot = await _firestore
+        .collection(teacherInboxCollection)
+        .where('teacherId', isEqualTo: teacherId)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    return snapshot.docs
+        .map(TeacherInboxMessage.fromFirestore)
+        .toList(growable: false);
+  }
+
+  Future<List<TeacherBroadcastMessage>> fetchTeacherBroadcastsOnce({
+    required String teacherId,
+    int limit = 10,
+  }) async {
+    final snapshot = await _firestore
+        .collection(teacherBroadcastsCollection)
+        .where('teacherId', isEqualTo: teacherId)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    return snapshot.docs
+        .map(TeacherBroadcastMessage.fromFirestore)
+        .toList(growable: false);
+  }
+
+  Future<List<TeacherInboxMessage>> fetchChildRepliesOnce({
+    required String childId,
+    int limit = 50,
+  }) async {
+    final snapshot = await _firestore
+        .collection(teacherInboxCollection)
+        .where('childId', isEqualTo: childId)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    return snapshot.docs
+        .map(TeacherInboxMessage.fromFirestore)
+        .toList(growable: false);
   }
 }

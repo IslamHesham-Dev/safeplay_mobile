@@ -9,6 +9,7 @@ import '../../models/teacher_inbox_message.dart';
 import '../../models/user_type.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/messaging_service.dart';
+import '../../navigation/route_names.dart';
 
 /// Teacher Messaging Screen - Broadcast messages to students
 class TeacherMessagingScreen extends StatefulWidget {
@@ -29,147 +30,223 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
   StreamSubscription<List<TeacherBroadcastMessage>>? _sentSubscription;
   bool _sendingBroadcast = false;
 
-  // Pre-made friendly nudges/notifications
+  // Pre-made friendly nudges/notifications with game links
   final List<QuickMessage> _quickMessages = [
-    // Science Games
+    // Science Games - Junior
     QuickMessage(
       id: 'food-chains',
-      emoji: '🦁',
+      emoji: '🌳',
       title: 'Explore Food Chains!',
       message:
-          'Hey explorers! 🌿 Ready to discover who eats what in nature? Jump into the Food Chains game and learn about animals, plants, and how they all connect!',
+          'Hey explorers! 🌿 Ready to discover who eats what in nature? Open the Food Chains game and learn about animals, plants, and how they all connect! You can find it under Science Interactive Games in your dashboard.',
       category: 'Science',
       color: const Color(0xFF4CAF50),
+      gameId: 'food-chains',
+      gameName: 'Food Chains',
+      gameLocation: 'Science Interactive Games section',
+      gameRoute: RouteNames.juniorDashboard,
+      ctaLabel: 'Play Food Chains',
+      ageGroup: 'junior',
     ),
     QuickMessage(
       id: 'microorganisms',
-      emoji: '🔬',
+      emoji: '🦠',
       title: 'Tiny World Adventure!',
       message:
-          'Did you know there are living things too small to see? 🦠 Explore the world of microorganisms - bacteria, fungi, and algae are waiting for you!',
+          'Did you know there are living things too small to see? 🔬 Explore the world of microorganisms - bacteria, fungi, and algae are waiting for you! Find this game under Science Interactive Games.',
       category: 'Science',
       color: const Color(0xFF9C27B0),
+      gameId: 'microorganisms',
+      gameName: 'Microorganisms',
+      gameLocation: 'Science Interactive Games section',
+      gameRoute: RouteNames.juniorDashboard,
+      ctaLabel: 'Explore Microorganisms',
+      ageGroup: 'junior',
     ),
+    QuickMessage(
+      id: 'health-growth',
+      emoji: '🏃',
+      title: 'Stay Healthy & Strong!',
+      message:
+          'Learn how your body needs water, food, exercise and rest to stay healthy! 💪 Help Ben live a healthy life in the Human Body Health & Growth game. Find it in Science Interactive Games.',
+      category: 'Science',
+      color: const Color(0xFFE91E63),
+      gameId: 'health-growth',
+      gameName: 'Human Body Health & Growth',
+      gameLocation: 'Science Interactive Games section',
+      gameRoute: RouteNames.juniorDashboard,
+      ctaLabel: 'Play Health & Growth',
+      ageGroup: 'junior',
+    ),
+    QuickMessage(
+      id: 'teeth-eating',
+      emoji: '🦷',
+      title: 'Amazing Teeth Facts!',
+      message:
+          'Did you know lions have very different teeth than sheep? 🦁 Learn how animals\' teeth are adapted to what they eat! Find Teeth & Eating under Science Interactive Games.',
+      category: 'Science',
+      color: const Color(0xFF00BCD4),
+      gameId: 'teeth-eating',
+      gameName: 'Teeth & Eating',
+      gameLocation: 'Science Interactive Games section',
+      gameRoute: RouteNames.juniorDashboard,
+      ctaLabel: 'Explore Teeth & Eating',
+      ageGroup: 'junior',
+    ),
+    // Science Games - Bright
     QuickMessage(
       id: 'electricity',
       emoji: '⚡',
       title: 'Power Up with Circuits!',
       message:
-          'Ready to become an electricity expert? 💡 Build circuits, connect batteries and bulbs, and see what happens when you change things around!',
+          'Ready to become an electricity expert? 💡 Build circuits, connect batteries and bulbs, and see what happens! Find the Electricity game under Science Interactive Games in your Bright dashboard.',
       category: 'Science',
       color: const Color(0xFFFF9800),
+      gameId: 'electricity',
+      gameName: 'Electricity',
+      gameLocation: 'Science Interactive Games section',
+      gameRoute: RouteNames.brightDashboard,
+      ctaLabel: 'Build Circuits',
+      ageGroup: 'bright',
     ),
     QuickMessage(
       id: 'earth-sun-moon',
       emoji: '🌍',
       title: 'Space Explorer Time!',
       message:
-          'Blast off into space! 🚀 Learn how Earth, Sun, and Moon dance together in the sky. Discover orbits and why we have day and night!',
+          'Blast off into space! 🚀 Learn how Earth, Sun, and Moon dance together in the sky. Discover orbits and why we have day and night! Find it under Science Interactive Games.',
       category: 'Science',
       color: const Color(0xFF2196F3),
+      gameId: 'earth-sun-moon',
+      gameName: 'Earth, Sun & Moon',
+      gameLocation: 'Science Interactive Games section',
+      gameRoute: RouteNames.brightDashboard,
+      ctaLabel: 'Explore Space',
+      ageGroup: 'bright',
     ),
-    QuickMessage(
-      id: 'plants-grow',
-      emoji: '🌱',
-      title: 'Grow a Plant!',
-      message:
-          'Become a plant scientist! 🧑‍🔬 Experiment with heat and water to help plants grow. What happens when conditions change?',
-      category: 'Science',
-      color: const Color(0xFF8BC34A),
-    ),
-    // Math Games
+    // Math Simulations - Bright
     QuickMessage(
       id: 'equality-explorer',
       emoji: '⚖️',
       title: 'Balance the Scale!',
       message:
-          'Can you make both sides equal? ⚖️ Use the balance scale to solve equations and become a math champion!',
+          'Can you make both sides equal? ⚖️ Use the balance scale to solve equations and become a math champion! Find Equality Explorer under Math Simulations in your dashboard.',
       category: 'Math',
       color: const Color(0xFF5B9BD5),
+      gameId: 'equality-explorer',
+      gameName: 'Equality Explorer',
+      gameLocation: 'Math Simulations section',
+      gameRoute: RouteNames.brightDashboard,
+      ctaLabel: 'Balance the Scale',
+      ageGroup: 'bright',
     ),
     QuickMessage(
       id: 'area-model',
       emoji: '📐',
       title: 'Shape Up with Area!',
       message:
-          'Rectangles are everywhere! 📏 Learn how to find area using the Area Model - break numbers into parts and see multiplication come alive!',
+          'Rectangles are everywhere! 📏 Learn how to find area using the Area Model - break numbers into parts and see multiplication come alive! Find it under Math Simulations.',
       category: 'Math',
       color: const Color(0xFFE91E63),
+      gameId: 'area-model-algebra',
+      gameName: 'Area Model Algebra',
+      gameLocation: 'Math Simulations section',
+      gameRoute: RouteNames.brightDashboard,
+      ctaLabel: 'Try Area Model',
+      ageGroup: 'bright',
     ),
+    // Science Simulations - Bright
     QuickMessage(
-      id: 'mean-balance',
-      emoji: '📊',
-      title: 'Fair Share Fun!',
-      message:
-          'What does "average" really mean? 🤔 Share and balance numbers to discover the mean - it\'s like making everything fair!',
-      category: 'Math',
-      color: const Color(0xFF00BCD4),
-    ),
-    // Reading & English
-    QuickMessage(
-      id: 'reading-time',
-      emoji: '📚',
-      title: 'Story Time!',
-      message:
-          'A new adventure awaits in the library! 📖 Pick a book, read along, and discover amazing stories. What will you read today?',
-      category: 'English',
-      color: const Color(0xFF673AB7),
-    ),
-    QuickMessage(
-      id: 'spelling-bee',
-      emoji: '🐝',
-      title: 'Spelling Bee Challenge!',
-      message:
-          'Can you spell like a champion? 🏆 Practice your spelling words and become a word wizard! Every letter counts!',
-      category: 'English',
-      color: const Color(0xFFFFEB3B),
-    ),
-    // Simulations
-    QuickMessage(
-      id: 'states-matter',
+      id: 'states-of-matter',
       emoji: '💧',
       title: 'States of Matter Magic!',
       message:
-          'Watch atoms dance! 💃 See how solids, liquids, and gases behave differently. Heat things up or cool them down - what happens?',
+          'Watch atoms dance! 💃 See how solids, liquids, and gases behave differently. Heat things up or cool them down - what happens? Find States of Matter under Science Simulations.',
       category: 'Simulation',
       color: const Color(0xFF00BCD4),
+      gameId: 'states-of-matter',
+      gameName: 'States of Matter',
+      gameLocation: 'Science Simulations section',
+      gameRoute: RouteNames.brightDashboard,
+      ctaLabel: 'Explore States of Matter',
+      ageGroup: 'bright',
     ),
     QuickMessage(
       id: 'static-electricity',
       emoji: '🎈',
       title: 'Balloon Science!',
       message:
-          'Rub a balloon and watch the magic happen! ✨ Learn about static electricity and see charges push and pull!',
+          'Rub a balloon and watch the magic happen! ✨ Learn about static electricity and see charges push and pull! Find Balloons and Static Electricity under Science Simulations.',
       category: 'Simulation',
       color: const Color(0xFFFF5722),
+      gameId: 'balloons-static',
+      gameName: 'Balloons and Static Electricity',
+      gameLocation: 'Science Simulations section',
+      gameRoute: RouteNames.brightDashboard,
+      ctaLabel: 'Play with Static',
+      ageGroup: 'bright',
     ),
-    // General Encouragement
+    // English/Reading
+    QuickMessage(
+      id: 'reading-time',
+      emoji: '📚',
+      title: 'Story Time!',
+      message:
+          'A new adventure awaits in the library! 📖 Pick a book, read along, and discover amazing stories. You can find books in the Reading section of your dashboard. What will you read today?',
+      category: 'English',
+      color: const Color(0xFF673AB7),
+      gameId: 'books',
+      gameName: 'Reading Corner',
+      gameLocation: 'Books section',
+      gameRoute: RouteNames.juniorDashboard,
+      ctaLabel: 'Open Reading Corner',
+      ageGroup: 'both',
+    ),
+    // Motivation & Wellbeing
     QuickMessage(
       id: 'daily-goal',
       emoji: '🎯',
       title: 'Daily Goal Reminder',
       message:
-          'You\'re doing amazing! 🌟 Remember to complete your daily tasks and earn those coins. Every game counts!',
+          'You\'re doing amazing! 🌟 Remember to complete your daily tasks and earn those coins. Every game counts! Check your progress at the top of your dashboard.',
       category: 'Motivation',
       color: const Color(0xFF4CAF50),
+      gameId: null,
+      gameName: null,
+      gameLocation: null,
+      gameRoute: null,
+      ctaLabel: null,
+      ageGroup: 'both',
     ),
     QuickMessage(
       id: 'wellbeing',
       emoji: '💖',
       title: 'Check-in Time',
       message:
-          'How are you feeling today? 😊 Take a moment to share your mood. We care about how you\'re doing!',
+          'How are you feeling today? 😊 Take a moment to share your mood in the Wellbeing Check. We care about how you\'re doing!',
       category: 'Wellbeing',
       color: const Color(0xFFE91E63),
+      gameId: 'wellbeing',
+      gameName: 'Wellbeing Check',
+      gameLocation: 'Dashboard',
+      gameRoute: RouteNames.brightDashboard,
+      ctaLabel: 'Open Wellbeing Check',
+      ageGroup: 'both',
     ),
     QuickMessage(
       id: 'explore-new',
       emoji: '🗺️',
       title: 'Try Something New!',
       message:
-          'Adventure awaits! 🚀 Why not try a game you haven\'t played before? You might discover your new favorite!',
+          'Adventure awaits! 🚀 Why not try a game you haven\'t played before? Scroll through your dashboard and pick something new. You might discover your new favorite!',
       category: 'Motivation',
       color: const Color(0xFF9C27B0),
+      gameId: null,
+      gameName: null,
+      gameLocation: null,
+      gameRoute: null,
+      ctaLabel: null,
+      ageGroup: 'both',
     ),
   ];
 
@@ -180,56 +257,66 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
     StudentMessage(
       id: 'mock-student-1',
       studentName: 'Emma',
-      studentAvatar: '👧',
+      studentAvatar: ':)',
       ageGroup: 'bright',
       question:
-          'Ms. Johnson, I don\'t understand how the food chain works. Can animals be in more than one food chain? 🤔',
+          "Ms. Johnson, I don't understand how the food chain works. Can animals be in more than one food chain?",
       timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
       isRead: false,
       relatedGame: 'Food Chains',
+      childId: 'mock-child-1',
+      inboxMessageId: 'mock-inbox-1',
     ),
     StudentMessage(
       id: 'mock-student-2',
       studentName: 'Liam',
-      studentAvatar: '👦',
+      studentAvatar: ':)',
       ageGroup: 'bright',
       question:
-          'How do I balance the equation in the scale game? I keep getting it wrong 😅',
+          "How do I balance the equation in the scale game? I keep getting it wrong?",
       timestamp: DateTime.now().subtract(const Duration(hours: 2)),
       isRead: false,
       relatedGame: 'Equality Explorer',
+      childId: 'mock-child-2',
+      inboxMessageId: 'mock-inbox-2',
     ),
     StudentMessage(
       id: 'mock-student-3',
       studentName: 'Sophia',
-      studentAvatar: '👧',
+      studentAvatar: ':)',
       ageGroup: 'bright',
       question:
-          'The States of Matter simulation is so cool! But why do the atoms move faster when it\'s hot? 🔥',
+          "The States of Matter simulation is so cool! But why do the atoms move faster when it's hot?",
       timestamp: DateTime.now().subtract(const Duration(hours: 5)),
       isRead: true,
       relatedGame: 'States of Matter',
+      childId: 'mock-child-3',
+      inboxMessageId: 'mock-inbox-3',
     ),
     StudentMessage(
       id: 'mock-student-4',
       studentName: 'Noah',
-      studentAvatar: '👦',
+      studentAvatar: ':)',
       ageGroup: 'bright',
-      question: 'I finished all the math games! What should I try next? ⭐',
+      question: "I finished all the math games! What should I try next?",
       timestamp: DateTime.now().subtract(const Duration(days: 1)),
       isRead: true,
       relatedGame: null,
+      childId: 'mock-child-4',
+      inboxMessageId: 'mock-inbox-4',
     ),
     StudentMessage(
       id: 'mock-student-5',
       studentName: 'Olivia',
-      studentAvatar: '👧',
+      studentAvatar: ':)',
       ageGroup: 'bright',
       question:
-          'Can you explain what happens to water when it freezes? I saw it in the simulation but I want to understand more! ❄️',
+          "Can you explain what happens to water when it freezes? I saw it in the simulation but want to understand more?",
       timestamp: DateTime.now().subtract(const Duration(days: 1, hours: 3)),
       isRead: true,
       relatedGame: 'States of Matter',
+      childId: 'mock-child-5',
+      inboxMessageId: 'mock-inbox-5',
     ),
   ];
   List<StudentMessage> _studentMessages = [];
@@ -334,12 +421,14 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
     return StudentMessage(
       id: message.id,
       studentName: message.childName,
-      studentAvatar: message.childAvatar ?? '🧒',
+      studentAvatar: message.childAvatar ?? ':)',
       ageGroup: message.ageGroup.name,
       question: message.body,
       timestamp: message.createdAt,
       isRead: message.isRead,
       relatedGame: message.relatedGame,
+      childId: message.childId,
+      inboxMessageId: message.id,
     );
   }
 
@@ -779,6 +868,35 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
+                if (message.gameName != null) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: SafePlayColors.neutral50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: SafePlayColors.neutral200),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.videogame_asset_outlined,
+                            size: 14, color: SafePlayColors.neutral500),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            '${message.gameName} - ${message.gameLocation ?? 'Dashboard'}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: SafePlayColors.neutral600,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -875,7 +993,7 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
               maxLength: 500,
               decoration: InputDecoration(
                 hintText:
-                    'Write a friendly message for your students...\n\nTip: Use emojis to make it fun! 🎉',
+                    'Write a friendly message for your students...\n\nTip: Use emojis to make it fun! :-)',
                 hintStyle: TextStyle(color: SafePlayColors.neutral400),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -966,15 +1084,17 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
       onTap: () {
         final text = _customMessageController.text;
         final selection = _customMessageController.selection;
+        final start = selection.start >= 0 ? selection.start : text.length;
+        final end = selection.end >= 0 ? selection.end : text.length;
         final newText = text.replaceRange(
-          selection.start,
-          selection.end,
+          start,
+          end,
           emoji,
         );
+        final newOffset = start + emoji.length;
         _customMessageController.value = TextEditingValue(
           text: newText,
-          selection:
-              TextSelection.collapsed(offset: selection.start + emoji.length),
+          selection: TextSelection.collapsed(offset: newOffset),
         );
       },
       borderRadius: BorderRadius.circular(8),
@@ -1186,6 +1306,39 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                 ),
               ),
             ),
+            if (message.gameName != null) ...[
+              const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.videogame_asset_outlined,
+                      size: 20, color: SafePlayColors.neutral500),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          message.gameName!,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          message.gameLocation ?? 'Dashboard shortcut',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: SafePlayColors.neutral600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 20),
             // Target info
             Container(
@@ -1448,7 +1601,7 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
               shape: BoxShape.circle,
             ),
             child: const Center(
-              child: Text('📭', style: TextStyle(fontSize: 48)),
+              child: Text(':)', style: TextStyle(fontSize: 48)),
             ),
           ),
           const SizedBox(height: 20),
@@ -1462,7 +1615,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            'When Bright students send you questions,\nthey will appear here.',
+            'When Bright students send you questions,\n'
+            'they will appear here.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -1650,6 +1804,8 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
           timestamp: message.timestamp,
           isRead: true,
           relatedGame: message.relatedGame,
+          childId: message.childId,
+          inboxMessageId: message.inboxMessageId,
         );
       }
     });
@@ -2012,6 +2168,12 @@ class QuickMessage {
   final String message;
   final String category;
   final Color color;
+  final String? gameId;
+  final String? gameName;
+  final String? gameLocation;
+  final String? gameRoute;
+  final String? ctaLabel;
+  final String? ageGroup; // 'junior', 'bright', or 'both'
 
   const QuickMessage({
     required this.id,
@@ -2020,6 +2182,12 @@ class QuickMessage {
     required this.message,
     required this.category,
     required this.color,
+    this.gameId,
+    this.gameName,
+    this.gameLocation,
+    this.gameRoute,
+    this.ctaLabel,
+    this.ageGroup,
   });
 }
 
@@ -2032,6 +2200,8 @@ class StudentMessage {
   final DateTime timestamp;
   final bool isRead;
   final String? relatedGame;
+  final String childId;
+  final String inboxMessageId;
 
   const StudentMessage({
     required this.id,
@@ -2041,6 +2211,8 @@ class StudentMessage {
     required this.question,
     required this.timestamp,
     required this.isRead,
+    required this.childId,
+    required this.inboxMessageId,
     this.relatedGame,
   });
 }

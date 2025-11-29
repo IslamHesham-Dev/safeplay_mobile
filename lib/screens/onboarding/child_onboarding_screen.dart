@@ -282,11 +282,11 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
                                 children: [
                                   Text(
                                     _pages[_currentPage].isLast ? "Let's Play! 🎮" : 'Next',
-                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                                   ),
                                   if (!_pages[_currentPage].isLast) ...[
                                     const SizedBox(width: 8),
-                                    const Icon(Icons.arrow_forward_rounded, size: 20),
+                                    const Icon(Icons.arrow_forward_rounded, size: 20, color: Colors.white),
                                   ],
                                 ],
                               ),
