@@ -6,11 +6,13 @@ import 'package:provider/provider.dart';
 
 import '../../design_system/colors.dart';
 import '../../navigation/route_names.dart';
+import '../../models/chat_safety_alert.dart';
 import '../../models/user_profile.dart';
 import '../../models/user_type.dart';
 import '../../providers/activity_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/child_provider.dart';
+import '../../providers/messaging_safety_provider.dart';
 import '../../widgets/parent/child_list_item.dart';
 import '../../widgets/parent/parent_settings_menu.dart';
 
@@ -25,6 +27,7 @@ class ParentDashboardScreen extends StatefulWidget {
 class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   ChildProvider? _childProvider;
   ActivityProvider? _activityProvider;
+  MessagingSafetyProvider? _messagingSafetyProvider;
   String? _lastLoadedChildId;
   bool _isSyncingChild = false;
   int _currentNavIndex = 0;
@@ -43,6 +46,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _childProvider = context.read<ChildProvider>();
       _activityProvider = context.read<ActivityProvider>();
+      _messagingSafetyProvider = context.read<MessagingSafetyProvider>();
       _childProvider?.addListener(_handleChildProviderChange);
       unawaited(_initializeDashboardState());
     });
@@ -84,13 +88,23 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         return;
       }
 
-      if (_lastLoadedChildId == selected.id &&
-          activityProvider.activities.isNotEmpty) {
-        return;
+      final shouldReloadActivities = _lastLoadedChildId != selected.id ||
+          activityProvider.activities.isEmpty;
+      if (shouldReloadActivities) {
+        _lastLoadedChildId = selected.id;
+        await activityProvider.loadActivitiesForChild(selected);
       }
 
-      _lastLoadedChildId = selected.id;
-      await activityProvider.loadActivitiesForChild(selected);
+      final parent = context.read<AuthProvider>().currentUser;
+      final safetyProvider = _messagingSafetyProvider;
+      if (parent != null && safetyProvider != null) {
+        unawaited(
+          safetyProvider.analyzeChild(
+            parent: parent,
+            child: selected,
+          ),
+        );
+      }
     } finally {
       _isSyncingChild = false;
     }
@@ -115,9 +129,16 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         ],
       ),
       body: SafeArea(
-        child: Consumer3<AuthProvider, ChildProvider, ActivityProvider>(
-          builder: (context, authProvider, childProvider, activityProvider, _) {
-            return _buildCurrentScreen(authProvider, childProvider, activityProvider);
+        child: Consumer4<AuthProvider, ChildProvider, ActivityProvider,
+            MessagingSafetyProvider>(
+          builder: (context, authProvider, childProvider, activityProvider,
+              safetyProvider, _) {
+            return _buildCurrentScreen(
+              authProvider,
+              childProvider,
+              activityProvider,
+              safetyProvider,
+            );
           },
         ),
       ),
@@ -215,7 +236,12 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
-  Widget _buildCurrentScreen(AuthProvider authProvider, ChildProvider childProvider, ActivityProvider activityProvider) {
+  Widget _buildCurrentScreen(
+    AuthProvider authProvider,
+    ChildProvider childProvider,
+    ActivityProvider activityProvider,
+    MessagingSafetyProvider safetyProvider,
+  ) {
     switch (_currentNavIndex) {
       case 0:
         return _buildHomeScreen(authProvider, childProvider, activityProvider);
@@ -224,7 +250,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       case 2:
         return _buildWellbeingScreen(childProvider);
       case 3:
-        return _buildMessagingAlertsScreen(childProvider);
+        return _buildMessagingAlertsScreen(
+          authProvider,
+          childProvider,
+          safetyProvider,
+        );
       default:
         return _buildHomeScreen(authProvider, childProvider, activityProvider);
     }
@@ -1786,363 +1816,552 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
-  // ============ MESSAGING ALERTS SCREEN ============
-  Widget _buildMessagingAlertsScreen(ChildProvider childProvider) {
-    final selectedChild = childProvider.selectedChild;
-    final hasChild = childProvider.children.isNotEmpty;
-    
-    // Detailed mock alerts data
-    final List<Map<String, dynamic>> alerts = selectedChild != null ? [
-      {
-        'id': '1',
-        'type': 'profanity',
-        'severity': 'medium',
-        'title': 'Inappropriate Language Detected',
-        'message': 'A mild inappropriate word was used in the conversation.',
-        'contact': 'Teacher Sarah',
-        'contactRole': 'Math Teacher',
-        'time': DateTime.now().subtract(const Duration(hours: 3)),
-        'reviewed': false,
-        'flaggedText': '"I hate this stupid homework"',
-        'context': 'During a homework help conversation about math problems.',
-        'aiConfidence': 87,
-      },
-      {
-        'id': '2',
-        'type': 'bullying',
-        'severity': 'high',
-        'title': 'Potential Bullying Language',
-        'message': 'Language that could be considered bullying was detected.',
-        'contact': 'Student Mike',
-        'contactRole': 'Classmate',
-        'time': DateTime.now().subtract(const Duration(days: 1)),
-        'reviewed': true,
-        'flaggedText': '"You\'re so dumb, nobody likes you"',
-        'context': 'Message received from another student during group chat.',
-        'aiConfidence': 94,
-      },
-      {
-        'id': '3',
-        'type': 'sensitive',
-        'severity': 'low',
-        'title': 'Sensitive Topic Mentioned',
-        'message': 'A potentially sensitive topic was discussed.',
-        'contact': 'Counselor Amy',
-        'contactRole': 'School Counselor',
-        'time': DateTime.now().subtract(const Duration(days: 2)),
-        'reviewed': true,
-        'flaggedText': '"I\'ve been feeling really sad lately"',
-        'context': 'During a scheduled check-in with the school counselor.',
-        'aiConfidence': 72,
-      },
-    ] : [];
-    
-    final unreviewedCount = alerts.where((a) => a['reviewed'] == false).length;
-    
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+
+
+
+  // ============ MESSAGING ALERTS SCREEN ============
+  Widget _buildMessagingAlertsScreen(
+    AuthProvider authProvider,
+    ChildProvider childProvider,
+    MessagingSafetyProvider safetyProvider,
+  ) {
+    final parent = authProvider.currentUser;
+    final selectedChild = childProvider.selectedChild;
+    final hasChild = childProvider.children.isNotEmpty;
+
+    final alerts = safetyProvider.alertsForChild(selectedChild?.id);
+    final isLoading = safetyProvider.isLoading(selectedChild?.id);
+    final error = safetyProvider.error;
+    final lastScan = selectedChild != null
+        ? safetyProvider.lastFetchedForChild(selectedChild.id)
+        : null;
+
+    final profanityCount = alerts
+        .where((alert) => alert.category == SafetyCategory.profanity)
+        .length;
+    final bullyingCount = alerts
+        .where((alert) => alert.category == SafetyCategory.bullying)
+        .length;
+    final sensitiveCount = alerts
+        .where((alert) => alert.category == SafetyCategory.sensitiveTopics)
+        .length;
+    final strangerCount = alerts
+        .where((alert) => alert.category == SafetyCategory.strangerDanger)
+        .length;
+    final unreviewedCount =
+        alerts.where((alert) => alert.reviewed == false).length;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildChildSelectorCard(context, childProvider),
+          const SizedBox(height: 20),
+          if (!hasChild)
+            _buildFullEmptyState(
+              'Add a child first',
+              'You need to add a child before viewing messaging alerts.',
+              Icons.child_care_rounded,
+              SafePlayColors.brandOrange500,
+            )
+          else if (selectedChild == null)
+            _buildFullEmptyState(
+              'Select a child',
+              'Choose a child from the dropdown above to view their messaging safety alerts.',
+              Icons.touch_app_rounded,
+              SafePlayColors.brandTeal500,
+            )
+          else ...[
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    SafePlayColors.error,
+                    SafePlayColors.error.withOpacity(0.8),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: SafePlayColors.error.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(Icons.security_rounded,
+                        color: Colors.white, size: 32),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "${selectedChild.name}'s Messages",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${alerts.length} alerts | ${unreviewedCount} need review',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.shield_rounded, color: Colors.white, size: 16),
+                        SizedBox(width: 6),
+                        Text(
+                          'AI Guard',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: SafePlayColors.success.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.safety_check_rounded,
+                            color: SafePlayColors.success, size: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'AI Safety Guard',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Monitoring chats between ${selectedChild.name} and teachers',
+                              style: TextStyle(
+                                color: SafePlayColors.neutral500,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Run new scan',
+                        onPressed: parent == null || isLoading
+                            ? null
+                            : () {
+                                safetyProvider.analyzeChild(
+                                  parent: parent,
+                                  child: selectedChild,
+                                  forceRefresh: true,
+                                );
+                              },
+                        icon: const Icon(Icons.refresh_rounded),
+                        color: SafePlayColors.brightIndigo,
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: SafePlayColors.success,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.check_circle,
+                                color: Colors.white, size: 16),
+                            SizedBox(width: 6),
+                            Text(
+                              'Active',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildStatusCard(
+                          icon: Icons.verified_user_rounded,
+                          label: 'Model',
+                          value: 'DeepSeek V3.1',
+                          color: SafePlayColors.brightIndigo,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildStatusCard(
+                          icon: Icons.access_time,
+                          label: 'Last scan',
+                          value: lastScan != null
+                              ? _formatTime(lastScan)
+                              : (isLoading ? 'Scanning...' : 'Pending'),
+                          color: SafePlayColors.brandOrange500,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildStatusCard(
+                          icon: Icons.warning_amber_rounded,
+                          label: 'Needs review',
+                          value: '$unreviewedCount alert(s)',
+                          color: SafePlayColors.error,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: SafePlayColors.juniorPurple.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.visibility_rounded,
+                            color: SafePlayColors.juniorPurple, size: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'What We Monitor',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildMonitorItem(
+                          'Profanity',
+                          Icons.report_rounded,
+                          SafePlayColors.error,
+                          count: profanityCount,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildMonitorItem(
+                          'Bullying',
+                          Icons.warning_rounded,
+                          SafePlayColors.warning,
+                          count: bullyingCount,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildMonitorItem(
+                          'Sensitive Topics',
+                          Icons.psychology_rounded,
+                          SafePlayColors.juniorPurple,
+                          count: sensitiveCount,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildMonitorItem(
+                          'Stranger Danger',
+                          Icons.person_off_rounded,
+                          SafePlayColors.brandOrange500,
+                          count: strangerCount,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: SafePlayColors.error.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.notifications_active_rounded,
+                            color: SafePlayColors.error, size: 24),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'Safety Alerts',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ),
+                      if (isLoading)
+                        const Padding(
+                          padding: EdgeInsets.only(right: 12),
+                          child: SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: SafePlayColors.neutral100,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${alerts.length} total',
+                          style: TextStyle(
+                            color: SafePlayColors.neutral600,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  if (error != null && alerts.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: SafePlayColors.error.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: SafePlayColors.error.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.error_outline,
+                              color: SafePlayColors.error, size: 28),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              error,
+                              style: TextStyle(
+                                color: SafePlayColors.neutral600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else if (alerts.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: SafePlayColors.success.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: SafePlayColors.success.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.verified_rounded,
+                              color: SafePlayColors.success, size: 40),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'All clear!',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "DeepSeek did not detect harmful content in ${selectedChild.name}'s latest messages.",
+                                  style: TextStyle(
+                                    color: SafePlayColors.neutral600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    ...alerts.map(
+                      (alert) => _buildDetailedAlertItem(
+                        alert,
+                        selectedChild.id,
+                        safetyProvider,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 100),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Child Selector
-          _buildChildSelectorCard(context, childProvider),
-          const SizedBox(height: 20),
-          
-          if (!hasChild)
-            _buildFullEmptyState(
-              'Add a child first',
-              'You need to add a child before viewing messaging alerts.',
-              Icons.child_care_rounded,
-              SafePlayColors.brandOrange500,
-            )
-          else if (selectedChild == null)
-            _buildFullEmptyState(
-              'Select a child',
-              'Choose a child from the dropdown above to view their messaging safety alerts.',
-              Icons.touch_app_rounded,
-              SafePlayColors.brandTeal500,
-            )
-          else ...[
-            // Header
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [SafePlayColors.error, SafePlayColors.error.withOpacity(0.8)],
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: SafePlayColors.error.withOpacity(0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(Icons.security_rounded, color: Colors.white, size: 32),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${selectedChild.name}\'s Messages',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'AI-powered safety monitoring',
-                          style: TextStyle(color: Colors.white70, fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (unreviewedCount > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            unreviewedCount.toString(),
-                            style: TextStyle(
-                              color: SafePlayColors.error,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                            ),
-                          ),
-                          Text(
-                            'New',
-                            style: TextStyle(
-                              color: SafePlayColors.error.withOpacity(0.7),
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              color: SafePlayColors.neutral600,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
             ),
-            const SizedBox(height: 20),
-            
-            // AI Safety Status
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: SafePlayColors.brightIndigo.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.smart_toy_rounded, color: SafePlayColors.brightIndigo, size: 24),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('AI Safety Guard', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                        Text('Monitoring all messages in real-time', style: TextStyle(color: SafePlayColors.neutral500, fontSize: 12)),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: SafePlayColors.success,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.check_circle, color: Colors.white, size: 16),
-                        SizedBox(width: 4),
-                        Text('Active', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 16),
-            
-            // What We Monitor
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: SafePlayColors.juniorPurple.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.visibility_rounded, color: SafePlayColors.juniorPurple, size: 24),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'What We Monitor',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(child: _buildMonitorItem('Profanity', Icons.report_rounded, SafePlayColors.error)),
-                      const SizedBox(width: 12),
-                      Expanded(child: _buildMonitorItem('Bullying', Icons.warning_rounded, SafePlayColors.warning)),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(child: _buildMonitorItem('Sensitive Topics', Icons.psychology_rounded, SafePlayColors.juniorPurple)),
-                      const SizedBox(width: 12),
-                      Expanded(child: _buildMonitorItem('Stranger Danger', Icons.person_off_rounded, SafePlayColors.brandOrange500)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            
-            // Alerts List
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: SafePlayColors.error.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.notifications_active_rounded, color: SafePlayColors.error, size: 24),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'Safety Alerts',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: SafePlayColors.neutral100,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '${alerts.length} total',
-                          style: TextStyle(color: SafePlayColors.neutral600, fontSize: 12, fontWeight: FontWeight.w500),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  if (alerts.isEmpty)
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: SafePlayColors.success.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: SafePlayColors.success.withOpacity(0.2)),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.verified_rounded, color: SafePlayColors.success, size: 40),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'All Clear!',
-                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'No safety concerns detected in ${selectedChild.name}\'s recent messages.',
-                                  style: TextStyle(color: SafePlayColors.neutral600, fontSize: 13),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    ...alerts.map((alert) => _buildDetailedAlertItem(alert)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 100),
-          ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildMonitorItem(String label, IconData icon, Color color) {
+  Widget _buildMonitorItem(
+    String label,
+    IconData icon,
+    Color color, {
+    int count = 0,
+  }) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -2155,9 +2374,28 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           Icon(icon, color: color, size: 20),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              label,
-              style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 13),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  count == 0
+                      ? 'No recent alerts'
+                      : '$count recent alert${count == 1 ? '' : 's'}',
+                  style: TextStyle(
+                    color: SafePlayColors.neutral500,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -2165,11 +2403,15 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
-  Widget _buildDetailedAlertItem(Map<String, dynamic> alert) {
-    final severity = alert['severity'] as String;
-    final reviewed = alert['reviewed'] as bool;
-    final time = alert['time'] as DateTime;
-    final aiConfidence = alert['aiConfidence'] as int;
+  Widget _buildDetailedAlertItem(
+    ChatSafetyAlert alert,
+    String childId,
+    MessagingSafetyProvider safetyProvider,
+  ) {
+    final severity = alert.severity.toLowerCase();
+    final reviewed = alert.reviewed;
+    final time = alert.timestamp;
+    final aiConfidence = alert.confidencePercent;
     
     Color severityColor;
     IconData severityIcon;
@@ -2230,7 +2472,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        alert['title'] as String,
+                        alert.title ?? '${alert.category.label} detected',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
@@ -2249,6 +2491,22 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                             child: Text(
                               severityLabel,
                               style: TextStyle(color: severityColor, fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: SafePlayColors.neutral200,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              alert.category.label,
+                              style: TextStyle(
+                                color: SafePlayColors.neutral700,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -2285,25 +2543,29 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Contact Info
                 Row(
                   children: [
                     Icon(Icons.person_rounded, size: 16, color: SafePlayColors.neutral500),
                     const SizedBox(width: 6),
-                    Text(
-                      '${alert['contact']}',
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: SafePlayColors.brightIndigo.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        alert['contactRole'] as String,
-                        style: TextStyle(color: SafePlayColors.brightIndigo, fontSize: 10, fontWeight: FontWeight.w500),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${alert.offenderName} → ${alert.targetName}',
+                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                          ),
+                          const SizedBox(height: 4),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              _buildRoleChip(alert.offenderRole),
+                              _buildRoleChip(alert.targetRole),
+                              _buildDirectionChip(alert.directionLabel),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -2334,7 +2596,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        alert['flaggedText'] as String,
+                        alert.flaggedText,
                         style: TextStyle(
                           color: SafePlayColors.neutral900,
                           fontSize: 14,
@@ -2354,7 +2616,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        alert['context'] as String,
+                        alert.context,
                         style: TextStyle(color: SafePlayColors.neutral600, fontSize: 12),
                       ),
                     ),
@@ -2395,7 +2657,15 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () {},
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Full chat view coming soon for ${alert.directionLabel.toLowerCase()}.',
+                                ),
+                              ),
+                            );
+                          },
                           icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
                           label: const Text('View Full Chat'),
                           style: OutlinedButton.styleFrom(
@@ -2409,7 +2679,14 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () {},
+                          onPressed: () {
+                            safetyProvider.markAlertReviewed(childId, alert.id);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Marked alert from ${alert.offenderName} as reviewed.'),
+                              ),
+                            );
+                          },
                           icon: const Icon(Icons.check_rounded, size: 16),
                           label: const Text('Mark Reviewed'),
                           style: ElevatedButton.styleFrom(
@@ -2427,6 +2704,47 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRoleChip(String role) {
+    final normalized = role.toLowerCase();
+    final isTeacher = normalized.contains('teacher');
+    final color = isTeacher ? SafePlayColors.brightIndigo : SafePlayColors.brandTeal500;
+    final label = isTeacher ? 'Teacher' : 'Child';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDirectionChip(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: SafePlayColors.brandOrange500.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: SafePlayColors.brandOrange500,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

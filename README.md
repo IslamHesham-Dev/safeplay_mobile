@@ -401,3 +401,28 @@ For issues and questions:
 **Version:** 1.0.0+1  
 **Last Updated:** October 12, 2025  
 **Status:** Active Development (~45% Complete)
+
+
+## AI Safety Monitoring (DeepSeek V3.1)
+
+The Parent Dashboard -> Alerts tab now surfaces real-time chat safety incidents using DeepSeek V3.1 (via OpenRouter). To enable the monitor:
+
+1. Provision an OpenRouter API key and keep it out of source control.
+2. Pass it (and optional attribution headers) at runtime:
+   ```sh
+   flutter run --dart-define=OPENROUTER_API_KEY=sk-or-************                --dart-define=OPENROUTER_APP_URL=https://safeplay.app                --dart-define=OPENROUTER_APP_NAME="SafePlay Mobile"
+   ```
+3. Select a child in the parent dashboard. The app will grab the latest teacher-to-student messages, ask DeepSeek to classify them, and surface Profanity, Bullying, Sensitive Topic, or Stranger Danger alerts. Tap the refresh icon in the "AI Safety Guard" card to force a rescan.
+
+Never commit the key--use `--dart-define`, CI secrets, or secure platform storage.
+
+### Required Firestore indexes
+
+The messaging safety scan relies on composite indexes for the inbox collections. They’re defined in `firestore.indexes.json`; deploy them with:
+
+```sh
+firebase deploy --only firestore:indexes
+```
+
+This creates the `childInboxMessages` and `teacherInboxMessages` indexes (`childId` asc + `createdAt` desc) so the dashboard can read chat history without the “index required” error.
+

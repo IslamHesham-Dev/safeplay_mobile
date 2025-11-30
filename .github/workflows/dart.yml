@@ -36,6 +36,9 @@ jobs:
       - name: Build iOS Release (No Code Sign)
         run: |
           flutter build ios --release --no-codesign
+          --dart-define=OPENROUTER_API_KEY=${{ secrets.OPENROUTER_API_KEY }}
+          --dart-define=OPENROUTER_APP_URL=${{ secrets.OPENROUTER_APP_URL }}
+          --dart-define=OPENROUTER_APP_NAME="${{ secrets.OPENROUTER_APP_NAME }}"
         env:
           COCOAPODS_DISABLE_STATS: true
           LANG: en_US.UTF-8

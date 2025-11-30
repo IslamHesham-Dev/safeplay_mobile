@@ -11,7 +11,9 @@ import 'navigation/app_router.dart';
 import 'providers/activity_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/child_provider.dart';
+import 'providers/messaging_safety_provider.dart';
 import 'services/activity_service.dart';
+import 'services/chat_safety_monitoring_service.dart';
 import 'services/offline_storage_service.dart';
 import 'services/sync_service.dart';
 import 'services/notification_service.dart';
@@ -61,6 +63,7 @@ class _SafePlayAppState extends State<SafePlayApp> {
   late final AuthService _authService;
   late final OfflineStorageService _offlineStorage;
   late final ActivityService _activityService;
+  late final ChatSafetyMonitoringService _chatSafetyMonitoringService;
   late final SyncService _syncService;
   late final NotificationService _notificationService;
   bool _notificationNavigatorRegistered = false;
@@ -72,6 +75,7 @@ class _SafePlayAppState extends State<SafePlayApp> {
     _authService = AuthService();
     _offlineStorage = OfflineStorageService();
     _activityService = ActivityService(offlineStorage: _offlineStorage);
+    _chatSafetyMonitoringService = ChatSafetyMonitoringService();
     _syncService = SyncService(_offlineStorage, _activityService);
     _notificationService = NotificationService();
     unawaited(_syncService.initialize());
@@ -97,6 +101,11 @@ class _SafePlayAppState extends State<SafePlayApp> {
         ),
         ChangeNotifierProvider(
           create: (_) => ActivityProvider(_activityService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => MessagingSafetyProvider(
+            _chatSafetyMonitoringService,
+          ),
         ),
         Provider<SyncService>.value(
           value: _syncService,
