@@ -487,9 +487,9 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
             // Full-screen content for Search
             Positioned.fill(
               bottom: 80, // Leave space for nav bar
-              child: const SafeArea(
+              child: SafeArea(
                 bottom: false,
-                child: SafeSearchScreen(),
+                child: SafeSearchScreen(childId: _currentChild?.id),
               ),
             ),
             // Floating navigation bar

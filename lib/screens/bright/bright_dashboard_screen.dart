@@ -494,7 +494,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                 bottom: false,
                 child: _currentBottomNavIndex == 1
                     ? const MessagingScreen()
-                    : const SafeSearchScreen(),
+                    : SafeSearchScreen(childId: _currentChild?.id),
               ),
             ),
             // Floating navigation bar
