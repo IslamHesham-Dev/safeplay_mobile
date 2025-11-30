@@ -238,4 +238,140 @@ class MessagingService {
               snapshot.docs.map(TeacherInboxMessage.fromFirestore).toList(),
         );
   }
+
+  /// Fetch messages around a specific timestamp for a conversation between child and teacher
+  Future<List<Map<String, dynamic>>> fetchConversationContext({
+    required String childId,
+    required String teacherId,
+    required DateTime aroundTimestamp,
+    int messagesBefore = 3,
+    int messagesAfter = 3,
+  }) async {
+    final startTime = aroundTimestamp.subtract(const Duration(hours: 24));
+    final endTime = aroundTimestamp.add(const Duration(hours: 24));
+
+    // Fetch child to teacher messages - use simple query without time filters to avoid index requirements
+    // We'll filter by time in memory
+    QuerySnapshot childToTeacherSnapshot;
+    try {
+      childToTeacherSnapshot = await _firestore
+          .collection(teacherInboxCollection)
+          .where('childId', isEqualTo: childId)
+          .where('teacherId', isEqualTo: teacherId)
+          .orderBy('createdAt', descending: true)
+          .limit(50) // Get recent messages, filter by time in memory
+          .get();
+    } catch (_) {
+      // If orderBy fails (missing index), fetch without orderBy and sort in memory
+      childToTeacherSnapshot = await _firestore
+          .collection(teacherInboxCollection)
+          .where('childId', isEqualTo: childId)
+          .where('teacherId', isEqualTo: teacherId)
+          .limit(100)
+          .get();
+    }
+
+    // Fetch teacher to child messages
+    QuerySnapshot teacherToChildSnapshot;
+    try {
+      teacherToChildSnapshot = await _firestore
+          .collection(childInboxCollection)
+          .where('childId', isEqualTo: childId)
+          .where('teacherId', isEqualTo: teacherId)
+          .orderBy('createdAt', descending: true)
+          .limit(50)
+          .get();
+    } catch (_) {
+      // If orderBy fails (missing index), fetch without orderBy and sort in memory
+      teacherToChildSnapshot = await _firestore
+          .collection(childInboxCollection)
+          .where('childId', isEqualTo: childId)
+          .where('teacherId', isEqualTo: teacherId)
+          .limit(100)
+          .get();
+    }
+
+    final allMessages = <Map<String, dynamic>>[];
+
+    // Process child to teacher messages
+    for (final doc in childToTeacherSnapshot.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final createdAt = data['createdAt'];
+      DateTime timestamp;
+      if (createdAt is Timestamp) {
+        timestamp = createdAt.toDate();
+      } else if (createdAt is DateTime) {
+        timestamp = createdAt;
+      } else {
+        continue; // Skip if no valid timestamp
+      }
+
+      // Filter by time range
+      if (timestamp.isBefore(startTime) || timestamp.isAfter(endTime)) {
+        continue;
+      }
+
+      allMessages.add({
+        'id': doc.id,
+        'sender': data['childName']?.toString() ?? 'Child',
+        'message': data['message']?.toString() ?? '',
+        'timestamp': timestamp,
+        'isFromChild': true,
+        'senderAvatar': data['childAvatar']?.toString(),
+      });
+    }
+
+    // Process teacher to child messages
+    for (final doc in teacherToChildSnapshot.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final createdAt = data['createdAt'];
+      DateTime timestamp;
+      if (createdAt is Timestamp) {
+        timestamp = createdAt.toDate();
+      } else if (createdAt is DateTime) {
+        timestamp = createdAt;
+      } else {
+        continue; // Skip if no valid timestamp
+      }
+
+      // Filter by time range
+      if (timestamp.isBefore(startTime) || timestamp.isAfter(endTime)) {
+        continue;
+      }
+
+      allMessages.add({
+        'id': doc.id,
+        'sender': data['teacherName']?.toString() ?? 'Teacher',
+        'message': data['message']?.toString() ?? '',
+        'timestamp': timestamp,
+        'isFromChild': false,
+        'senderAvatar': data['teacherAvatar']?.toString(),
+      });
+    }
+
+    // Sort by timestamp
+    allMessages.sort((a, b) => (a['timestamp'] as DateTime).compareTo(b['timestamp'] as DateTime));
+
+    // Find the flagged message index (within 5 minutes of the alert timestamp)
+    final flaggedIndex = allMessages.indexWhere((msg) {
+      final msgTime = msg['timestamp'] as DateTime;
+      return msgTime.difference(aroundTimestamp).abs().inMinutes < 5;
+    });
+
+    if (flaggedIndex == -1) {
+      // If we can't find the exact message, return messages around the timestamp
+      final filtered = allMessages.where((msg) {
+        final msgTime = msg['timestamp'] as DateTime;
+        return msgTime.isAfter(aroundTimestamp.subtract(const Duration(hours: 1))) &&
+               msgTime.isBefore(aroundTimestamp.add(const Duration(hours: 1)));
+      }).toList();
+      return filtered;
+    }
+
+    // Get messages before and after the flagged message
+    final startIndex = (flaggedIndex - messagesBefore).clamp(0, allMessages.length);
+    final endIndex = (flaggedIndex + messagesAfter + 1).clamp(0, allMessages.length);
+    
+    return allMessages.sublist(startIndex, endIndex);
+  }
 }
