@@ -3,6 +3,39 @@ import 'package:flutter/foundation.dart';
 import '../models/browser_control_settings.dart';
 import '../services/browser_control_service.dart';
 
+const Set<String> _socialKeywords = {
+  'facebook',
+  'instagram',
+  'tiktok',
+  'snapchat',
+  'twitter',
+  'discord',
+  'reddit',
+  'social media',
+};
+
+const Set<String> _gamblingKeywords = {
+  'casino',
+  'betting',
+  'bet',
+  'slot',
+  'poker',
+  'lottery',
+  'wager',
+  'roulette',
+};
+
+const Set<String> _violenceKeywords = {
+  'blood',
+  'gun',
+  'shooting',
+  'fight',
+  'murder',
+  'killing',
+  'knife',
+  'gore',
+};
+
 class BrowserControlProvider extends ChangeNotifier {
   BrowserControlProvider(this._service);
 
@@ -44,28 +77,38 @@ class BrowserControlProvider extends ChangeNotifier {
   Future<void> refresh(String childId) =>
       loadSettings(childId, forceRefresh: true);
 
-  Future<void> setSafeSearch(String childId, bool enabled) =>
-      _mutateSettings(
+  Future<void> setSafeSearch(String childId, bool enabled) => _mutateSettings(
         childId,
         (current) => current.copyWith(safeSearchEnabled: enabled),
       );
 
-  Future<void> setSocialFilter(String childId, bool enabled) =>
-      _mutateSettings(
+  Future<void> setSocialFilter(String childId, bool enabled) => _mutateSettings(
         childId,
-        (current) => current.copyWith(blockSocialMedia: enabled),
+        (current) => _applyTopicKeywords(
+          current.copyWith(blockSocialMedia: enabled),
+          keywords: _socialKeywords,
+          include: enabled,
+        ),
       );
 
   Future<void> setGamblingFilter(String childId, bool enabled) =>
       _mutateSettings(
         childId,
-        (current) => current.copyWith(blockGambling: enabled),
+        (current) => _applyTopicKeywords(
+          current.copyWith(blockGambling: enabled),
+          keywords: _gamblingKeywords,
+          include: enabled,
+        ),
       );
 
   Future<void> setViolenceFilter(String childId, bool enabled) =>
       _mutateSettings(
         childId,
-        (current) => current.copyWith(blockViolence: enabled),
+        (current) => _applyTopicKeywords(
+          current.copyWith(blockViolence: enabled),
+          keywords: _violenceKeywords,
+          include: enabled,
+        ),
       );
 
   Future<void> addBlockedKeyword(String childId, String keyword) {
@@ -140,5 +183,26 @@ class BrowserControlProvider extends ChangeNotifier {
       trimmed = 'https://$trimmed';
     }
     return trimmed;
+  }
+
+  BrowserControlSettings _applyTopicKeywords(
+    BrowserControlSettings settings, {
+    required Set<String> keywords,
+    required bool include,
+  }) {
+    final normalized = keywords.map((word) => word.toLowerCase().trim());
+    final current = settings.blockedKeywords.map((word) => word.toLowerCase());
+    if (include) {
+      final merged = {
+        ...settings.blockedKeywords,
+        ...normalized,
+      }.where((word) => word.isNotEmpty).toList();
+      return settings.copyWith(blockedKeywords: merged);
+    } else {
+      final filtered = settings.blockedKeywords
+          .where((word) => !normalized.contains(word.toLowerCase()))
+          .toList();
+      return settings.copyWith(blockedKeywords: filtered);
+    }
   }
 }
