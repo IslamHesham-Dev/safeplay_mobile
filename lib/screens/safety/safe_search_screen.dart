@@ -10,6 +10,7 @@ import '../../design_system/junior_theme.dart';
 import '../../models/browser_control_settings.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/browser_control_provider.dart';
+import '../../services/mediation_guidance_service.dart';
 
 class SafeSearchScreen extends StatefulWidget {
   const SafeSearchScreen({super.key, this.childId});
@@ -23,11 +24,14 @@ class SafeSearchScreen extends StatefulWidget {
 class _SafeSearchScreenState extends State<SafeSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   InAppWebViewController? _webViewController;
+  final MediationGuidanceService _mediationGuidanceService =
+      MediationGuidanceService();
   double _progress = 0;
   bool _canGoBack = false;
   bool _canGoForward = false;
   String? _statusMessage;
   String? _resolvedChildId;
+  String? _resolvedChildName;
   BrowserControlSettings? _latestSettings;
 
   @override
@@ -35,6 +39,7 @@ class _SafeSearchScreenState extends State<SafeSearchScreen> {
     super.didChangeDependencies();
     final authProvider = context.read<AuthProvider>();
     final resolvedChildId = widget.childId ?? authProvider.currentChild?.id;
+    _resolvedChildName = authProvider.currentChild?.name;
     if (resolvedChildId != null && resolvedChildId != _resolvedChildId) {
       _resolvedChildId = resolvedChildId;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -556,10 +561,16 @@ class _SafeSearchScreenState extends State<SafeSearchScreen> {
     setState(() {
       _statusMessage = reason;
     });
-    _showBlockedContentDialog(reason);
+    unawaited(_showBlockedContentDialog(reason));
   }
 
-  void _showBlockedContentDialog(String reason) {
+  Future<void> _showBlockedContentDialog(String reason) async {
+    final childName = _resolvedChildName ?? 'your trusted adults';
+    final guidance = await _mediationGuidanceService.generateGuidance(
+      blockedReason: reason,
+      childName: childName,
+    );
+    if (!mounted) return;
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -685,7 +696,7 @@ class _SafeSearchScreenState extends State<SafeSearchScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Your parents have set up safe browsing to keep you protected while exploring the web.',
+                        guidance,
                         style: JuniorTheme.bodySmall.copyWith(
                           color: SafePlayColors.neutral600,
                           height: 1.4,
