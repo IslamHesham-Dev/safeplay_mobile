@@ -1,7 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:confetti/confetti.dart';
-import '../../design_system/colors.dart';
 import '../../models/activity.dart';
 import '../../providers/activity_provider.dart';
 import '../../providers/child_provider.dart';
@@ -9,6 +10,7 @@ import '../../providers/auth_provider.dart';
 import '../../widgets/activities/question_widget.dart';
 import '../../widgets/activities/progress_tracker_widget.dart';
 import '../../widgets/activities/completion_celebration_widget.dart';
+import '../../services/activity_session_service.dart';
 
 /// Activity player screen for interactive learning
 class ActivityPlayerScreen extends StatefulWidget {
@@ -30,6 +32,8 @@ class _ActivityPlayerScreenState extends State<ActivityPlayerScreen> {
   bool _showingFeedback = false;
   bool _isComplete = false;
   late ConfettiController _confettiController;
+  final ActivitySessionService _activitySessionService =
+      ActivitySessionService();
 
   @override
   void initState() {
@@ -49,10 +53,20 @@ class _ActivityPlayerScreenState extends State<ActivityPlayerScreen> {
     final authProvider = context.read<AuthProvider>();
     final activityProvider = context.read<ActivityProvider>();
 
-    if (authProvider.currentChild != null) {
+    final currentChild = authProvider.currentChild;
+    if (currentChild != null) {
       await activityProvider.startActivity(
-        authProvider.currentChild!.id,
+        currentChild.id,
         widget.activity.id,
+      );
+      unawaited(
+        _activitySessionService.logSession(
+          childId: currentChild.id,
+          activityId: widget.activity.id,
+          title: widget.activity.title,
+          subject: widget.activity.subject.name,
+          durationMinutes: widget.activity.durationMinutes,
+        ),
       );
     }
   }
@@ -214,4 +228,3 @@ class _ActivityPlayerScreenState extends State<ActivityPlayerScreen> {
     );
   }
 }
-

@@ -9,6 +9,7 @@ import 'design_system/theme.dart';
 import 'firebase_options.dart';
 import 'navigation/app_router.dart';
 import 'providers/activity_provider.dart';
+import 'providers/activity_session_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/browser_activity_provider.dart';
 import 'providers/browser_control_provider.dart';
@@ -18,6 +19,7 @@ import 'services/activity_service.dart';
 import 'services/browser_activity_insights_service.dart';
 import 'services/browser_activity_service.dart';
 import 'services/browser_control_service.dart';
+import 'services/activity_session_service.dart';
 import 'services/chat_safety_monitoring_service.dart';
 import 'services/offline_storage_service.dart';
 import 'services/sync_service.dart';
@@ -72,6 +74,7 @@ class _SafePlayAppState extends State<SafePlayApp> {
   late final BrowserControlService _browserControlService;
   late final BrowserActivityService _browserActivityService;
   late final BrowserActivityInsightsService _browserActivityInsightsService;
+  late final ActivitySessionService _activitySessionService;
   late final SyncService _syncService;
   late final NotificationService _notificationService;
   bool _notificationNavigatorRegistered = false;
@@ -87,6 +90,7 @@ class _SafePlayAppState extends State<SafePlayApp> {
     _browserControlService = BrowserControlService();
     _browserActivityService = BrowserActivityService();
     _browserActivityInsightsService = BrowserActivityInsightsService();
+    _activitySessionService = ActivitySessionService();
     _syncService = SyncService(_offlineStorage, _activityService);
     _notificationService = NotificationService();
     unawaited(_syncService.initialize());
@@ -125,6 +129,11 @@ class _SafePlayAppState extends State<SafePlayApp> {
           create: (_) => BrowserActivityProvider(
             _browserActivityService,
             _browserActivityInsightsService,
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ActivitySessionProvider(
+            _activitySessionService,
           ),
         ),
         Provider<SyncService>.value(

@@ -1,18 +1,25 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 
 import '../models/lesson.dart';
 import '../models/question_template.dart';
 import '../models/activity.dart';
 import '../models/game_activity.dart';
+import '../providers/auth_provider.dart';
 import '../screens/junior/games/junior_game_player_screen.dart';
+import 'activity_session_service.dart';
 import 'simple_template_service.dart';
 
 /// Service for launching games with questions from templates
 class JuniorGameLauncher {
   final SimpleTemplateService _templateService = SimpleTemplateService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final ActivitySessionService _activitySessionService =
+      ActivitySessionService();
 
   /// Launch a game based on a lesson
   /// Loads question templates and navigates to the appropriate game screen
@@ -126,6 +133,7 @@ class JuniorGameLauncher {
 
       // Navigate to game player screen
       if (context.mounted) {
+        _logSession(context, lesson);
         await Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => JuniorGamePlayerScreen(
@@ -526,5 +534,41 @@ class JuniorGameLauncher {
         duration: const Duration(seconds: 3),
       ),
     );
+  }
+
+  void _logSession(BuildContext context, Lesson lesson) {
+    final authProvider = context.read<AuthProvider>();
+    final child = authProvider.currentChild;
+    if (child == null) return;
+    final duration = _extractLessonDuration(lesson);
+    unawaited(
+      _activitySessionService.logSession(
+        childId: child.id,
+        activityId: lesson.id,
+        title: lesson.title,
+        subject: (lesson.subject ?? 'general').toLowerCase(),
+        durationMinutes: duration,
+      ),
+    );
+  }
+
+  int? _extractLessonDuration(Lesson lesson) {
+    final candidates = [
+      lesson.metadata['durationMinutes'],
+      lesson.metadata['duration'],
+      lesson.metadata['estimatedDuration'],
+      lesson.content['durationMinutes'],
+      lesson.content['duration'],
+    ];
+    for (final value in candidates) {
+      if (value == null) continue;
+      if (value is int) return value;
+      if (value is num) return value.toInt();
+      if (value is String) {
+        final parsed = int.tryParse(value);
+        if (parsed != null) return parsed;
+      }
+    }
+    return null;
   }
 }

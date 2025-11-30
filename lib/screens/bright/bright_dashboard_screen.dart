@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +18,7 @@ import '../../widgets/junior/junior_progress_bar.dart';
 import '../../widgets/junior/junior_bottom_navigation.dart';
 import '../../widgets/junior/junior_confetti.dart';
 import '../../widgets/question_template_exporter.dart';
+import '../../services/activity_session_service.dart';
 import '../../services/junior_game_launcher.dart';
 import '../junior/games/number_hunt_games.dart';
 import '../junior/games/koala_jumps_games.dart';
@@ -57,6 +58,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   late final AnimationController _animationController;
   late final Animation<double> _fadeAnimation;
   final JuniorGameLauncher _gameLauncher = JuniorGameLauncher();
+  final ActivitySessionService _activitySessionService =
+      ActivitySessionService();
 
   List<Lesson> _todaysTasks = [];
   List<Lesson> _completedTasks = [];
@@ -308,6 +311,12 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     if (!mounted) return;
     // Only apply reward if game was actually played (result == true)
     if (result == true) {
+      _logSession(
+        itemId: game.id,
+        title: game.title,
+        subject: game.subject,
+        durationMinutes: game.estimatedMinutes,
+      );
       await _applyMinutesReward(
         minutes: game.estimatedMinutes,
         sourceTitle: game.title,
@@ -315,7 +324,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     }
   }
 
-  Future<void> _openSimulation(sim.Simulation simulation, {Color? color}) async {
+  Future<void> _openSimulation(sim.Simulation simulation,
+      {Color? color}) async {
     final result = await _pushWithMusicResume<bool>(
       MaterialPageRoute(
         builder: (context) => SimulationDetailScreen(
@@ -327,6 +337,14 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     if (!mounted) return;
     // Only apply reward if game was actually played (result == true)
     if (result == true) {
+      _logSession(
+        itemId: simulation.id,
+        title: simulation.title,
+        subject: simulation.topics.isNotEmpty
+            ? simulation.topics.first
+            : 'simulation',
+        durationMinutes: simulation.estimatedMinutes,
+      );
       await _applyMinutesReward(
         minutes: simulation.estimatedMinutes,
         sourceTitle: simulation.title,
@@ -340,6 +358,26 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
       await _resumeBackgroundMusicIfNeeded();
     }
     return result;
+  }
+
+  void _logSession({
+    required String itemId,
+    required String title,
+    required String subject,
+    int? durationMinutes,
+  }) {
+    final authProvider = context.read<AuthProvider>();
+    final child = authProvider.currentChild;
+    if (child == null) return;
+    unawaited(
+      _activitySessionService.logSession(
+        childId: child.id,
+        activityId: itemId,
+        title: title,
+        subject: subject.toLowerCase(),
+        durationMinutes: durationMinutes,
+      ),
+    );
   }
 
   @override
@@ -480,7 +518,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
-    
+
     // For Messages and Search, show full-screen content with navbar
     if (_currentBottomNavIndex == 1 || _currentBottomNavIndex == 2) {
       return Scaffold(
@@ -530,7 +568,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
         ),
       );
     }
-    
+
     // Default Home dashboard layout
     return Scaffold(
       backgroundColor: JuniorTheme.backgroundLight,
@@ -1449,10 +1487,10 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
 
   Widget _buildCurrentScreen() {
     // Home dashboard content (Messages and Search are handled in build())
-        return Column(
-          children: [
-            _buildDailyTasksProgress(),
-            const SizedBox(height: JuniorTheme.spacingLarge),
+    return Column(
+      children: [
+        _buildDailyTasksProgress(),
+        const SizedBox(height: JuniorTheme.spacingLarge),
         // Wellbeing Check Widget
         WellbeingCheckWidget(
           onTap: () {
@@ -1465,24 +1503,24 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
             );
           },
         ),
-            const SizedBox(height: JuniorTheme.spacingLarge),
-            _buildTodaysTasksSection(),
-            const SizedBox(height: JuniorTheme.spacingLarge),
-            _buildScienceGamesSection(),
-            const SizedBox(height: JuniorTheme.spacingMedium),
-            _buildScienceSimulationsSection(),
-            const SizedBox(height: JuniorTheme.spacingLarge),
-            _buildMathGamesSection(),
-            const SizedBox(height: JuniorTheme.spacingMedium),
-            _buildMathSimulationsSection(),
-            const SizedBox(height: JuniorTheme.spacingLarge),
-            _buildEnglishGamesSection(),
-            const SizedBox(height: JuniorTheme.spacingLarge),
-            _buildBooksSection(),
-            const SizedBox(
-                height: 80), // Extra space at bottom for floating nav bar
-          ],
-        );
+        const SizedBox(height: JuniorTheme.spacingLarge),
+        _buildTodaysTasksSection(),
+        const SizedBox(height: JuniorTheme.spacingLarge),
+        _buildScienceGamesSection(),
+        const SizedBox(height: JuniorTheme.spacingMedium),
+        _buildScienceSimulationsSection(),
+        const SizedBox(height: JuniorTheme.spacingLarge),
+        _buildMathGamesSection(),
+        const SizedBox(height: JuniorTheme.spacingMedium),
+        _buildMathSimulationsSection(),
+        const SizedBox(height: JuniorTheme.spacingLarge),
+        _buildEnglishGamesSection(),
+        const SizedBox(height: JuniorTheme.spacingLarge),
+        _buildBooksSection(),
+        const SizedBox(
+            height: 80), // Extra space at bottom for floating nav bar
+      ],
+    );
   }
 
   String _getCategoryIcon(String category) {

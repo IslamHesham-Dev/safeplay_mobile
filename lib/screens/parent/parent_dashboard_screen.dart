@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 
 import '../../design_system/colors.dart';
 import '../../navigation/route_names.dart';
+import '../../models/activity.dart';
+import '../../models/activity_session_entry.dart';
 import '../../models/browser_activity_insight.dart';
 import '../../models/browser_control_settings.dart';
 import '../../models/chat_safety_alert.dart';
@@ -13,6 +15,7 @@ import '../../models/user_profile.dart';
 import '../../models/user_type.dart';
 import '../../providers/activity_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/activity_session_provider.dart';
 import '../../providers/browser_activity_provider.dart';
 import '../../providers/browser_control_provider.dart';
 import '../../providers/child_provider.dart';
@@ -36,9 +39,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   MessagingSafetyProvider? _messagingSafetyProvider;
   BrowserControlProvider? _browserControlProvider;
   BrowserActivityProvider? _browserActivityProvider;
+  ActivitySessionProvider? _activitySessionProvider;
   String? _lastLoadedChildId;
   bool _isSyncingChild = false;
   int _currentNavIndex = 0;
+  bool _showAllRecentActivities = false;
 
   @override
   void initState() {
@@ -49,6 +54,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       _messagingSafetyProvider = context.read<MessagingSafetyProvider>();
       _browserControlProvider = context.read<BrowserControlProvider>();
       _browserActivityProvider = context.read<BrowserActivityProvider>();
+      _activitySessionProvider = context.read<ActivitySessionProvider>();
       _childProvider?.addListener(_handleChildProviderChange);
       unawaited(_initializeDashboardState());
     });
@@ -70,6 +76,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   }
 
   void _handleChildProviderChange() {
+    if (mounted) {
+      setState(() {
+        _showAllRecentActivities = false;
+      });
+    }
     unawaited(_syncSelectedChild());
   }
 
@@ -101,6 +112,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       final safetyProvider = _messagingSafetyProvider;
       final browserProvider = _browserControlProvider;
       final activitySummaryProvider = _browserActivityProvider;
+      final sessionProvider = _activitySessionProvider;
       if (parent != null && safetyProvider != null) {
         unawaited(
           safetyProvider.analyzeChild(
@@ -119,6 +131,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             selected.name,
           ),
         );
+      }
+      if (sessionProvider != null) {
+        unawaited(sessionProvider.loadSessions(selected.id));
       }
     } finally {
       _isSyncingChild = false;
@@ -153,13 +168,18 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             BrowserActivityProvider>(
           builder: (context, authProvider, childProvider, activityProvider,
               safetyProvider, browserProvider, activitySummaryProvider, _) {
-            return _buildCurrentScreen(
-              authProvider,
-              childProvider,
-              activityProvider,
-              safetyProvider,
-              browserProvider,
-              activitySummaryProvider,
+            return Consumer<ActivitySessionProvider>(
+              builder: (context, sessionProvider, __) {
+                return _buildCurrentScreen(
+                  authProvider,
+                  childProvider,
+                  activityProvider,
+                  safetyProvider,
+                  browserProvider,
+                  activitySummaryProvider,
+                  sessionProvider,
+                );
+              },
             );
           },
         ),
@@ -268,10 +288,15 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     MessagingSafetyProvider safetyProvider,
     BrowserControlProvider browserProvider,
     BrowserActivityProvider activitySummaryProvider,
+    ActivitySessionProvider activitySessionProvider,
   ) {
     switch (_currentNavIndex) {
       case 0:
-        return _buildHomeScreen(authProvider, childProvider, activityProvider);
+        return _buildHomeScreen(
+          authProvider,
+          childProvider,
+          activitySessionProvider,
+        );
       case 1:
         return _buildParentalControlsScreen(
           childProvider,
@@ -287,13 +312,20 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           safetyProvider,
         );
       default:
-        return _buildHomeScreen(authProvider, childProvider, activityProvider);
+        return _buildHomeScreen(
+          authProvider,
+          childProvider,
+          activitySessionProvider,
+        );
     }
   }
 
   // ============ HOME SCREEN ============
-  Widget _buildHomeScreen(AuthProvider authProvider,
-      ChildProvider childProvider, ActivityProvider activityProvider) {
+  Widget _buildHomeScreen(
+    AuthProvider authProvider,
+    ChildProvider childProvider,
+    ActivitySessionProvider sessionProvider,
+  ) {
     final user = authProvider.currentUser;
     final children = childProvider.children;
     final selectedChild = childProvider.selectedChild;
@@ -323,7 +355,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           sliver: SliverToBoxAdapter(
             child: _buildRecentActivitiesCard(
-                context, childProvider, activityProvider),
+                context, childProvider, sessionProvider),
           ),
         ),
         SliverPadding(
@@ -753,34 +785,29 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   }
 
   // ============ RECENT ACTIVITIES CARD ============
-  Widget _buildRecentActivitiesCard(BuildContext context,
-      ChildProvider childProvider, ActivityProvider activityProvider) {
+  Widget _buildRecentActivitiesCard(
+    BuildContext context,
+    ChildProvider childProvider,
+    ActivitySessionProvider sessionProvider,
+  ) {
     final selectedChild = childProvider.selectedChild;
     final hasChild = childProvider.children.isNotEmpty;
-
-    List<Map<String, dynamic>> activities = [];
-    if (selectedChild != null) {
-      activities = [
-        {
-          'title': 'Letter Sound Adventure',
-          'score': 85,
-          'time': DateTime.now().subtract(const Duration(hours: 2)),
-          'subject': 'English',
-        },
-        {
-          'title': 'Number Counting Fun',
-          'score': 100,
-          'time': DateTime.now().subtract(const Duration(hours: 5)),
-          'subject': 'Math',
-        },
-        {
-          'title': 'Animal Discovery',
-          'score': 90,
-          'time': DateTime.now().subtract(const Duration(days: 1)),
-          'subject': 'Science',
-        },
-      ];
-    }
+    final childId = selectedChild?.id ?? '';
+    final sessions = selectedChild == null
+        ? const <ActivitySessionEntry>[]
+        : sessionProvider.sessionsFor(childId);
+    final isLoading =
+        selectedChild != null && sessionProvider.isLoading(childId);
+    final error =
+        selectedChild != null ? sessionProvider.errorFor(childId) : null;
+    final hasSessions = sessions.isNotEmpty;
+    final canToggle = sessions.length > 3;
+    final showAll = _showAllRecentActivities || !canToggle;
+    final visibleSessions =
+        showAll ? sessions : sessions.take(3).toList(growable: false);
+    final recentItems = visibleSessions
+        .map(_mapSessionToRecentActivity)
+        .toList(growable: false);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -854,11 +881,29 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   ],
                 ),
               ),
-              if (selectedChild != null && activities.isNotEmpty)
+              IconButton(
+                icon: const Icon(Icons.refresh_rounded),
+                tooltip: 'Refresh activity feed',
+                onPressed: (selectedChild == null || isLoading)
+                    ? null
+                    : () {
+                        setState(() {
+                          _showAllRecentActivities = false;
+                        });
+                        unawaited(
+                          sessionProvider.loadSessions(selectedChild.id),
+                        );
+                      },
+              ),
+              if (selectedChild != null && hasSessions && canToggle)
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    setState(() {
+                      _showAllRecentActivities = !_showAllRecentActivities;
+                    });
+                  },
                   child: Text(
-                    'View All',
+                    _showAllRecentActivities ? 'Show Less' : 'View All',
                     style: TextStyle(
                       color: SafePlayColors.brightIndigo,
                       fontSize: 13,
@@ -881,40 +926,83 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               Icons.touch_app_rounded,
               SafePlayColors.brandTeal500,
             )
-          else if (activities.isEmpty)
+          else if (isLoading && !hasSessions)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          else if (!hasSessions)
             _buildEmptyStateMessage(
               'No activities yet for ${selectedChild.name}.',
               Icons.hourglass_empty_rounded,
               SafePlayColors.neutral400,
             )
-          else
-            ...activities.map((activity) => _buildActivityItem(activity)),
+          else ...[
+            ...recentItems.map(_buildActivityItem),
+            if (isLoading)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: LinearProgressIndicator(minHeight: 2),
+              ),
+          ],
+          if (error != null && hasSessions)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                'Showing cached insights. Refresh to try again.',
+                style: TextStyle(
+                  color: SafePlayColors.warning,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: SafePlayColors.neutral50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: SafePlayColors.neutral200,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  color: SafePlayColors.neutral600,
+                  size: 18,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'This summary respects privacy by showing abstracted activity patterns, not personal details.',
+                    style: TextStyle(
+                      color: SafePlayColors.neutral600,
+                      fontSize: 12,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildActivityItem(Map<String, dynamic> activity) {
-    final score = activity['score'] as int;
-    final color = score >= 80
-        ? SafePlayColors.success
-        : score >= 60
-            ? SafePlayColors.brandOrange500
-            : SafePlayColors.error;
-
-    final subjectColors = {
-      'English': SafePlayColors.juniorPurple,
-      'Math': SafePlayColors.brandOrange500,
-      'Science': SafePlayColors.brandTeal500,
-    };
-    final subjectColor =
-        subjectColors[activity['subject']] ?? SafePlayColors.brightIndigo;
+  Widget _buildActivityItem(_RecentActivityItem activity) {
+    final accentColor = activity.subjectColor;
+    final completionColor = SafePlayColors.success;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: SafePlayColors.neutral50,
+        color: accentColor.withOpacity(0.05),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -922,10 +1010,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: subjectColor.withOpacity(0.1),
+              color: accentColor.withOpacity(0.15),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(Icons.school_rounded, color: subjectColor, size: 22),
+            child: Icon(Icons.videogame_asset_rounded,
+                color: accentColor, size: 22),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -933,7 +1022,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  activity['title'] as String,
+                  activity.title,
                   style: const TextStyle(
                       fontWeight: FontWeight.w600, fontSize: 14),
                 ),
@@ -942,15 +1031,17 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
-                        color: subjectColor.withOpacity(0.1),
+                        color: accentColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        activity['subject'] as String,
+                        activity.subjectLabel,
                         style: TextStyle(
-                          color: subjectColor,
+                          color: accentColor,
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                         ),
@@ -958,9 +1049,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      _formatTime(activity['time'] as DateTime),
+                      activity.timeLabel,
                       style: TextStyle(
-                          color: SafePlayColors.neutral400, fontSize: 11),
+                        color: SafePlayColors.neutral500,
+                        fontSize: 11,
+                      ),
                     ),
                   ],
                 ),
@@ -970,13 +1063,13 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: completionColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
-              '$score%',
+              '${activity.completionPercent}%',
               style: TextStyle(
-                color: color,
+                color: completionColor,
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               ),
@@ -1023,6 +1116,73 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         ],
       ),
     );
+  }
+
+  _RecentActivityItem _mapSessionToRecentActivity(
+    ActivitySessionEntry entry,
+  ) {
+    final subjectEnum = _mapRawSubjectToEnum(entry.subject);
+    final subjectLabel =
+        subjectEnum?.displayName ?? _formatSubjectLabel(entry.subject);
+    return _RecentActivityItem(
+      title: entry.title,
+      subjectLabel: subjectLabel,
+      subjectColor: _subjectColor(subjectEnum),
+      timeLabel: _formatDurationLabel(entry.durationMinutes),
+      completionPercent: 100,
+    );
+  }
+
+  ActivitySubject? _mapRawSubjectToEnum(String? raw) {
+    final normalized = raw?.toLowerCase().trim() ?? '';
+    if (normalized.isEmpty) return null;
+    if (normalized.contains('english')) {
+      return ActivitySubject.reading;
+    }
+    if (normalized.contains('language')) {
+      return ActivitySubject.reading;
+    }
+    if (normalized.contains('writing')) {
+      return ActivitySubject.writing;
+    }
+    return ActivitySubject.fromString(normalized);
+  }
+
+  Color _subjectColor(ActivitySubject? subject) {
+    switch (subject) {
+      case ActivitySubject.math:
+        return SafePlayColors.brandOrange500;
+      case ActivitySubject.reading:
+      case ActivitySubject.writing:
+        return SafePlayColors.brightIndigo;
+      case ActivitySubject.science:
+        return SafePlayColors.brandTeal500;
+      case ActivitySubject.social:
+        return SafePlayColors.brightDeepPurple;
+      case ActivitySubject.art:
+        return SafePlayColors.juniorPink;
+      case ActivitySubject.music:
+        return SafePlayColors.juniorPurple;
+      case ActivitySubject.coding:
+        return SafePlayColors.brightTeal;
+      default:
+        return SafePlayColors.neutral600;
+    }
+  }
+
+  String _formatDurationLabel(int? minutes) {
+    if (minutes == null || minutes <= 0) {
+      return 'Teacher-assigned session';
+    }
+    if (minutes == 1) return '1 min session';
+    return '$minutes min session';
+  }
+
+  String _formatSubjectLabel(String? raw) {
+    if (raw == null || raw.isEmpty) return 'Learning';
+    final normalized = raw.replaceAll(RegExp(r'[_\\-]+'), ' ').trim();
+    if (normalized.isEmpty) return 'Learning';
+    return normalized[0].toUpperCase() + normalized.substring(1);
   }
 
   // ============ PARENTAL CONTROLS SCREEN ============
@@ -4006,4 +4166,20 @@ class _BrowserActivityItem {
     required this.category,
     required this.timeAgo,
   });
+}
+
+class _RecentActivityItem {
+  const _RecentActivityItem({
+    required this.title,
+    required this.subjectLabel,
+    required this.subjectColor,
+    required this.timeLabel,
+    this.completionPercent = 100,
+  });
+
+  final String title;
+  final String subjectLabel;
+  final Color subjectColor;
+  final String timeLabel;
+  final int completionPercent;
 }

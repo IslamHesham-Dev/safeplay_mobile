@@ -19,9 +19,11 @@ import '../../widgets/junior/junior_progress_bar.dart';
 import '../../widgets/junior/junior_bottom_navigation.dart';
 import '../../widgets/junior/junior_confetti.dart';
 import '../../widgets/question_template_exporter.dart';
+import '../../services/activity_session_service.dart';
 import '../../services/junior_games_service.dart';
 import '../../services/junior_game_launcher.dart';
 import '../../services/simple_template_service.dart';
+import '../../services/activity_session_service.dart';
 import '../../navigation/route_names.dart';
 import 'games/number_hunt_games.dart';
 import 'games/koala_jumps_games.dart';
@@ -58,6 +60,8 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   final JuniorGamesService _gamesService = JuniorGamesService();
   final JuniorGameLauncher _gameLauncher = JuniorGameLauncher();
   final SimpleTemplateService _templateService = SimpleTemplateService();
+  final ActivitySessionService _activitySessionService =
+      ActivitySessionService();
 
   List<Lesson> _todaysTasks = [];
   List<Lesson> _completedTasks = [];
@@ -304,6 +308,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     if (!mounted) return;
     // Only apply reward if game was actually played (result == true)
     if (result == true) {
+      _logWebGameSession(game);
       await _applyMinutesReward(
         minutes: game.estimatedMinutes,
         sourceTitle: game.title,
@@ -317,6 +322,21 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
       await _resumeBackgroundMusicIfNeeded();
     }
     return result;
+  }
+
+  void _logWebGameSession(WebGame game) {
+    final authProvider = context.read<AuthProvider>();
+    final child = authProvider.currentChild;
+    if (child == null) return;
+    unawaited(
+      _activitySessionService.logSession(
+        childId: child.id,
+        activityId: game.id,
+        title: game.title,
+        subject: game.subject,
+        durationMinutes: game.estimatedMinutes,
+      ),
+    );
   }
 
   @override
@@ -432,7 +452,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
-    
+
     // For Messages (Notifications), show full-screen content with navbar
     if (_currentBottomNavIndex == 1) {
       return Scaffold(
@@ -477,7 +497,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
         ),
       );
     }
-    
+
     // For Search, show full-screen content with navbar
     if (_currentBottomNavIndex == 2) {
       return Scaffold(
@@ -525,7 +545,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
         ),
       );
     }
-    
+
     // Default Home dashboard layout
     return Scaffold(
       backgroundColor: JuniorTheme.backgroundLight,
