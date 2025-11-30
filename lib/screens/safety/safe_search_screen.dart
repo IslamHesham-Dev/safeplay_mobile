@@ -1,5 +1,5 @@
-
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -438,15 +438,24 @@ class _SafeSearchScreenState extends State<SafeSearchScreen> {
     });
   }
 
-  void _performSearch(BrowserControlSettings settings) {
+  Future<void> _performSearch(BrowserControlSettings settings) async {
     final query = _searchController.text.trim();
     if (query.isEmpty || _webViewController == null) return;
+
+    final blockedKeyword = _findBlockedKeywordInQuery(query, settings);
+    if (blockedKeyword != null) {
+      _showBlockedSnack(
+        'This search contains the blocked word "$blockedKeyword".',
+      );
+      return;
+    }
+
     final encoded = Uri.encodeComponent(query);
-    final target = settings.safeSearchEnabled
-        ? 'https://www.kiddle.co/search.php?q='
-        : 'https://duckduckgo.com/?q=';
-    final url = '$target$encoded';
-    _openUrl(url);
+    final url = 'https://www.kiddle.co/search.php?q=$encoded';
+    final handledByForm = await _submitQueryThroughKiddleForm(query);
+    if (!handledByForm) {
+      _openUrl(url);
+    }
     FocusScope.of(context).unfocus();
   }
 
@@ -459,7 +468,8 @@ class _SafeSearchScreenState extends State<SafeSearchScreen> {
       _showBlockedSnack(blockReason);
       return;
     }
-    await controller.loadUrl(urlRequest: URLRequest(url: WebUri(uri.toString())));
+    await controller.loadUrl(
+        urlRequest: URLRequest(url: WebUri(uri.toString())));
     await _updateNavigationAvailability();
   }
 
@@ -499,6 +509,47 @@ class _SafeSearchScreenState extends State<SafeSearchScreen> {
     }
 
     return null;
+  }
+
+  String? _findBlockedKeywordInQuery(
+    String query,
+    BrowserControlSettings settings,
+  ) {
+    final normalized = query.toLowerCase();
+    for (final keyword in settings.blockedKeywords) {
+      final trimmed = keyword.trim().toLowerCase();
+      if (trimmed.isNotEmpty && normalized.contains(trimmed)) {
+        return trimmed;
+      }
+    }
+    return null;
+  }
+
+  Future<bool> _submitQueryThroughKiddleForm(String query) async {
+    final controller = _webViewController;
+    if (controller == null) return false;
+    final escaped = jsonEncode(query);
+    try {
+      final result = await controller.evaluateJavascript(
+        source: '''
+          (function() {
+            const input = document.querySelector('input[name="q"], input#q');
+            if (!input) return 'missing-input';
+            input.value = $escaped;
+            const form = input.closest('form');
+            if (form && typeof form.submit === 'function') {
+              form.submit();
+              return 'submitted';
+            }
+            input.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter'}));
+            return 'dispatched';
+          })();
+        ''',
+      );
+      return result == 'submitted' || result == 'dispatched';
+    } catch (error) {
+      return false;
+    }
   }
 
   void _showBlockedSnack(String reason) {
