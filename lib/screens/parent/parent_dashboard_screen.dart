@@ -1621,26 +1621,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: SafePlayColors.neutral500,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Changes sync automatically to SafeSearch and the Junior/Bright dashboards once saved.',
-                      style: TextStyle(
-                        color: SafePlayColors.neutral600,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              const SizedBox(height: 32),
+              // Browser Activity History Section
+              _buildBrowserHistorySection(selectedChild),
             ],
             const SizedBox(height: 100),
           ],
@@ -1775,6 +1758,213 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             message,
             textAlign: TextAlign.center,
             style: TextStyle(color: SafePlayColors.neutral500, fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBrowserHistorySection(ChildProfile? child) {
+    if (child == null) return const SizedBox.shrink();
+
+    // Mock high-level activity data (UI only, no logic)
+    final mockActivities = [
+      _BrowserActivityItem(
+        icon: Icons.play_circle_outline_rounded,
+        color: SafePlayColors.brandTeal500,
+        summary: 'Watched 3 educational videos',
+        category: 'Educational Content',
+        timeAgo: '2 hours ago',
+      ),
+      _BrowserActivityItem(
+        icon: Icons.search_rounded,
+        color: SafePlayColors.brandOrange500,
+        summary: 'Searched for science topics 5 times',
+        category: 'Search Activity',
+        timeAgo: '4 hours ago',
+      ),
+      _BrowserActivityItem(
+        icon: Icons.language_rounded,
+        color: SafePlayColors.success,
+        summary: 'Visited 8 safe websites',
+        category: 'Website Visits',
+        timeAgo: 'Today',
+      ),
+      _BrowserActivityItem(
+        icon: Icons.block_rounded,
+        color: SafePlayColors.error,
+        summary: 'Blocked content attempts: 2',
+        category: 'Safety Blocks',
+        timeAgo: 'Yesterday',
+      ),
+      _BrowserActivityItem(
+        icon: Icons.book_rounded,
+        color: SafePlayColors.brightIndigo,
+        summary: 'Read 2 articles about space',
+        category: 'Reading Activity',
+        timeAgo: 'Yesterday',
+      ),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: SafePlayColors.brandTeal500.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.history_rounded,
+                  color: SafePlayColors.brandTeal500,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Browser Activity History',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'High-level summary of ${child.name}\'s online activity. Privacy-focused insights.',
+            style: TextStyle(
+              color: SafePlayColors.neutral600,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 20),
+          ...mockActivities.map((activity) => _buildBrowserActivityItem(activity)),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: SafePlayColors.neutral50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: SafePlayColors.neutral200,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  color: SafePlayColors.neutral600,
+                  size: 18,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'This summary respects privacy by showing abstracted activity patterns, not personal details.',
+                    style: TextStyle(
+                      color: SafePlayColors.neutral600,
+                      fontSize: 12,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBrowserActivityItem(_BrowserActivityItem activity) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: activity.color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: activity.color.withOpacity(0.15),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: activity.color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              activity.icon,
+              color: activity.color,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  activity.summary,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: activity.color.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        activity.category,
+                        style: TextStyle(
+                          color: activity.color,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      activity.timeAgo,
+                      style: TextStyle(
+                        color: SafePlayColors.neutral500,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -3692,4 +3882,21 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
   }
+}
+
+/// Helper class for browser activity history items (UI only)
+class _BrowserActivityItem {
+  final IconData icon;
+  final Color color;
+  final String summary;
+  final String category;
+  final String timeAgo;
+
+  _BrowserActivityItem({
+    required this.icon,
+    required this.color,
+    required this.summary,
+    required this.category,
+    required this.timeAgo,
+  });
 }
