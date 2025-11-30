@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +11,7 @@ import '../../design_system/junior_theme.dart';
 import '../../models/browser_control_settings.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/browser_control_provider.dart';
+import '../../services/browser_activity_service.dart';
 import '../../services/mediation_guidance_service.dart';
 
 class SafeSearchScreen extends StatefulWidget {
@@ -26,6 +28,8 @@ class _SafeSearchScreenState extends State<SafeSearchScreen> {
   InAppWebViewController? _webViewController;
   final MediationGuidanceService _mediationGuidanceService =
       MediationGuidanceService();
+  final BrowserActivityService _browserActivityService =
+      BrowserActivityService();
   double _progress = 0;
   bool _canGoBack = false;
   bool _canGoForward = false;
@@ -403,6 +407,9 @@ class _SafeSearchScreenState extends State<SafeSearchScreen> {
                 _progress = 1;
                 _statusMessage = 'Exploring ${url?.host ?? ''}';
               });
+              if (url != null) {
+                unawaited(_logVisitEvent(url.toString()));
+              }
               await _updateNavigationAvailability();
             },
             onProgressChanged: (_, progress) {
@@ -461,6 +468,7 @@ class _SafeSearchScreenState extends State<SafeSearchScreen> {
     if (!handledByForm) {
       _openUrl(url);
     }
+    unawaited(_logSearchEvent(query));
     FocusScope.of(context).unfocus();
   }
 
@@ -557,11 +565,53 @@ class _SafeSearchScreenState extends State<SafeSearchScreen> {
     }
   }
 
+  Future<void> _logSearchEvent(String query) async {
+    final childId = _resolvedChildId;
+    if (childId == null || query.isEmpty) return;
+    try {
+      await _browserActivityService.logSearch(
+        childId: childId,
+        query: query,
+      );
+    } catch (error) {
+      debugPrint('Failed to log search activity: $error');
+    }
+  }
+
+  Future<void> _logVisitEvent(String url) async {
+    final childId = _resolvedChildId;
+    if (childId == null) return;
+    final host = Uri.tryParse(url)?.host ?? '';
+    if (host.isEmpty || host.contains('kiddle.co')) return;
+    try {
+      await _browserActivityService.logVisit(
+        childId: childId,
+        url: url,
+      );
+    } catch (error) {
+      debugPrint('Failed to log visit activity: $error');
+    }
+  }
+
+  Future<void> _logBlockedAttempt(String reason) async {
+    final childId = _resolvedChildId;
+    if (childId == null) return;
+    try {
+      await _browserActivityService.logBlocked(
+        childId: childId,
+        reason: reason,
+      );
+    } catch (error) {
+      debugPrint('Failed to log blocked attempt: $error');
+    }
+  }
+
   void _showBlockedSnack(String reason) {
     setState(() {
       _statusMessage = reason;
     });
     unawaited(_showBlockedContentDialog(reason));
+    unawaited(_logBlockedAttempt(reason));
   }
 
   Future<void> _showBlockedContentDialog(String reason) async {

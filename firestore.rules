@@ -21,6 +21,10 @@ service cloud.firestore {
       return request.auth == null && childExists(childId);
     }
 
+    function childDeviceWriteAllowed(childId) {
+      return request.auth == null && childExists(childId);
+    }
+
     // Users can read and write their own user document
     match /users/{userId} {
       allow create: if request.auth != null && request.auth.uid == userId;
@@ -178,6 +182,12 @@ service cloud.firestore {
     match /browserControls/{childId} {
       allow read: if canManageBrowserControls(childId) || childDeviceReadAllowed(childId);
       allow write: if canManageBrowserControls(childId);
+    }
+
+    match /browserActivity/{childId}/events/{eventId} {
+      allow read: if canManageBrowserControls(childId);
+      allow create: if canManageBrowserControls(childId) || childDeviceWriteAllowed(childId);
+      allow update, delete: if canManageBrowserControls(childId);
     }
     
     // Default allow rule for development - remove this in production

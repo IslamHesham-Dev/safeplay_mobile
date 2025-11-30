@@ -6,12 +6,14 @@ import 'package:provider/provider.dart';
 
 import '../../design_system/colors.dart';
 import '../../navigation/route_names.dart';
+import '../../models/browser_activity_insight.dart';
 import '../../models/browser_control_settings.dart';
 import '../../models/chat_safety_alert.dart';
 import '../../models/user_profile.dart';
 import '../../models/user_type.dart';
 import '../../providers/activity_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/browser_activity_provider.dart';
 import '../../providers/browser_control_provider.dart';
 import '../../providers/child_provider.dart';
 import '../../providers/messaging_safety_provider.dart';
@@ -33,6 +35,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   ActivityProvider? _activityProvider;
   MessagingSafetyProvider? _messagingSafetyProvider;
   BrowserControlProvider? _browserControlProvider;
+  BrowserActivityProvider? _browserActivityProvider;
   String? _lastLoadedChildId;
   bool _isSyncingChild = false;
   int _currentNavIndex = 0;
@@ -45,6 +48,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       _activityProvider = context.read<ActivityProvider>();
       _messagingSafetyProvider = context.read<MessagingSafetyProvider>();
       _browserControlProvider = context.read<BrowserControlProvider>();
+      _browserActivityProvider = context.read<BrowserActivityProvider>();
       _childProvider?.addListener(_handleChildProviderChange);
       unawaited(_initializeDashboardState());
     });
@@ -96,6 +100,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       final parent = context.read<AuthProvider>().currentUser;
       final safetyProvider = _messagingSafetyProvider;
       final browserProvider = _browserControlProvider;
+      final activitySummaryProvider = _browserActivityProvider;
       if (parent != null && safetyProvider != null) {
         unawaited(
           safetyProvider.analyzeChild(
@@ -106,6 +111,14 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       }
       if (browserProvider != null) {
         unawaited(browserProvider.loadSettings(selected.id));
+      }
+      if (activitySummaryProvider != null) {
+        unawaited(
+          activitySummaryProvider.loadActivity(
+            selected.id,
+            selected.name,
+          ),
+        );
       }
     } finally {
       _isSyncingChild = false;
@@ -131,16 +144,22 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         ],
       ),
       body: SafeArea(
-        child: Consumer5<AuthProvider, ChildProvider, ActivityProvider,
-            MessagingSafetyProvider, BrowserControlProvider>(
+        child: Consumer6<
+            AuthProvider,
+            ChildProvider,
+            ActivityProvider,
+            MessagingSafetyProvider,
+            BrowserControlProvider,
+            BrowserActivityProvider>(
           builder: (context, authProvider, childProvider, activityProvider,
-              safetyProvider, browserProvider, _) {
+              safetyProvider, browserProvider, activitySummaryProvider, _) {
             return _buildCurrentScreen(
               authProvider,
               childProvider,
               activityProvider,
               safetyProvider,
               browserProvider,
+              activitySummaryProvider,
             );
           },
         ),
@@ -248,12 +267,17 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     ActivityProvider activityProvider,
     MessagingSafetyProvider safetyProvider,
     BrowserControlProvider browserProvider,
+    BrowserActivityProvider activitySummaryProvider,
   ) {
     switch (_currentNavIndex) {
       case 0:
         return _buildHomeScreen(authProvider, childProvider, activityProvider);
       case 1:
-        return _buildParentalControlsScreen(childProvider, browserProvider);
+        return _buildParentalControlsScreen(
+          childProvider,
+          browserProvider,
+          activitySummaryProvider,
+        );
       case 2:
         return _buildWellbeingScreen(childProvider);
       case 3:
@@ -1005,6 +1029,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   Widget _buildParentalControlsScreen(
     ChildProvider childProvider,
     BrowserControlProvider browserProvider,
+    BrowserActivityProvider activityProvider,
   ) {
     final selectedChild = childProvider.selectedChild;
     final hasChild = childProvider.children.isNotEmpty;
@@ -1623,7 +1648,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               ),
               const SizedBox(height: 32),
               // Browser Activity History Section
-              _buildBrowserHistorySection(selectedChild),
+              _buildBrowserHistorySection(
+                selectedChild,
+                activityProvider,
+              ),
             ],
             const SizedBox(height: 100),
           ],
@@ -1764,47 +1792,18 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
-  Widget _buildBrowserHistorySection(ChildProfile? child) {
+  Widget _buildBrowserHistorySection(
+    ChildProfile? child,
+    BrowserActivityProvider activityProvider,
+  ) {
     if (child == null) return const SizedBox.shrink();
 
-    // Mock high-level activity data (UI only, no logic)
-    final mockActivities = [
-      _BrowserActivityItem(
-        icon: Icons.play_circle_outline_rounded,
-        color: SafePlayColors.brandTeal500,
-        summary: 'Watched 3 educational videos',
-        category: 'Educational Content',
-        timeAgo: '2 hours ago',
-      ),
-      _BrowserActivityItem(
-        icon: Icons.search_rounded,
-        color: SafePlayColors.brandOrange500,
-        summary: 'Searched for science topics 5 times',
-        category: 'Search Activity',
-        timeAgo: '4 hours ago',
-      ),
-      _BrowserActivityItem(
-        icon: Icons.language_rounded,
-        color: SafePlayColors.success,
-        summary: 'Visited 8 safe websites',
-        category: 'Website Visits',
-        timeAgo: 'Today',
-      ),
-      _BrowserActivityItem(
-        icon: Icons.block_rounded,
-        color: SafePlayColors.error,
-        summary: 'Blocked content attempts: 2',
-        category: 'Safety Blocks',
-        timeAgo: 'Yesterday',
-      ),
-      _BrowserActivityItem(
-        icon: Icons.book_rounded,
-        color: SafePlayColors.brightIndigo,
-        summary: 'Read 2 articles about space',
-        category: 'Reading Activity',
-        timeAgo: 'Yesterday',
-      ),
-    ];
+    final childId = child.id;
+    final insights = activityProvider.insightsFor(childId);
+    final isLoading = activityProvider.isLoading(childId);
+    final error = activityProvider.errorFor(childId);
+    final activityItems =
+        insights.map(_mapInsightToActivityItem).toList(growable: false);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1846,6 +1845,15 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   ),
                 ),
               ),
+              IconButton(
+                icon: const Icon(Icons.refresh_rounded),
+                onPressed: isLoading
+                    ? null
+                    : () => activityProvider.loadActivity(
+                          child.id,
+                          child.name,
+                        ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -1857,7 +1865,66 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          ...mockActivities.map((activity) => _buildBrowserActivityItem(activity)),
+          if (isLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                ),
+              ),
+            )
+          else if (error != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: SafePlayColors.error.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: SafePlayColors.error.withOpacity(0.2),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Unable to load recent browsing insights.',
+                    style: TextStyle(
+                      color: SafePlayColors.neutral700,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    error,
+                    style: TextStyle(
+                      color: SafePlayColors.neutral600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else if (activityItems.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: SafePlayColors.neutral50,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${child.name} hasn\'t generated enough Safe Browser activity for a summary yet. Encourage supervised browsing to see privacy-preserving insights here.',
+                style: TextStyle(
+                  color: SafePlayColors.neutral600,
+                  height: 1.4,
+                ),
+              ),
+            )
+          else
+            ...activityItems
+                .map((activity) => _buildBrowserActivityItem(activity)),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(12),
@@ -1968,6 +2035,46 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  _BrowserActivityItem _mapInsightToActivityItem(
+    BrowserActivityInsight insight,
+  ) {
+    final categoryKey = insight.category.toLowerCase();
+    Color color = SafePlayColors.brandTeal500;
+    IconData icon = Icons.language_rounded;
+
+    if (categoryKey.contains('safety') || categoryKey.contains('block')) {
+      color = SafePlayColors.error;
+      icon = Icons.block_rounded;
+    } else if (categoryKey.contains('learning') ||
+        categoryKey.contains('educational')) {
+      color = SafePlayColors.brandTeal500;
+      icon = Icons.school_rounded;
+    } else if (categoryKey.contains('entertainment')) {
+      color = SafePlayColors.brandOrange500;
+      icon = Icons.play_circle_outline_rounded;
+    } else if (categoryKey.contains('social')) {
+      color = SafePlayColors.brightIndigo;
+      icon = Icons.group_rounded;
+    } else if (categoryKey.contains('current')) {
+      color = SafePlayColors.success;
+      icon = Icons.public_rounded;
+    } else if (categoryKey.contains('sensitive')) {
+      color = SafePlayColors.error;
+      icon = Icons.warning_amber_rounded;
+    } else {
+      color = SafePlayColors.neutral600;
+      icon = Icons.history_rounded;
+    }
+
+    return _BrowserActivityItem(
+      icon: icon,
+      color: color,
+      summary: insight.summary,
+      category: insight.category,
+      timeAgo: insight.timeframe,
     );
   }
 
