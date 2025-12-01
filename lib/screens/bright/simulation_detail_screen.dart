@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,6 +18,58 @@ const Map<String, String> _simulationVoiceoverAssets = {
       'audio/voiceovers/math/area_model/1.mp3',
   'equality-explorer-basics':
       'audio/voiceovers/math/equality_explorer/1.mp3',
+};
+
+class _PostStartVoiceover {
+  final Duration delay;
+  final String assetPath;
+  const _PostStartVoiceover(this.delay, this.assetPath);
+}
+
+const Map<String, List<_PostStartVoiceover>>
+    _postStartVoiceoverSequences = {
+  'states-of-matter': [
+    _PostStartVoiceover(
+      Duration(seconds: 10),
+      'audio/voiceovers/science/states_of_matter/2.mp3',
+    ),
+    _PostStartVoiceover(
+      Duration(seconds: 20),
+      'audio/voiceovers/science/states_of_matter/3.mp3',
+    ),
+  ],
+  'balloons-static-electricity': [
+    _PostStartVoiceover(
+      Duration(seconds: 10),
+      'audio/voiceovers/science/balloons_and_static/2.mp3',
+    ),
+  ],
+  'density': [
+    _PostStartVoiceover(
+      Duration(seconds: 10),
+      'audio/voiceovers/science/exploring_density/2.mp3',
+    ),
+    _PostStartVoiceover(
+      Duration(seconds: 20),
+      'audio/voiceovers/science/exploring_density/3.mp3',
+    ),
+    _PostStartVoiceover(
+      Duration(seconds: 30),
+      'audio/voiceovers/science/exploring_density/4.mp3',
+    ),
+  ],
+  'equality-explorer-basics': [
+    _PostStartVoiceover(
+      Duration(seconds: 10),
+      'audio/voiceovers/math/equality_explorer/2.mp3',
+    ),
+  ],
+  'area-model-introduction': [
+    _PostStartVoiceover(
+      Duration(seconds: 10),
+      'audio/voiceovers/math/area_model/2.mp3',
+    ),
+  ],
 };
 
 /// Simulation Detail & Launch Page
@@ -51,6 +104,9 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
   final AudioPlayer _voiceoverPlayer = AudioPlayer();
   bool _voiceoverActive = false;
   StreamSubscription<void>? _voiceoverCompleteSubscription;
+  Timer? _postStartVoiceoverTimer;
+  final Queue<_PostStartVoiceover> _pendingPostStartVoiceovers =
+      Queue<_PostStartVoiceover>();
 
   // Get the card color with fallback to default blue
   Color get _cardColor => widget.cardColor ?? const Color(0xFF5B9BD5);
@@ -73,6 +129,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
     unawaited(_voiceoverPlayer.stop());
     unawaited(_notifyVoiceoverEnded());
     _voiceoverPlayer.dispose();
+    _cancelPostStartVoiceovers();
     // Reset orientation when leaving
     allowAllDeviceOrientations();
     super.dispose();
@@ -82,30 +139,68 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
     final voiceoverPath =
         _simulationVoiceoverAssets[widget.simulation.id];
     if (voiceoverPath == null) return;
+    await _playVoiceoverAsset(voiceoverPath);
+  }
+
+  Future<void> _playVoiceoverAsset(String assetPath) async {
+    final completer = Completer<void>();
     try {
       if (widget.onVoiceoverStart != null) {
         await widget.onVoiceoverStart!.call();
       }
       _voiceoverActive = true;
       _voiceoverCompleteSubscription?.cancel();
+      _voiceoverCompleteSubscription =
+          _voiceoverPlayer.onPlayerComplete.listen((_) {
+        _voiceoverCompleteSubscription?.cancel();
+        _voiceoverCompleteSubscription = null;
+        if (!completer.isCompleted) {
+          completer.complete();
+        }
+        unawaited(_notifyVoiceoverEnded());
+      });
       await _voiceoverPlayer.setPlayerMode(PlayerMode.mediaPlayer);
       await _voiceoverPlayer.setReleaseMode(ReleaseMode.stop);
       await _voiceoverPlayer.setVolume(1.0);
       await _voiceoverPlayer.stop();
-      await _voiceoverPlayer.play(
-        AssetSource(voiceoverPath),
-      );
-      _voiceoverCompleteSubscription =
-          _voiceoverPlayer.onPlayerComplete.listen((_) {
-        unawaited(_notifyVoiceoverEnded());
-      });
-      debugPrint(
-          'Playing simulation voiceover for ${widget.simulation.id}');
+      await _voiceoverPlayer.play(AssetSource(assetPath));
+      debugPrint('Playing simulation voiceover asset: $assetPath');
+      await completer.future;
     } catch (e, stack) {
-      debugPrint('Error playing simulation voiceover: $e');
+      debugPrint('Error playing simulation voiceover ($assetPath): $e');
       debugPrint('$stack');
+      if (!completer.isCompleted) {
+        completer.complete();
+      }
       await _notifyVoiceoverEnded();
     }
+  }
+
+  void _startPostStartVoiceovers() {
+    _cancelPostStartVoiceovers();
+    final sequence =
+        _postStartVoiceoverSequences[widget.simulation.id];
+    if (sequence == null || sequence.isEmpty) return;
+    _pendingPostStartVoiceovers
+      ..clear()
+      ..addAll(sequence);
+    _scheduleNextPostStartVoiceover();
+  }
+
+  void _scheduleNextPostStartVoiceover() {
+    if (_pendingPostStartVoiceovers.isEmpty) return;
+    final next = _pendingPostStartVoiceovers.removeFirst();
+    _postStartVoiceoverTimer = Timer(next.delay, () async {
+      if (!mounted) return;
+      await _playVoiceoverAsset(next.assetPath);
+      _scheduleNextPostStartVoiceover();
+    });
+  }
+
+  void _cancelPostStartVoiceovers() {
+    _postStartVoiceoverTimer?.cancel();
+    _postStartVoiceoverTimer = null;
+    _pendingPostStartVoiceovers.clear();
   }
 
   Future<void> _notifyVoiceoverEnded() async {
@@ -145,6 +240,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
     await SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.immersiveSticky,
     );
+    _startPostStartVoiceovers();
   }
 
 
@@ -765,6 +861,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                 child: InkWell(
                   customBorder: const CircleBorder(),
                   onTap: () {
+                    _cancelPostStartVoiceovers();
                     // Return true if game was played (they entered fullscreen)
                     Navigator.of(context).pop(_gameWasPlayed);
                   },

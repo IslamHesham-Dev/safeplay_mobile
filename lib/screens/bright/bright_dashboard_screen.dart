@@ -245,9 +245,9 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     if (state == PlayerState.playing) {
       _backgroundMusicPausedForVoiceover = true;
       try {
-        await _audioPlayer.pause();
+        await _audioPlayer.stop();
       } catch (e) {
-        debugPrint('Error pausing background music for voiceover: $e');
+        debugPrint('Error stopping background music for voiceover: $e');
       }
     } else {
       _backgroundMusicPausedForVoiceover = false;
@@ -257,11 +257,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   Future<void> _resumeBackgroundMusicAfterVoiceover() async {
     if (!_backgroundMusicPausedForVoiceover) return;
     _backgroundMusicPausedForVoiceover = false;
-    try {
-      await _audioPlayer.resume();
-    } catch (_) {
-      await _ensureBackgroundMusicPlaying();
-    }
+    await _playBackgroundMusic();
   }
 
   ChildrenProgress _progressOrPlaceholder() {
