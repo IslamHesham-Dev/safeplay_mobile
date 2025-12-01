@@ -843,17 +843,12 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
               child: Container(color: Colors.black),
             ),
           Positioned(
-            bottom: 12,
-            right: 12,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: MediaQuery.of(context).size.height * 0.08,
             child: IgnorePointer(
-              child: Container(
-                width: MediaQuery.of(context).size.width * 0.72,
-                height: MediaQuery.of(context).size.height * 0.06,
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
+              child: Container(color: Colors.black),
             ),
           ),
           Positioned(
