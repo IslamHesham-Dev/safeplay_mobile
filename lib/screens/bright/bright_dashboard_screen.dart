@@ -445,6 +445,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
       debugPrint('$stack');
     } finally {
       await _resumeBackgroundMusicAfterVoiceover();
+      await _ensureBackgroundMusicPlaying();
     }
   }
 

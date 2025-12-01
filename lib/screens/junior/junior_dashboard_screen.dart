@@ -386,9 +386,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
       debugPrint('Error playing welcome voiceover: $e');
       debugPrint('$stack');
     } finally {
-      if (wasBackgroundPlaying) {
-        await _ensureBackgroundMusicPlaying();
-      }
+      await _ensureBackgroundMusicPlaying();
     }
   }
 

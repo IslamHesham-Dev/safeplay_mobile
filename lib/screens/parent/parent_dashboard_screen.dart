@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 
 import '../../design_system/colors.dart';
 import '../../navigation/route_names.dart';
@@ -11,6 +12,7 @@ import '../../models/activity_session_entry.dart';
 import '../../models/browser_activity_insight.dart';
 import '../../models/browser_control_settings.dart';
 import '../../models/chat_safety_alert.dart';
+import '../../models/wellbeing_entry.dart';
 import '../../models/user_profile.dart';
 import '../../models/user_type.dart';
 import '../../providers/activity_provider.dart';
@@ -20,6 +22,8 @@ import '../../providers/browser_activity_provider.dart';
 import '../../providers/browser_control_provider.dart';
 import '../../providers/child_provider.dart';
 import '../../providers/messaging_safety_provider.dart';
+import '../../providers/wellbeing_provider.dart';
+import '../../constants/wellbeing_moods.dart';
 import '../../widgets/parent/child_list_item.dart';
 import '../../widgets/parent/parent_settings_menu.dart';
 import '../../services/messaging_service.dart';
@@ -40,6 +44,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   BrowserControlProvider? _browserControlProvider;
   BrowserActivityProvider? _browserActivityProvider;
   ActivitySessionProvider? _activitySessionProvider;
+  WellbeingProvider? _wellbeingProvider;
   String? _lastLoadedChildId;
   bool _isSyncingChild = false;
   int _currentNavIndex = 0;
@@ -55,6 +60,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       _browserControlProvider = context.read<BrowserControlProvider>();
       _browserActivityProvider = context.read<BrowserActivityProvider>();
       _activitySessionProvider = context.read<ActivitySessionProvider>();
+      _wellbeingProvider = context.read<WellbeingProvider>();
       _childProvider?.addListener(_handleChildProviderChange);
       unawaited(_initializeDashboardState());
     });
@@ -135,6 +141,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       if (sessionProvider != null) {
         unawaited(sessionProvider.loadSessions(selected.id));
       }
+      final wellbeingProvider = _wellbeingProvider;
+      if (wellbeingProvider != null) {
+        unawaited(wellbeingProvider.loadEntries(selected.id));
+      }
     } finally {
       _isSyncingChild = false;
     }
@@ -168,6 +178,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             BrowserActivityProvider>(
           builder: (context, authProvider, childProvider, activityProvider,
               safetyProvider, browserProvider, activitySummaryProvider, _) {
+            final wellbeingProvider = context.watch<WellbeingProvider>();
             return Consumer<ActivitySessionProvider>(
               builder: (context, sessionProvider, __) {
                 return _buildCurrentScreen(
@@ -178,6 +189,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   browserProvider,
                   activitySummaryProvider,
                   sessionProvider,
+                  wellbeingProvider,
                 );
               },
             );
@@ -289,6 +301,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     BrowserControlProvider browserProvider,
     BrowserActivityProvider activitySummaryProvider,
     ActivitySessionProvider activitySessionProvider,
+    WellbeingProvider wellbeingProvider,
   ) {
     switch (_currentNavIndex) {
       case 0:
@@ -304,7 +317,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           activitySummaryProvider,
         );
       case 2:
-        return _buildWellbeingScreen(childProvider);
+        return _buildWellbeingScreen(childProvider, wellbeingProvider);
       case 3:
         return _buildMessagingAlertsScreen(
           authProvider,
@@ -940,12 +953,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               SafePlayColors.neutral400,
             )
           else ...[
+            const SizedBox(height: 8),
             ...recentItems.map(_buildActivityItem),
-            if (isLoading)
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: LinearProgressIndicator(minHeight: 2),
-              ),
           ],
           if (error != null && hasSessions)
             Padding(
@@ -2348,423 +2357,169 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   }
 
   // ============ WELLBEING SCREEN ============
-  Widget _buildWellbeingScreen(ChildProvider childProvider) {
+  Widget _buildWellbeingScreen(
+    ChildProvider childProvider,
+    WellbeingProvider wellbeingProvider,
+  ) {
     final selectedChild = childProvider.selectedChild;
     final hasChild = childProvider.children.isNotEmpty;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Child Selector
-          _buildChildSelectorCard(context, childProvider),
-          const SizedBox(height: 20),
+    Future<void> refresh() async {
+      if (selectedChild != null) {
+        await wellbeingProvider.loadEntries(selectedChild.id);
+      }
+    }
 
-          if (!hasChild)
-            _buildFullEmptyState(
-              'Add a child first',
-              'You need to add a child before viewing wellbeing reports.',
-              Icons.child_care_rounded,
-              SafePlayColors.brandOrange500,
-            )
-          else if (selectedChild == null)
-            _buildFullEmptyState(
-              'Select a child',
-              'Choose a child from the dropdown above to view their wellbeing data.',
-              Icons.touch_app_rounded,
-              SafePlayColors.brandTeal500,
-            )
-          else ...[
-            // Header
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    SafePlayColors.juniorPink,
-                    SafePlayColors.juniorPurple
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: SafePlayColors.juniorPink.withOpacity(0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
+    return RefreshIndicator(
+      onRefresh: refresh,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildChildSelectorCard(context, childProvider),
+            const SizedBox(height: 20),
+            if (!hasChild)
+              _buildFullEmptyState(
+                'Add a child first',
+                'You need to add a child before viewing wellbeing reports.',
+                Icons.child_care_rounded,
+                SafePlayColors.brandOrange500,
+              )
+            else if (selectedChild == null)
+              _buildFullEmptyState(
+                'Select a child',
+                'Choose a child from the dropdown above to view their wellbeing data.',
+                Icons.touch_app_rounded,
+                SafePlayColors.brandTeal500,
+              )
+            else ...[
+              Builder(
+                builder: (context) {
+                  final entries =
+                      wellbeingProvider.entriesForChild(selectedChild.id);
+                  final isLoading =
+                      wellbeingProvider.isLoading(selectedChild.id);
+                  final hasEntries = entries.isNotEmpty;
+                  final averageScore =
+                      wellbeingProvider.averageScore(selectedChild.id);
+                  final moodDefinition = hasEntries
+                      ? moodDefinitionForScore(averageScore)
+                      : kWellbeingMoods.last;
+                  final latestEntry = hasEntries ? entries.first : null;
+                  final weeklySummary = _generateWeeklyMoodSummary(entries);
+                  final recentEntries = wellbeingProvider.recentEntries(
+                    selectedChild.id,
+                    limit: 5,
+                  );
+
+                  if (!hasEntries && !isLoading) {
+                    final firstName = selectedChild.name.split(' ').first;
+                    return _buildFullEmptyState(
+                      'No check-ins yet',
+                      'Encourage $firstName to share how they\'re feeling from their dashboard.',
+                      Icons.favorite_outline_rounded,
+                      SafePlayColors.juniorPink,
+                    );
+                  }
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildWellbeingHeader(selectedChild, latestEntry),
+                      const SizedBox(height: 20),
+                      _buildWellbeingOverviewCard(
+                        moodDefinition,
+                        averageScore,
+                        latestEntry,
+                        isLoading,
+                      ),
+                      const SizedBox(height: 20),
+                      _buildWeeklyMoodCard(
+                        weeklySummary,
+                        hasEntries,
+                        isLoading,
+                      ),
+                      const SizedBox(height: 20),
+                      _buildRecentCheckinsCard(
+                        recentEntries,
+                        isLoading,
+                      ),
+                      const SizedBox(height: 20),
+                      _buildWellbeingPrivacyNote(),
+                    ],
+                  );
+                },
               ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(Icons.favorite_rounded,
-                        color: Colors.white, size: 32),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${selectedChild.name}\'s Wellbeing',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Track emotional health & mood',
-                          style: TextStyle(color: Colors.white70, fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            ],
             const SizedBox(height: 24),
-
-            // Overall Score - Wide Banner
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    SafePlayColors.success,
-                    SafePlayColors.success.withOpacity(0.8)
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: SafePlayColors.success.withOpacity(0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Text('😊', style: TextStyle(fontSize: 40)),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Overall Wellbeing',
-                          style: TextStyle(color: Colors.white70, fontSize: 13),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Good',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 28,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          '85%',
-                          style: TextStyle(
-                            color: SafePlayColors.success,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 22,
-                          ),
-                        ),
-                        Text(
-                          'Score',
-                          style: TextStyle(
-                            color: SafePlayColors.success.withOpacity(0.7),
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Weekly Mood
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: SafePlayColors.juniorPink.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.calendar_month_rounded,
-                            color: SafePlayColors.juniorPink, size: 24),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'This Week\'s Mood',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 18),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildMoodDay('Mon', '🤩', SafePlayColors.success),
-                      _buildMoodDay('Tue', '🙂', SafePlayColors.brandTeal500),
-                      _buildMoodDay('Wed', '🙂', SafePlayColors.brandTeal500),
-                      _buildMoodDay('Thu', '😐', SafePlayColors.warning),
-                      _buildMoodDay('Fri', '🤩', SafePlayColors.success),
-                      _buildMoodDay('Sat', '—', SafePlayColors.neutral200),
-                      _buildMoodDay('Sun', '—', SafePlayColors.neutral200),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Recent Check-ins
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: SafePlayColors.brightIndigo.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.history_rounded,
-                            color: SafePlayColors.brightIndigo, size: 24),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'Recent Check-ins',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 18),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _buildCheckinItem(
-                      'Today', '🤩', 'Awesome', 'Had a great day at school!'),
-                  _buildCheckinItem(
-                      'Yesterday', '🙂', 'Good', 'Played with friends'),
-                  _buildCheckinItem(
-                      '2 days ago', '😐', 'Okay', 'Felt a bit tired'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 100),
           ],
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildMoodDay(String day, String emoji, Color color) {
-    return Column(
-      children: [
-        Text(
-          day,
-          style: TextStyle(
-            color: SafePlayColors.neutral400,
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Center(
-            child: Text(emoji, style: const TextStyle(fontSize: 20)),
-          ),
-        ),
-      ],
-    );
-  }
+  Widget _buildWellbeingHeader(
+    ChildProfile child,
+    WellbeingEntry? latestEntry,
+  ) {
+    final timestampLabel = latestEntry == null
+        ? 'No check-ins yet'
+        : "Last shared ${DateFormat('MMM d \u2022 h:mm a').format(latestEntry.timestamp)}";
 
-  Widget _buildStatusChip({
-    required String label,
-    required IconData icon,
-    required bool isActive,
-    Color? activeColor,
-    Color? inactiveColor,
-    Color? backgroundColor,
-  }) {
-    final resolvedColor = isActive
-        ? (activeColor ?? SafePlayColors.brandTeal500)
-        : (inactiveColor ?? SafePlayColors.neutral500);
-    final resolvedBackground =
-        backgroundColor ?? resolvedColor.withOpacity(isActive ? 0.15 : 0.08);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: resolvedBackground,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: resolvedColor, size: 16),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: resolvedColor,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-            ),
+        gradient: const LinearGradient(
+          colors: [
+            SafePlayColors.juniorPink,
+            SafePlayColors.juniorPurple,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: SafePlayColors.juniorPink.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
-      ),
-    );
-  }
-
-  String _formatSyncDescription(DateTime? timestamp) {
-    if (timestamp == null) {
-      return 'Never synced yet';
-    }
-    final diff = DateTime.now().difference(timestamp);
-    if (diff.inMinutes < 1) return 'Last synced just now';
-    if (diff.inHours < 1) {
-      final minutes = diff.inMinutes;
-      return 'Last synced ${minutes} minute${minutes == 1 ? '' : 's'} ago';
-    }
-    if (diff.inDays < 1) {
-      final hours = diff.inHours;
-      return 'Last synced ${hours} hour${hours == 1 ? '' : 's'} ago';
-    }
-    final days = diff.inDays;
-    return 'Last synced ${days} day${days == 1 ? '' : 's'} ago';
-  }
-
-  String _formatSiteLabel(String site) {
-    var normalized = site.trim();
-    if (normalized.startsWith('https://')) {
-      normalized = normalized.substring(8);
-    } else if (normalized.startsWith('http://')) {
-      normalized = normalized.substring(7);
-    }
-    if (normalized.startsWith('www.')) {
-      normalized = normalized.substring(4);
-    }
-    return normalized;
-  }
-
-  Widget _buildCheckinItem(
-      String date, String emoji, String mood, String note) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: SafePlayColors.neutral50,
-        borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: Text(emoji, style: const TextStyle(fontSize: 28)),
+            child: const Icon(
+              Icons.favorite_rounded,
+              color: Colors.white,
+              size: 32,
+            ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(mood,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16)),
-                    Text(date,
-                        style: TextStyle(
-                            color: SafePlayColors.neutral400, fontSize: 12)),
-                  ],
+                Text(
+                  "${child.name}'s wellbeing",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  note,
-                  style:
-                      TextStyle(color: SafePlayColors.neutral600, fontSize: 13),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  timestampLabel,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13,
+                  ),
                 ),
               ],
             ),
@@ -2774,7 +2529,315 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
-  // ============ MESSAGING ALERTS SCREEN ============
+  Widget _buildWellbeingOverviewCard(
+    WellbeingMoodDefinition moodDefinition,
+    double averageScore,
+    WellbeingEntry? latestEntry,
+    bool isLoading,
+  ) {
+    final note = latestEntry?.notes?.trim();
+    final scoreText = (!isLoading && averageScore == 0) ? '--' : '%';
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            moodDefinition.color,
+            moodDefinition.color.withOpacity(0.85),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: moodDefinition.color.withOpacity(0.25),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              moodDefinition.emoji,
+              style: const TextStyle(fontSize: 40),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Overall wellbeing',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  moodDefinition.label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 28,
+                  ),
+                ),
+                if (note != null && note.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Latest note: $note',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  scoreText,
+                  style: TextStyle(
+                    color: moodDefinition.color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                  ),
+                ),
+                Text(
+                  'Score',
+                  style: TextStyle(
+                    color: moodDefinition.color.withOpacity(0.7),
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeeklyMoodCard(
+    List<_MoodDaySummary> summary,
+    bool hasEntries,
+    bool isLoading,
+  ) {
+    final hasSignals = summary.any((day) => day.emoji != '—');
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: SafePlayColors.juniorPink.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.calendar_month_rounded,
+                  color: SafePlayColors.juniorPink,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                "This week's mood",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          if (isLoading && !hasEntries)
+            const Center(child: CircularProgressIndicator())
+          else if (!hasSignals)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Text('No mood entries yet this week.'),
+            )
+          else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: summary
+                  .map(
+                    (day) => _buildMoodDay(
+                      day.label,
+                      day.emoji,
+                      day.color,
+                    ),
+                  )
+                  .toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecentCheckinsCard(
+    List<WellbeingEntry> entries,
+    bool isLoading,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: SafePlayColors.brightIndigo.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.history_rounded,
+                  color: SafePlayColors.brightIndigo,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Recent check-ins',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (isLoading && entries.isEmpty)
+            const Center(child: CircularProgressIndicator())
+          else if (entries.isEmpty)
+            const Text('No wellbeing check-ins recorded yet.')
+          else
+            ...entries.map(
+              (entry) => _buildCheckinItem(
+                _formatCheckinDate(entry.timestamp),
+                entry.moodEmoji,
+                entry.moodLabel,
+                entry.notes?.isNotEmpty == true
+                    ? entry.notes!
+                    : 'No note added',
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWellbeingPrivacyNote() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: SafePlayColors.neutral50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: SafePlayColors.neutral200,
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.info_outline_rounded,
+            color: SafePlayColors.neutral600,
+            size: 18,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              "Meta-level summaries keep kids' privacy intact while still showing trends parents can act on.",
+              style: TextStyle(
+                color: SafePlayColors.neutral600,
+                fontSize: 12,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<_MoodDaySummary> _generateWeeklyMoodSummary(
+      List<WellbeingEntry> entries) {
+    final now = DateTime.now();
+    final Map<String, WellbeingEntry> latestPerDay = {};
+    for (final entry in entries) {
+      final key = _dayKey(entry.timestamp);
+      latestPerDay.putIfAbsent(key, () => entry);
+    }
+
+    final formatter = DateFormat('EEE');
+    return List.generate(7, (index) {
+      final date = now.subtract(Duration(days: 6 - index));
+      final key = _dayKey(date);
+      final entry = latestPerDay[key];
+      if (entry == null) {
+        return _MoodDaySummary(
+          formatter.format(date),
+          '—',
+          SafePlayColors.neutral300,
+        );
+      }
+      final moodDefinition = moodDefinitionForLabel(entry.moodLabel);
+      return _MoodDaySummary(
+        formatter.format(date),
+        moodDefinition.emoji,
+        moodDefinition.color,
+      );
+    });
+  }
+
+  String _dayKey(DateTime date) => '${date.year}-${date.month}-${date.day}';
+
+// ============ MESSAGING ALERTS SCREEN ============
 
   Widget _buildMessagingAlertsScreen(
     AuthProvider authProvider,
@@ -3367,6 +3430,170 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildStatusChip({
+    required String label,
+    required IconData icon,
+    required bool isActive,
+    required Color activeColor,
+    required Color inactiveColor,
+    required Color backgroundColor,
+  }) {
+    final resolvedColor = isActive ? activeColor : inactiveColor;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: resolvedColor.withOpacity(isActive ? 0.6 : 0.3),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: resolvedColor),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: resolvedColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatSyncDescription(DateTime? timestamp) {
+    if (timestamp == null) {
+      return 'Never synced yet';
+    }
+    final diff = DateTime.now().difference(timestamp);
+    if (diff.inMinutes < 1) return 'Last synced just now';
+    if (diff.inHours < 1) {
+      final minutes = diff.inMinutes;
+      return 'Last synced ${minutes} minute${minutes == 1 ? '' : 's'} ago';
+    }
+    if (diff.inDays < 1) {
+      final hours = diff.inHours;
+      return 'Last synced ${hours} hour${hours == 1 ? '' : 's'} ago';
+    }
+    final days = diff.inDays;
+    return 'Last synced ${days} day${days == 1 ? '' : 's'} ago';
+  }
+
+  String _formatSiteLabel(String site) {
+    var normalized = site.trim();
+    if (normalized.startsWith('https://')) {
+      normalized = normalized.substring(8);
+    } else if (normalized.startsWith('http://')) {
+      normalized = normalized.substring(7);
+    }
+    if (normalized.startsWith('www.')) {
+      normalized = normalized.substring(4);
+    }
+    return normalized;
+  }
+
+  Widget _buildMoodDay(String day, String emoji, Color color) {
+    return Column(
+      children: [
+        Text(
+          day,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+            color: SafePlayColors.neutral600,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            emoji,
+            style: const TextStyle(fontSize: 20),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCheckinItem(
+      String date, String emoji, String mood, String note) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: SafePlayColors.neutral50,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Text(emoji, style: const TextStyle(fontSize: 28)),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(mood,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(date,
+                        style: TextStyle(
+                            color: SafePlayColors.neutral400, fontSize: 12)),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  note,
+                  style:
+                      TextStyle(color: SafePlayColors.neutral600, fontSize: 13),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatCheckinDate(DateTime timestamp) {
+    final now = DateTime.now();
+    final diff = now.difference(timestamp);
+    if (diff.inDays == 0) {
+      return DateFormat('h:mm a').format(timestamp);
+    }
+    if (diff.inDays == 1) {
+      return 'Yesterday • ${DateFormat('h:mm a').format(timestamp)}';
+    }
+    return DateFormat('EEE • h:mm a').format(timestamp);
   }
 
   Widget _buildDetailedAlertItem(
@@ -4149,6 +4376,13 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
   }
+}
+
+class _MoodDaySummary {
+  const _MoodDaySummary(this.label, this.emoji, this.color);
+  final String label;
+  final String emoji;
+  final Color color;
 }
 
 /// Helper class for browser activity history items (UI only)

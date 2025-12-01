@@ -15,6 +15,7 @@ import 'providers/browser_activity_provider.dart';
 import 'providers/browser_control_provider.dart';
 import 'providers/child_provider.dart';
 import 'providers/messaging_safety_provider.dart';
+import 'providers/wellbeing_provider.dart';
 import 'services/activity_service.dart';
 import 'services/browser_activity_insights_service.dart';
 import 'services/browser_activity_service.dart';
@@ -25,6 +26,7 @@ import 'services/offline_storage_service.dart';
 import 'services/sync_service.dart';
 import 'services/notification_service.dart';
 import 'services/auth_service.dart';
+import 'services/wellbeing_service.dart';
 import 'utils/orientation_utils.dart';
 // Database initialization removed - it requires admin permissions and should be run manually
 // import 'services/database_initializer.dart';
@@ -75,6 +77,7 @@ class _SafePlayAppState extends State<SafePlayApp> {
   late final BrowserActivityService _browserActivityService;
   late final BrowserActivityInsightsService _browserActivityInsightsService;
   late final ActivitySessionService _activitySessionService;
+  late final WellbeingService _wellbeingService;
   late final SyncService _syncService;
   late final NotificationService _notificationService;
   bool _notificationNavigatorRegistered = false;
@@ -91,6 +94,7 @@ class _SafePlayAppState extends State<SafePlayApp> {
     _browserActivityService = BrowserActivityService();
     _browserActivityInsightsService = BrowserActivityInsightsService();
     _activitySessionService = ActivitySessionService();
+    _wellbeingService = WellbeingService();
     _syncService = SyncService(_offlineStorage, _activityService);
     _notificationService = NotificationService();
     unawaited(_syncService.initialize());
@@ -135,6 +139,9 @@ class _SafePlayAppState extends State<SafePlayApp> {
           create: (_) => ActivitySessionProvider(
             _activitySessionService,
           ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => WellbeingProvider(_wellbeingService),
         ),
         Provider<SyncService>.value(
           value: _syncService,
