@@ -541,8 +541,9 @@ class _WellbeingCheckScreenState extends State<WellbeingCheckScreen>
               const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () {
-                  if (widget.isCompact) {
-                    Navigator.of(context).maybePop();
+                  final navigator = Navigator.of(context);
+                  if (navigator.canPop()) {
+                    navigator.pop();
                   } else {
                     setState(() {
                       _showThankYou = false;
@@ -564,7 +565,7 @@ class _WellbeingCheckScreenState extends State<WellbeingCheckScreen>
                   elevation: 4,
                 ),
                 child: const Text(
-                  'Done',
+                  'Okay',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

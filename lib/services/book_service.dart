@@ -15,38 +15,39 @@ class BookService {
     final books = [
       Book(
         id: '1',
-        title: 'A Planet Like Ours',
-        pdfPath:
-            'assets/books/A Planet Like Ours (Frank Murphy) (Z-Library).pdf',
-        thumbnailPath: 'assets/books/thumbnails/A planet like ours.PNG',
+        title: 'Hamza Adventure 6',
+        pdfPath: 'assets/books/hamza_adventure-6.pdf',
+        thumbnailPath: 'assets/books/thumbnails/hamza_adventure-6.PNG',
       ),
       Book(
         id: '2',
-        title: 'Lulu & Rocky in Rocky Mountain',
-        pdfPath:
-            'assets/books/Lulu  Rocky in Rocky Mountain National Park (Barbara Joosse) (Z-Library).pdf',
-        thumbnailPath: 'assets/books/thumbnails/Lulu & Rocky.PNG',
+        title: 'Hamza Adventure 7',
+        pdfPath: 'assets/books/hamza_adventure-7.pdf',
+        thumbnailPath: 'assets/books/thumbnails/hamza_adventure-7.PNG',
       ),
       Book(
         id: '3',
-        title: 'Pirates Don\'t Dance',
-        pdfPath:
-            'assets/books/Pirates Dont Dance (Shawna J. C. Tenney) (Z-Library).pdf',
-        thumbnailPath: 'assets/books/thumbnails/Pirates Dont Dance.PNG',
+        title: 'Hugh Adventure',
+        pdfPath: 'assets/books/hugh_adventure.pdf',
+        thumbnailPath: 'assets/books/thumbnails/hugh_adventure.PNG',
       ),
       Book(
         id: '4',
-        title: 'The Ant and the Grasshopper',
-        pdfPath:
-            'assets/books/The Ant and the Grasshopper (Melissa Rothman) (Z-Library).pdf',
-        thumbnailPath:
-            'assets/books/thumbnails/The Ant and The Grasshopper.PNG',
+        title: 'Nada Adventure',
+        pdfPath: 'assets/books/nada_adventure.pdf',
+        thumbnailPath: 'assets/books/thumbnails/nada_adventure.PNG',
       ),
       Book(
         id: '5',
-        title: 'The Lion King',
-        pdfPath: 'assets/books/The Lion King (.) (Z-Library).pdf',
-        thumbnailPath: 'assets/books/thumbnails/The Lion King.PNG',
+        title: 'Sarah Adventure 2',
+        pdfPath: 'assets/books/Sarah_adventure-2.pdf',
+        thumbnailPath: 'assets/books/thumbnails/sarah_adventure-2.PNG',
+      ),
+      Book(
+        id: '6',
+        title: 'Youssef Adventure',
+        pdfPath: 'assets/books/youssef_adventure.pdf',
+        thumbnailPath: 'assets/books/thumbnails/youssef_adventure.PNG',
       ),
     ];
 

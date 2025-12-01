@@ -195,6 +195,12 @@ service cloud.firestore {
       allow create: if canManageBrowserControls(childId) || childDeviceWriteAllowed(childId);
       allow update, delete: if canManageBrowserControls(childId);
     }
+
+    match /wellbeingReports/{childId}/entries/{entryId} {
+      allow read: if canManageBrowserControls(childId);
+      allow create: if canManageBrowserControls(childId) || childDeviceWriteAllowed(childId);
+      allow update, delete: if canManageBrowserControls(childId);
+    }
     
     // Default allow rule for development - remove this in production
     match /{document=**} {
