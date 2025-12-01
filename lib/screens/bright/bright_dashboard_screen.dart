@@ -382,9 +382,18 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   }
 
   Future<T?> _pushWithMusicResume<T>(Route<T> route) async {
+    final wasPlaying = _audioPlayer.state == PlayerState.playing;
+    if (wasPlaying) {
+      try {
+        await _audioPlayer.pause();
+      } catch (_) {
+        // Ignore pause errors
+      }
+    }
+
     final result = await Navigator.of(context).push(route);
-    if (mounted) {
-      await _resumeBackgroundMusicIfNeeded();
+    if (mounted && wasPlaying) {
+      await _ensureBackgroundMusicPlaying();
     }
     return result;
   }
@@ -421,6 +430,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   }
 
   Future<void> _playWelcomeVoiceover() async {
+    await _pauseBackgroundMusicForVoiceover();
     try {
       await _voiceoverPlayer.setPlayerMode(PlayerMode.lowLatency);
       await _voiceoverPlayer.setReleaseMode(ReleaseMode.stop);
@@ -429,10 +439,14 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
       await _voiceoverPlayer.play(
         AssetSource('audio/voiceovers/welcome.mp3'),
       );
+      await _voiceoverPlayer.onPlayerComplete.first
+          .timeout(const Duration(seconds: 10), onTimeout: () {});
       debugPrint('Playing welcome voiceover for bright dashboard');
     } catch (e, stack) {
       debugPrint('Error playing welcome voiceover: $e');
       debugPrint('$stack');
+    } finally {
+      await _resumeBackgroundMusicAfterVoiceover();
     }
   }
 
@@ -1540,7 +1554,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
         // Wellbeing Check Widget
         WellbeingCheckWidget(
           onTap: () {
-            Navigator.of(context).push(
+            _pushWithMusicResume(
               MaterialPageRoute(
                 builder: (context) => const Scaffold(
                   body: WellbeingCheckScreen(),
