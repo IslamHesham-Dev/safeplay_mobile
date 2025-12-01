@@ -18,6 +18,7 @@ class GameLauncherWebView extends StatefulWidget {
     required this.onExitRequested,
     this.onLoadingChanged,
     this.onWebFullscreenExit,
+    this.disableCustomScripts = false,
   });
 
   /// The target URL that hosts the embedded game.
@@ -43,6 +44,7 @@ class GameLauncherWebView extends StatefulWidget {
 
   /// Web-only callback since iframe fullscreen requests can't be intercepted otherwise
   final VoidCallback? onWebFullscreenExit;
+  final bool disableCustomScripts;
 
   @override
   State<GameLauncherWebView> createState() => _GameLauncherWebViewState();
@@ -289,17 +291,24 @@ class _GameLauncherWebViewState extends State<GameLauncherWebView> {
             },
             onLoadStart: (controller, url) {
               _setLoading(true);
-              controller.evaluateJavascript(source: _preHideScript);
+              if (!widget.disableCustomScripts) {
+                controller.evaluateJavascript(source: _preHideScript);
+              }
             },
             onLoadStop: (controller, url) async {
-              await Future.delayed(const Duration(milliseconds: 3000));
-              try {
-                await controller.evaluateJavascript(source: _cleanupScript);
-              } catch (e) {
-                debugPrint('Cleanup JS error: $e');
+              if (!widget.disableCustomScripts) {
+                await Future.delayed(const Duration(milliseconds: 3000));
+                try {
+                  await controller.evaluateJavascript(source: _cleanupScript);
+                } catch (e) {
+                  debugPrint('Cleanup JS error: $e');
+                }
+                await Future.delayed(const Duration(milliseconds: 1000));
+                _setLoading(false);
+              } else {
+                await Future.delayed(const Duration(milliseconds: 500));
+                _setLoading(false);
               }
-              await Future.delayed(const Duration(milliseconds: 1000));
-              _setLoading(false);
             },
             onReceivedError: (controller, request, error) {
               debugPrint('WebView error: $error');

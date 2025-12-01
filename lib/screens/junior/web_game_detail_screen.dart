@@ -662,6 +662,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
               gameUrl: widget.game.websiteUrl,
               previewHeight: previewHeight,
               isFullscreen: _isFullscreen,
+              disableCustomScripts: widget.game.disableCustomScripts,
               onControllerReady: (controller) {
                 _webViewController = controller;
               },
