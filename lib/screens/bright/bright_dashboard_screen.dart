@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
@@ -84,6 +85,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   String _selectedMathCategory = 'All';
   String _selectedEnglishCategory = 'All';
   bool _showCelebration = false;
+  final ScrollController _scrollController = ScrollController();
+  double _scrollOffset = 0.0;
 
   // Audio player for background music
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -127,6 +130,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     _loadMathWebGames();
     _loadEnglishWebGames();
     _animationController.forward();
+    _scrollController.addListener(_handleScroll);
     // Start background music
     _playBackgroundMusic();
     // Play welcome voiceover after first frame when assets are ready
@@ -258,6 +262,21 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     if (!_backgroundMusicPausedForVoiceover) return;
     _backgroundMusicPausedForVoiceover = false;
     await _playBackgroundMusic();
+  }
+
+  void _handleScroll() {
+    if (!_scrollController.hasClients) return;
+    final newOffset = _scrollController.offset.clamp(0, 160).toDouble();
+    if (newOffset != _scrollOffset) {
+      setState(() => _scrollOffset = newOffset);
+    }
+  }
+
+  double get _collapseProgress {
+    final progress = _scrollOffset / 140.0;
+    if (progress <= 0) return 0;
+    if (progress >= 1) return 1;
+    return progress;
   }
 
   ChildrenProgress _progressOrPlaceholder() {
@@ -424,6 +443,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     _clickSoundPlayer.dispose();
     _rewardSoundPlayer.dispose();
     _voiceoverPlayer.dispose();
+    _scrollController.removeListener(_handleScroll);
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -577,6 +598,15 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
+    final collapseProgress = _collapseProgress;
+    final baseTop = height * 0.40 - 50;
+    final dynamicTop = math.max(baseTop - 70 * collapseProgress, baseTop - 70);
+    final avatarAlignmentY = -0.50 - 0.2 * collapseProgress;
+    final avatarSize = (height * 0.15 + 40) - (18 * collapseProgress);
+    final coinYOffset = -20 - 12 * collapseProgress;
+    final coinLabelTop = 54 - 8 * collapseProgress;
+    double coinScale = 1 - 0.25 * collapseProgress;
+    if (coinScale < 0.75) coinScale = 0.75;
 
     // For Messages and Search, show full-screen content with navbar
     if (_currentBottomNavIndex == 1 || _currentBottomNavIndex == 2) {
@@ -676,8 +706,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                 ),
                 // Avatar + coins grouped so coins are guaranteed below avatar
                 Align(
-                  alignment: const Alignment(
-                      0, -0.50), // Moved down from -0.70 to -0.50
+                  alignment: Alignment(0, avatarAlignmentY),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -685,13 +714,13 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                       Center(
                         child: JuniorAvatarWidget(
                           childId: _currentChild?.id ?? '',
-                          size: height * 0.15 + 40,
+                          size: avatarSize,
                           gender: _sanitizeGender(_currentChild?.gender),
                         ),
                       ),
                       const SizedBox(height: 2),
                       Transform.translate(
-                        offset: const Offset(0, -20),
+                        offset: Offset(0, coinYOffset),
                         child: Stack(
                           alignment: Alignment.topCenter,
                           clipBehavior: Clip.none,
@@ -701,7 +730,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                               textStyle: JuniorTheme.headingLarge.copyWith(
                                 color: JuniorTheme.textPrimary,
                                 fontWeight: FontWeight.w800,
-                                fontSize: 52,
+                                fontSize: 52 * coinScale,
                                 shadows: [
                                   Shadow(
                                     color: Colors.white.withOpacity(0.5),
@@ -712,7 +741,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                               ),
                             ),
                             Positioned(
-                              top: 54, // lowered a bit more for extra spacing
+                              top: coinLabelTop,
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -720,7 +749,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                                   Icon(
                                     Icons.monetization_on,
                                     color: JuniorTheme.accentGold,
-                                    size: 20,
+                                    size: 20 * coinScale,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
@@ -728,7 +757,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                                     textAlign: TextAlign.center,
                                     style: JuniorTheme.bodySmall.copyWith(
                                       color: JuniorTheme.textPrimary,
-                                      fontSize: 18,
+                                      fontSize: 18 * coinScale,
                                       fontWeight: FontWeight.w600,
                                       shadows: [
                                         Shadow(
@@ -755,7 +784,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
 
           // White content area with notched divider (allows background to show through notch)
           Positioned(
-            top: height * 0.40 - 50, // Start slightly before background ends
+            top: dynamicTop, // Start slightly before background ends
             left: 0,
             right: 0,
             bottom: 0,
@@ -766,6 +795,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                 child: RefreshIndicator(
                   onRefresh: _loadDashboardData,
                   child: SingleChildScrollView(
+                    controller: _scrollController,
                     padding: const EdgeInsets.only(
                       left: JuniorTheme.spacingMedium,
                       right: JuniorTheme.spacingMedium,
