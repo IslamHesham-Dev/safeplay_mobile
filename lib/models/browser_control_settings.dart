@@ -28,12 +28,45 @@ class BrowserControlSettings {
     'https://www.britannica.com/kids',
   ];
 
+  static const Set<String> socialFilterKeywords = {
+    'facebook',
+    'instagram',
+    'tiktok',
+    'snapchat',
+    'twitter',
+    'discord',
+    'reddit',
+    'social media',
+  };
+
+  static const Set<String> gamblingFilterKeywords = {
+    'casino',
+    'betting',
+    'bet',
+    'slot',
+    'poker',
+    'lottery',
+    'wager',
+    'roulette',
+  };
+
+  static const Set<String> violenceFilterKeywords = {
+    'blood',
+    'gun',
+    'shooting',
+    'fight',
+    'murder',
+    'killing',
+    'knife',
+    'gore',
+  };
+
   factory BrowserControlSettings.defaults() {
     return const BrowserControlSettings(
       safeSearchEnabled: true,
-      blockSocialMedia: true,
-      blockGambling: true,
-      blockViolence: true,
+      blockSocialMedia: false,
+      blockGambling: false,
+      blockViolence: false,
       blockedKeywords: <String>[],
       allowedSites: defaultAllowedSites,
     );
@@ -53,7 +86,8 @@ class BrowserControlSettings {
       blockSocialMedia: blockSocialMedia ?? this.blockSocialMedia,
       blockGambling: blockGambling ?? this.blockGambling,
       blockViolence: blockViolence ?? this.blockViolence,
-      blockedKeywords: blockedKeywords ?? List<String>.from(this.blockedKeywords),
+      blockedKeywords:
+          blockedKeywords ?? List<String>.from(this.blockedKeywords),
       allowedSites: allowedSites ?? List<String>.from(this.allowedSites),
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -65,6 +99,8 @@ class BrowserControlSettings {
             .where((value) => value.isNotEmpty)
             .toList() ??
         const <String>[];
+    final lowerBlocked =
+        blockedList.map((value) => value.toLowerCase()).toList(growable: false);
     final allowedList = (data['allowedSites'] as List?)
             ?.map((value) => value.toString().trim())
             .where((value) => value.isNotEmpty)
@@ -72,11 +108,21 @@ class BrowserControlSettings {
         const <String>[];
     final updatedAt = data['updatedAt'];
 
+    final hasSocialKeywords = lowerBlocked.any(
+        (word) => BrowserControlSettings.socialFilterKeywords.contains(word));
+    final hasGamblingKeywords = lowerBlocked.any(
+        (word) => BrowserControlSettings.gamblingFilterKeywords.contains(word));
+    final hasViolenceKeywords = lowerBlocked.any(
+        (word) => BrowserControlSettings.violenceFilterKeywords.contains(word));
+
     return BrowserControlSettings(
       safeSearchEnabled: data['safeSearchEnabled'] as bool? ?? true,
-      blockSocialMedia: data['blockSocialMedia'] as bool? ?? true,
-      blockGambling: data['blockGambling'] as bool? ?? true,
-      blockViolence: data['blockViolence'] as bool? ?? true,
+      blockSocialMedia:
+          (data['blockSocialMedia'] as bool? ?? false) && hasSocialKeywords,
+      blockGambling:
+          (data['blockGambling'] as bool? ?? false) && hasGamblingKeywords,
+      blockViolence:
+          (data['blockViolence'] as bool? ?? false) && hasViolenceKeywords,
       blockedKeywords: blockedList,
       allowedSites: allowedList.isEmpty ? defaultAllowedSites : allowedList,
       updatedAt: updatedAt is Timestamp
