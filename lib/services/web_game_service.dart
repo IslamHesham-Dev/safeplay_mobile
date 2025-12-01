@@ -1,8 +1,4 @@
-import '../data/embedded_web_games.dart';
 import '../models/web_game.dart';
-
-const String _sheppardFoodChainDataUrl =
-    'data:text/html;base64,$kSheppardFoodChainHtmlBase64';
 
 /// Service for managing web-based educational games
 class WebGameService {
@@ -24,37 +20,6 @@ class WebGameService {
   /// Get web games for Junior children (6-8)
   Future<List<WebGame>> _getJuniorWebGames({String? subject}) async {
     final allGames = [
-      WebGame(
-        id: 'sheppard-food-chain',
-        title: 'Food Chain Adventure (Sheppard Software)',
-        description:
-            'Practice building producer → consumer → predator chains with this interactive drag-and-drop challenge from Sheppard Software. Learners place each organism in the correct order and watch energy move through the ecosystem.',
-        websiteUrl: _sheppardFoodChainDataUrl,
-        canvasSelector: null,
-        topics: [
-          'Food Chains',
-          'Ecosystems',
-          'Energy Flow',
-          'Habitats',
-        ],
-        learningGoals: [
-          'Arrange producers, herbivores, omnivores, and carnivores in the correct order.',
-          'Observe how energy transfers from plants to animals higher in the chain.',
-          'Compare woodland, desert, and ocean chains to see how habitats affect organisms.',
-          'Recognize that breaking one link in the chain affects every other organism.',
-        ],
-        explanation:
-            'This HTML5 version from Sheppard Software lets students focus only on the interactive challenge. The surrounding site chrome has been removed so the iframe fills our in-app viewport, matching the requested embed snippet.',
-        warning:
-            'Requires an internet connection. The embedded iframe loads external content from Sheppard Software.',
-        estimatedMinutes: 10,
-        difficulty: 'Easy',
-        ageGroup: 'junior',
-        subject: 'science',
-        iconEmoji: 'dYOF',
-        color: '3F51B5', // Indigo
-        disableCustomScripts: true,
-      ),
       const WebGame(
         id: 'food-chains',
         title: 'Food Chains',

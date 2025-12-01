@@ -17,7 +17,6 @@ class WebGame extends Equatable {
   final String subject; // 'math', 'science', 'reading', etc.
   final String iconEmoji;
   final String color; // Hex color for the card
-  final bool disableCustomScripts;
 
   const WebGame({
     required this.id,
@@ -35,7 +34,6 @@ class WebGame extends Equatable {
     required this.subject,
     required this.iconEmoji,
     required this.color,
-    this.disableCustomScripts = false,
   });
 
   @override
@@ -55,6 +53,6 @@ class WebGame extends Equatable {
         subject,
         iconEmoji,
         color,
-        disableCustomScripts,
       ];
 }
+
