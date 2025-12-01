@@ -601,9 +601,9 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     final collapseProgress = _collapseProgress;
     final baseTop = height * 0.40 - 50;
     final dynamicTop = math.max(baseTop - 70 * collapseProgress, baseTop - 70);
-    final avatarAlignmentY = -0.50 - 0.2 * collapseProgress;
+    final avatarAlignmentY = -0.50 - 0.50 * collapseProgress;
     final avatarSize = (height * 0.15 + 40) - (18 * collapseProgress);
-    final coinYOffset = -20 - 12 * collapseProgress;
+    final coinYOffset = -10 - 8 * collapseProgress;
     final coinLabelTop = 54 - 8 * collapseProgress;
     double coinScale = 1 - 0.25 * collapseProgress;
     if (coinScale < 0.75) coinScale = 0.75;
