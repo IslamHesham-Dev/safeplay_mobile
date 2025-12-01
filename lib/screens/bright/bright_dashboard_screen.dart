@@ -93,6 +93,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   final AudioPlayer _rewardSoundPlayer = AudioPlayer();
   // Audio player for the welcome dashboard voiceover
   final AudioPlayer _voiceoverPlayer = AudioPlayer();
+  bool _backgroundMusicPausedForVoiceover = false;
 
   // Animation bookkeeping for the hero coin counter
   int _coinAnimationStartValue = 0;
@@ -239,6 +240,30 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     }
   }
 
+  Future<void> _pauseBackgroundMusicForVoiceover() async {
+    final state = _audioPlayer.state;
+    if (state == PlayerState.playing) {
+      _backgroundMusicPausedForVoiceover = true;
+      try {
+        await _audioPlayer.pause();
+      } catch (e) {
+        debugPrint('Error pausing background music for voiceover: $e');
+      }
+    } else {
+      _backgroundMusicPausedForVoiceover = false;
+    }
+  }
+
+  Future<void> _resumeBackgroundMusicAfterVoiceover() async {
+    if (!_backgroundMusicPausedForVoiceover) return;
+    _backgroundMusicPausedForVoiceover = false;
+    try {
+      await _audioPlayer.resume();
+    } catch (_) {
+      await _ensureBackgroundMusicPlaying();
+    }
+  }
+
   ChildrenProgress _progressOrPlaceholder() {
     if (_childProgress != null) {
       return _childProgress!;
@@ -337,6 +362,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
         builder: (context) => SimulationDetailScreen(
           simulation: simulation,
           cardColor: color,
+          onVoiceoverStart: _pauseBackgroundMusicForVoiceover,
+          onVoiceoverEnd: _resumeBackgroundMusicAfterVoiceover,
         ),
       ),
     );

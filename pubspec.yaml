@@ -107,6 +107,11 @@ flutter:
     - assets/audio/phonics/
     - assets/audio/voiceovers/
     - assets/audio/voiceovers/onboarding_screen/
+    - assets/audio/voiceovers/science/states_of_matter/
+    - assets/audio/voiceovers/science/balloons_and_static/
+    - assets/audio/voiceovers/science/exploring_density/
+    - assets/audio/voiceovers/math/area_model/
+    - assets/audio/voiceovers/math/equality_explorer/
     - assets/audio/first.mp3
     - assets/audio/third.mp3
     - assets/audio/sound effects/sound effects/activity completed.wav

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -6,16 +7,32 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import '../../models/simulation.dart' as sim;
 import '../../utils/orientation_utils.dart';
 
+const Map<String, String> _simulationVoiceoverAssets = {
+  'states-of-matter':
+      'audio/voiceovers/science/states_of_matter/1.mp3',
+  'balloons-static-electricity':
+      'audio/voiceovers/science/balloons_and_static/1.mp3',
+  'density': 'audio/voiceovers/science/exploring_density/1.mp3',
+  'area-model-introduction':
+      'audio/voiceovers/math/area_model/1.mp3',
+  'equality-explorer-basics':
+      'audio/voiceovers/math/equality_explorer/1.mp3',
+};
+
 /// Simulation Detail & Launch Page
 /// Replicates the UI design from the DIY Bubble Wand reference
 class SimulationDetailScreen extends StatefulWidget {
   final sim.Simulation simulation;
   final Color? cardColor; // Color from the dashboard card
+  final Future<void> Function()? onVoiceoverStart;
+  final Future<void> Function()? onVoiceoverEnd;
 
   const SimulationDetailScreen({
     super.key,
     required this.simulation,
     this.cardColor,
+    this.onVoiceoverStart,
+    this.onVoiceoverEnd,
   });
 
   @override
@@ -31,6 +48,9 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
   bool _showInitialOverlay = false;
   Timer? _overlayTimer;
   Timer? _previewOverlayTimer;
+  final AudioPlayer _voiceoverPlayer = AudioPlayer();
+  bool _voiceoverActive = false;
+  StreamSubscription<void>? _voiceoverCompleteSubscription;
 
   // Get the card color with fallback to default blue
   Color get _cardColor => widget.cardColor ?? const Color(0xFF5B9BD5);
@@ -38,6 +58,9 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _maybePlaySimulationVoiceover();
+    });
   }
 
   @override
@@ -46,9 +69,57 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
     _scrollController.dispose();
     _overlayTimer?.cancel();
     _previewOverlayTimer?.cancel();
+    _voiceoverCompleteSubscription?.cancel();
+    unawaited(_voiceoverPlayer.stop());
+    unawaited(_notifyVoiceoverEnded());
+    _voiceoverPlayer.dispose();
     // Reset orientation when leaving
     allowAllDeviceOrientations();
     super.dispose();
+  }
+
+  Future<void> _maybePlaySimulationVoiceover() async {
+    final voiceoverPath =
+        _simulationVoiceoverAssets[widget.simulation.id];
+    if (voiceoverPath == null) return;
+    try {
+      if (widget.onVoiceoverStart != null) {
+        await widget.onVoiceoverStart!.call();
+      }
+      _voiceoverActive = true;
+      _voiceoverCompleteSubscription?.cancel();
+      await _voiceoverPlayer.setPlayerMode(PlayerMode.mediaPlayer);
+      await _voiceoverPlayer.setReleaseMode(ReleaseMode.stop);
+      await _voiceoverPlayer.setVolume(1.0);
+      await _voiceoverPlayer.stop();
+      await _voiceoverPlayer.play(
+        AssetSource(voiceoverPath),
+      );
+      _voiceoverCompleteSubscription =
+          _voiceoverPlayer.onPlayerComplete.listen((_) {
+        unawaited(_notifyVoiceoverEnded());
+      });
+      debugPrint(
+          'Playing simulation voiceover for ${widget.simulation.id}');
+    } catch (e, stack) {
+      debugPrint('Error playing simulation voiceover: $e');
+      debugPrint('$stack');
+      await _notifyVoiceoverEnded();
+    }
+  }
+
+  Future<void> _notifyVoiceoverEnded() async {
+    if (!_voiceoverActive) return;
+    _voiceoverActive = false;
+    _voiceoverCompleteSubscription?.cancel();
+    _voiceoverCompleteSubscription = null;
+    if (widget.onVoiceoverEnd != null) {
+      try {
+        await widget.onVoiceoverEnd!.call();
+      } catch (e) {
+        debugPrint('Error resuming background music after voiceover: $e');
+      }
+    }
   }
 
   Future<void> _enterFullscreen() async {
