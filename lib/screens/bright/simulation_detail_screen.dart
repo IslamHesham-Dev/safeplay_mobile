@@ -844,11 +844,15 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
             ),
           Positioned(
             bottom: 0,
-            left: 0,
             right: 0,
+            width: MediaQuery.of(context).size.width * 0.3,
             height: MediaQuery.of(context).size.height * 0.08,
             child: IgnorePointer(
-              child: Container(color: Colors.black),
+              child: Container(
+                color: widget.simulation.id == 'states-of-matter'
+                    ? Colors.white
+                    : Colors.black,
+              ),
             ),
           ),
           Positioned(
