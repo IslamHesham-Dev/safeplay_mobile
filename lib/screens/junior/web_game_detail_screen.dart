@@ -120,7 +120,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
             // Return true if game was played (they entered fullscreen)
             Navigator.of(context).pop(_gameWasPlayed);
           },
-          child: const Icon(Icons.fullscreen_exit),
+                child: const Icon(Icons.fullscreen_exit),
         ),
       ),
     );
@@ -804,7 +804,7 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
             ),
           ),
         ],
-      ),
+        ),
     );
   }
 

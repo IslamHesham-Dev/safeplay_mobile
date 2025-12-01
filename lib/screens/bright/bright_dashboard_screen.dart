@@ -5,6 +5,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/screen_time_limit_provider.dart';
 import '../../providers/activity_provider.dart';
 import '../../models/user_profile.dart';
 import '../../models/user_type.dart';
@@ -21,6 +22,8 @@ import '../../widgets/junior/junior_confetti.dart';
 import '../../widgets/question_template_exporter.dart';
 import '../../services/activity_session_service.dart';
 import '../../services/junior_game_launcher.dart';
+import '../../widgets/screen_time_limit_popup.dart';
+import '../../models/screen_time_limit_settings.dart';
 import '../junior/games/number_hunt_games.dart';
 import '../junior/games/koala_jumps_games.dart';
 import '../junior/games/pattern_wizard_games.dart';
@@ -86,6 +89,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   String _selectedMathCategory = 'All';
   String _selectedEnglishCategory = 'All';
   bool _showCelebration = false;
+  bool _screenLimitDialogShown = false;
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0.0;
 
@@ -119,8 +123,19 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     final childName = _currentChild!.name;
     // Default to 2 hours (120 minutes) - replace with actual limit from parent settings
     const dailyLimitMinutes = 120;
-    
-    ScreenTimeLimitPopup.show(context, childName, dailyLimitMinutes);
+
+    ScreenTimeLimitPopup.show(
+      context,
+      childName: childName,
+      dailyLimitMinutes: dailyLimitMinutes,
+      onConfirm: () async {
+        Navigator.of(context, rootNavigator: true).pop();
+        final authProvider = context.read<AuthProvider>();
+        await authProvider.signOut();
+        if (!mounted) return;
+        context.go(RouteNames.childSelector);
+      },
+    );
   }
 
   @override
@@ -148,6 +163,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     // Play welcome voiceover after first frame when assets are ready
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_playWelcomeVoiceover());
+      unawaited(_initializeScreenTimeLimit());
     });
   }
 
@@ -356,6 +372,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     await _playRewardSound();
     debugPrint(
         'Bright reward applied from $sourceTitle: +$rewardPoints coins (minutes: $minutes)');
+    await _recordScreenTimeUsage(minutes);
   }
 
   Future<void> _openWebGame(WebGame game) async {
@@ -480,6 +497,60 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
       await _resumeBackgroundMusicAfterVoiceover();
       await _ensureBackgroundMusicPlaying();
     }
+  }
+
+  Future<void> _initializeScreenTimeLimit() async {
+    final authProvider = context.read<AuthProvider>();
+    final child = authProvider.currentChild;
+    if (child == null) return;
+    await context.read<ScreenTimeLimitProvider>().loadSettings(child.id);
+    if (!mounted) return;
+    _maybeShowScreenTimeLimitPopup();
+  }
+
+  void _maybeShowScreenTimeLimitPopup() {
+    final child = _currentChild;
+    if (child == null) return;
+    final provider = context.read<ScreenTimeLimitProvider>();
+    final settings = provider.settingsFor(child.id);
+    if (settings == null) return;
+    if (settings.shouldLock) {
+      _showScreenTimeLimitDialog(settings, child.name);
+    } else {
+      _screenLimitDialogShown = false;
+    }
+  }
+
+  Future<void> _recordScreenTimeUsage(int minutes) async {
+    if (minutes <= 0) return;
+    final child = _currentChild ?? context.read<AuthProvider>().currentChild;
+    if (child == null) return;
+    final provider = context.read<ScreenTimeLimitProvider>();
+    final updated = await provider.recordUsage(child.id, minutes);
+    if (!mounted) return;
+    if (updated != null && updated.shouldLock) {
+      _showScreenTimeLimitDialog(updated, child.name);
+    }
+  }
+
+  void _showScreenTimeLimitDialog(
+    ScreenTimeLimitSettings settings,
+    String childName,
+  ) {
+    if (_screenLimitDialogShown) return;
+    _screenLimitDialogShown = true;
+    ScreenTimeLimitPopup.show(
+      context,
+      childName: childName,
+      dailyLimitMinutes: settings.dailyLimitMinutes,
+      onConfirm: () async {
+        Navigator.of(context, rootNavigator: true).pop();
+        final authProvider = context.read<AuthProvider>();
+        await authProvider.signOut();
+        if (!mounted) return;
+        context.go(RouteNames.childSelector);
+      },
+    );
   }
 
   Future<void> _loadDashboardData() async {
@@ -619,6 +690,23 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     final coinLabelTop = 54 - 8 * collapseProgress;
     double coinScale = 1 - 0.25 * collapseProgress;
     if (coinScale < 0.75) coinScale = 0.75;
+    final screenTimeProvider = context.watch<ScreenTimeLimitProvider>();
+    final lockedChildId = _currentChild?.id;
+    if (lockedChildId != null) {
+      final limitSettings = screenTimeProvider.settingsFor(lockedChildId);
+      final shouldLock = limitSettings?.shouldLock ?? false;
+      if (shouldLock && !_screenLimitDialogShown) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _showScreenTimeLimitDialog(
+            limitSettings!,
+            _currentChild?.name ?? 'Explorer',
+          );
+        });
+      } else if (!shouldLock && _screenLimitDialogShown) {
+        _screenLimitDialogShown = false;
+      }
+    }
 
     // For Messages and Search, show full-screen content with navbar
     if (_currentBottomNavIndex == 1 || _currentBottomNavIndex == 2) {

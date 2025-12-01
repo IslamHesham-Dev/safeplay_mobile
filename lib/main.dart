@@ -12,6 +12,7 @@ import 'providers/activity_provider.dart';
 import 'providers/activity_session_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/browser_activity_provider.dart';
+import 'providers/screen_time_limit_provider.dart';
 import 'providers/browser_control_provider.dart';
 import 'providers/child_provider.dart';
 import 'providers/messaging_safety_provider.dart';
@@ -20,6 +21,7 @@ import 'services/activity_service.dart';
 import 'services/browser_activity_insights_service.dart';
 import 'services/browser_activity_service.dart';
 import 'services/browser_control_service.dart';
+import 'services/screen_time_limit_service.dart';
 import 'services/activity_session_service.dart';
 import 'services/chat_safety_monitoring_service.dart';
 import 'services/offline_storage_service.dart';
@@ -80,6 +82,7 @@ class _SafePlayAppState extends State<SafePlayApp> {
   late final WellbeingService _wellbeingService;
   late final SyncService _syncService;
   late final NotificationService _notificationService;
+  late final ScreenTimeLimitService _screenTimeLimitService;
   bool _notificationNavigatorRegistered = false;
   AppRouter? _appRouter;
 
@@ -97,6 +100,7 @@ class _SafePlayAppState extends State<SafePlayApp> {
     _wellbeingService = WellbeingService();
     _syncService = SyncService(_offlineStorage, _activityService);
     _notificationService = NotificationService();
+    _screenTimeLimitService = ScreenTimeLimitService();
     unawaited(_syncService.initialize());
     unawaited(_notificationService.initialize());
   }
@@ -142,6 +146,9 @@ class _SafePlayAppState extends State<SafePlayApp> {
         ),
         ChangeNotifierProvider(
           create: (_) => WellbeingProvider(_wellbeingService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ScreenTimeLimitProvider(_screenTimeLimitService),
         ),
         Provider<SyncService>.value(
           value: _syncService,

@@ -7,18 +7,26 @@ class ScreenTimeLimitPopup extends StatelessWidget {
     super.key,
     required this.childName,
     required this.dailyLimitMinutes,
+    required this.onConfirm,
   });
 
   final String childName;
   final int dailyLimitMinutes;
+  final VoidCallback onConfirm;
 
-  static void show(BuildContext context, String childName, int dailyLimitMinutes) {
+  static void show(
+    BuildContext context, {
+    required String childName,
+    required int dailyLimitMinutes,
+    required VoidCallback onConfirm,
+  }) {
     showDialog(
       context: context,
       barrierDismissible: false, // Prevent dismissing by tapping outside
       builder: (context) => ScreenTimeLimitPopup(
         childName: childName,
         dailyLimitMinutes: dailyLimitMinutes,
+        onConfirm: onConfirm,
       ),
     );
   }
@@ -192,11 +200,7 @@ class ScreenTimeLimitPopup extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Close the app or navigate to a safe screen
-                    Navigator.of(context).pop();
-                    // Optionally: SystemNavigator.pop() to close the app
-                  },
+                  onPressed: onConfirm,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: SafePlayColors.brandOrange500,
@@ -266,4 +270,3 @@ class ScreenTimeLimitPopup extends StatelessWidget {
     }
   }
 }
-

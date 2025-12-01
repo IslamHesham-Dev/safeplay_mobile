@@ -23,6 +23,7 @@ import '../../providers/browser_control_provider.dart';
 import '../../providers/child_provider.dart';
 import '../../providers/messaging_safety_provider.dart';
 import '../../providers/wellbeing_provider.dart';
+import '../../providers/screen_time_limit_provider.dart';
 import '../../constants/wellbeing_moods.dart';
 import '../../widgets/parent/child_list_item.dart';
 import '../../widgets/parent/parent_settings_menu.dart';
@@ -45,10 +46,13 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   BrowserActivityProvider? _browserActivityProvider;
   ActivitySessionProvider? _activitySessionProvider;
   WellbeingProvider? _wellbeingProvider;
+  ScreenTimeLimitProvider? _screenTimeProvider;
   String? _lastLoadedChildId;
   bool _isSyncingChild = false;
   int _currentNavIndex = 0;
   bool _showAllRecentActivities = false;
+  final Map<String, int> _pendingScreenLimitMinutes = {};
+  final Map<String, bool> _pendingScreenLimitEnabled = {};
 
   @override
   void initState() {
@@ -61,6 +65,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       _browserActivityProvider = context.read<BrowserActivityProvider>();
       _activitySessionProvider = context.read<ActivitySessionProvider>();
       _wellbeingProvider = context.read<WellbeingProvider>();
+      _screenTimeProvider = context.read<ScreenTimeLimitProvider>();
       _childProvider?.addListener(_handleChildProviderChange);
       unawaited(_initializeDashboardState());
     });
@@ -85,6 +90,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     if (mounted) {
       setState(() {
         _showAllRecentActivities = false;
+        _pendingScreenLimitMinutes.clear();
+        _pendingScreenLimitEnabled.clear();
       });
     }
     unawaited(_syncSelectedChild());
@@ -145,6 +152,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       if (wellbeingProvider != null) {
         unawaited(wellbeingProvider.loadEntries(selected.id));
       }
+      final screenProvider = _screenTimeProvider;
+      if (screenProvider != null) {
+        unawaited(screenProvider.loadSettings(selected.id));
+      }
     } finally {
       _isSyncingChild = false;
     }
@@ -179,6 +190,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           builder: (context, authProvider, childProvider, activityProvider,
               safetyProvider, browserProvider, activitySummaryProvider, _) {
             final wellbeingProvider = context.watch<WellbeingProvider>();
+            final screenTimeProvider = context.watch<ScreenTimeLimitProvider>();
             return Consumer<ActivitySessionProvider>(
               builder: (context, sessionProvider, __) {
                 return _buildCurrentScreen(
@@ -190,6 +202,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   activitySummaryProvider,
                   sessionProvider,
                   wellbeingProvider,
+                  screenTimeProvider,
                 );
               },
             );
@@ -302,6 +315,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     BrowserActivityProvider activitySummaryProvider,
     ActivitySessionProvider activitySessionProvider,
     WellbeingProvider wellbeingProvider,
+    ScreenTimeLimitProvider screenTimeProvider,
   ) {
     switch (_currentNavIndex) {
       case 0:
@@ -309,6 +323,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           authProvider,
           childProvider,
           activitySessionProvider,
+          screenTimeProvider,
         );
       case 1:
         return _buildParentalControlsScreen(
@@ -329,6 +344,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           authProvider,
           childProvider,
           activitySessionProvider,
+          screenTimeProvider,
         );
     }
   }
@@ -338,6 +354,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     AuthProvider authProvider,
     ChildProvider childProvider,
     ActivitySessionProvider sessionProvider,
+    ScreenTimeLimitProvider screenTimeProvider,
   ) {
     final user = authProvider.currentUser;
     final children = childProvider.children;
@@ -375,7 +392,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           sliver: SliverToBoxAdapter(
-            child: _buildScreenTimeLimitCard(context, childProvider),
+            child: _buildScreenTimeLimitCard(
+              context,
+              childProvider,
+              screenTimeProvider,
+            ),
           ),
         ),
         SliverPadding(
@@ -1014,13 +1035,26 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   Widget _buildScreenTimeLimitCard(
     BuildContext context,
     ChildProvider childProvider,
+    ScreenTimeLimitProvider screenTimeProvider,
   ) {
     final selectedChild = childProvider.selectedChild;
     final hasChild = childProvider.children.isNotEmpty;
-
-    // Mock data for screen time limits (UI only, no logic)
-    int dailyLimitMinutes = selectedChild != null ? 120 : 0; // Default 2 hours
-    bool isEnabled = selectedChild != null;
+    final childId = selectedChild?.id ?? '';
+    final settings =
+        childId.isNotEmpty ? screenTimeProvider.settingsFor(childId) : null;
+    final isLoading =
+        childId.isNotEmpty && screenTimeProvider.isLoading(childId);
+    final isSaving = childId.isNotEmpty && screenTimeProvider.isSaving(childId);
+    final displayEnabled =
+        _pendingScreenLimitEnabled[childId] ?? settings?.isEnabled ?? false;
+    final displayMinutes = _pendingScreenLimitMinutes[childId] ??
+        settings?.dailyLimitMinutes ??
+        120;
+    final remainingMinutes = settings?.remainingMinutes ?? displayMinutes;
+    final limitMinutes = settings?.dailyLimitMinutes ?? displayMinutes;
+    final usedMinutes = settings?.usedMinutesToday ?? 0;
+    final isLocked = settings?.shouldLock ?? false;
+    final controlsDisabled = childId.isEmpty || isLoading || isSaving;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1051,8 +1085,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.timer_rounded,
-                    color: SafePlayColors.brandOrange500, size: 24),
+                child: const Icon(
+                  Icons.timer_rounded,
+                  color: SafePlayColors.brandOrange500,
+                  size: 24,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1103,7 +1140,6 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               SafePlayColors.brandTeal500,
             )
           else ...[
-            // Enable/Disable Toggle
             Row(
               children: [
                 Expanded(
@@ -1129,20 +1165,39 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   ),
                 ),
                 Switch.adaptive(
-                  value: isEnabled,
-                  onChanged: (value) {
-                    // UI only - no logic
-                    setState(() {
-                      isEnabled = value;
-                    });
-                  },
+                  value: displayEnabled,
+                  onChanged: controlsDisabled
+                      ? null
+                      : (value) {
+                          setState(() {
+                            _pendingScreenLimitEnabled[childId] = value;
+                            if (!value) {
+                              _pendingScreenLimitMinutes.remove(childId);
+                            }
+                          });
+                          if (childId.isNotEmpty) {
+                            unawaited(
+                              screenTimeProvider
+                                  .setLimit(
+                                childId,
+                                isEnabled: value,
+                                dailyLimitMinutes: displayMinutes,
+                              )
+                                  .whenComplete(() {
+                                if (!mounted) return;
+                                setState(() {
+                                  _pendingScreenLimitEnabled.remove(childId);
+                                });
+                              }),
+                            );
+                          }
+                        },
                   activeColor: SafePlayColors.brandOrange500,
                 ),
               ],
             ),
-            if (isEnabled) ...[
+            if (displayEnabled) ...[
               const SizedBox(height: 24),
-              // Time Limit Slider
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1166,7 +1221,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          _formatTimeLimit(dailyLimitMinutes),
+                          _formatTimeLimit(displayMinutes),
                           style: TextStyle(
                             color: SafePlayColors.brandOrange500,
                             fontWeight: FontWeight.bold,
@@ -1178,18 +1233,41 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   ),
                   const SizedBox(height: 12),
                   Slider(
-                    value: dailyLimitMinutes.toDouble(),
+                    value: displayMinutes.clamp(30, 240).toDouble(),
                     min: 30,
                     max: 240,
-                    divisions: 14, // 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 195, 210, 225, 240
-                    label: _formatTimeLimit(dailyLimitMinutes),
+                    divisions: 14,
+                    label: _formatTimeLimit(displayMinutes),
                     activeColor: SafePlayColors.brandOrange500,
                     inactiveColor: SafePlayColors.neutral300,
-                    onChanged: (value) {
-                      setState(() {
-                        dailyLimitMinutes = value.round();
-                      });
-                    },
+                    onChanged: controlsDisabled
+                        ? null
+                        : (value) {
+                            setState(() {
+                              _pendingScreenLimitMinutes[childId] =
+                                  value.round();
+                            });
+                          },
+                    onChangeEnd: controlsDisabled
+                        ? null
+                        : (value) {
+                            if (childId.isEmpty) return;
+                            final minutes = value.round();
+                            unawaited(
+                              screenTimeProvider
+                                  .setLimit(
+                                childId,
+                                isEnabled: true,
+                                dailyLimitMinutes: minutes,
+                              )
+                                  .whenComplete(() {
+                                if (!mounted) return;
+                                setState(() {
+                                  _pendingScreenLimitMinutes.remove(childId);
+                                });
+                              }),
+                            );
+                          },
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1213,7 +1291,6 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 ],
               ),
               const SizedBox(height: 20),
-              // Quick Presets
               const Text(
                 'Quick Presets',
                 style: TextStyle(
@@ -1226,22 +1303,61 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  _buildTimePresetChip('1 hour', 60, dailyLimitMinutes, () {
-                    setState(() => dailyLimitMinutes = 60);
-                  }),
-                  _buildTimePresetChip('1.5 hours', 90, dailyLimitMinutes, () {
-                    setState(() => dailyLimitMinutes = 90);
-                  }),
-                  _buildTimePresetChip('2 hours', 120, dailyLimitMinutes, () {
-                    setState(() => dailyLimitMinutes = 120);
-                  }),
-                  _buildTimePresetChip('3 hours', 180, dailyLimitMinutes, () {
-                    setState(() => dailyLimitMinutes = 180);
-                  }),
+                  _buildTimePresetChip(
+                    '1 hour',
+                    60,
+                    displayMinutes,
+                    controlsDisabled
+                        ? null
+                        : () => _applyPresetLimit(
+                              childId,
+                              60,
+                              screenTimeProvider,
+                              displayEnabled,
+                            ),
+                  ),
+                  _buildTimePresetChip(
+                    '1.5 hours',
+                    90,
+                    displayMinutes,
+                    controlsDisabled
+                        ? null
+                        : () => _applyPresetLimit(
+                              childId,
+                              90,
+                              screenTimeProvider,
+                              displayEnabled,
+                            ),
+                  ),
+                  _buildTimePresetChip(
+                    '2 hours',
+                    120,
+                    displayMinutes,
+                    controlsDisabled
+                        ? null
+                        : () => _applyPresetLimit(
+                              childId,
+                              120,
+                              screenTimeProvider,
+                              displayEnabled,
+                            ),
+                  ),
+                  _buildTimePresetChip(
+                    '3 hours',
+                    180,
+                    displayMinutes,
+                    controlsDisabled
+                        ? null
+                        : () => _applyPresetLimit(
+                              childId,
+                              180,
+                              screenTimeProvider,
+                              displayEnabled,
+                            ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
-              // Info Box
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -1273,6 +1389,56 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: SafePlayColors.neutral50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: SafePlayColors.neutral200,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.schedule_rounded,
+                      color: SafePlayColors.neutral600,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        isLocked
+                            ? '${selectedChild.name} has reached the daily screen time limit.'
+                            : '${_formatMinutes(remainingMinutes)} remaining out of ${_formatMinutes(limitMinutes)} today.',
+                        style: TextStyle(
+                          color: SafePlayColors.neutral700,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isLocked) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: controlsDisabled
+                        ? null
+                        : () {
+                            if (childId.isEmpty) return;
+                            unawaited(
+                              screenTimeProvider.unlockLimit(childId),
+                            );
+                          },
+                    icon: const Icon(Icons.lock_open_rounded),
+                    label: const Text('Unlock for today'),
+                  ),
+                ),
+              ],
             ],
           ],
         ],
@@ -1284,7 +1450,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     String label,
     int minutes,
     int currentMinutes,
-    VoidCallback onTap,
+    VoidCallback? onTap,
   ) {
     final isSelected = minutes == currentMinutes;
     return InkWell(
@@ -1314,6 +1480,42 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         ),
       ),
     );
+  }
+
+  void _applyPresetLimit(
+    String childId,
+    int minutes,
+    ScreenTimeLimitProvider screenTimeProvider,
+    bool isEnabled,
+  ) {
+    setState(() {
+      _pendingScreenLimitMinutes[childId] = minutes;
+    });
+    if (!isEnabled || childId.isEmpty) return;
+    unawaited(
+      screenTimeProvider
+          .setLimit(
+        childId,
+        isEnabled: true,
+        dailyLimitMinutes: minutes,
+      )
+          .whenComplete(() {
+        if (!mounted) return;
+        setState(() {
+          _pendingScreenLimitMinutes.remove(childId);
+        });
+      }),
+    );
+  }
+
+  String _formatMinutes(int minutes) {
+    if (minutes < 60) return '$minutes min';
+    final hours = minutes ~/ 60;
+    final mins = minutes % 60;
+    if (mins == 0) {
+      return '$hours ${hours == 1 ? 'hour' : 'hours'}';
+    }
+    return '$hours h $mins m';
   }
 
   String _formatTimeLimit(int minutes) {
