@@ -371,6 +371,13 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 context, childProvider, sessionProvider),
           ),
         ),
+        // Screen Time Limit Controls
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          sliver: SliverToBoxAdapter(
+            child: _buildScreenTimeLimitCard(context, childProvider),
+          ),
+        ),
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           sliver: SliverToBoxAdapter(
@@ -1001,6 +1008,328 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         ],
       ),
     );
+  }
+
+  // ============ SCREEN TIME LIMIT CARD ============
+  Widget _buildScreenTimeLimitCard(
+    BuildContext context,
+    ChildProvider childProvider,
+  ) {
+    final selectedChild = childProvider.selectedChild;
+    final hasChild = childProvider.children.isNotEmpty;
+
+    // Mock data for screen time limits (UI only, no logic)
+    int dailyLimitMinutes = selectedChild != null ? 120 : 0; // Default 2 hours
+    bool isEnabled = selectedChild != null;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      SafePlayColors.brandOrange500.withOpacity(0.15),
+                      SafePlayColors.brandOrange500.withOpacity(0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.timer_rounded,
+                    color: SafePlayColors.brandOrange500, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Screen Time Limit',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    if (selectedChild != null)
+                      Text(
+                        'Daily limit for ${selectedChild.name}',
+                        style: TextStyle(
+                          color: SafePlayColors.neutral500,
+                          fontSize: 12,
+                        ),
+                      )
+                    else
+                      Text(
+                        hasChild
+                            ? 'Select a child to set limits'
+                            : 'Add a child first',
+                        style: TextStyle(
+                          color: SafePlayColors.neutral400,
+                          fontSize: 12,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          if (!hasChild)
+            _buildEmptyStateMessage(
+              'Add a child to set screen time limits.',
+              Icons.child_care_rounded,
+              SafePlayColors.brandOrange500,
+            )
+          else if (selectedChild == null)
+            _buildEmptyStateMessage(
+              'Select a child from the dropdown to configure their screen time.',
+              Icons.touch_app_rounded,
+              SafePlayColors.brandTeal500,
+            )
+          else ...[
+            // Enable/Disable Toggle
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Enable Screen Time Limit',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Automatically pause the app when daily limit is reached',
+                        style: TextStyle(
+                          color: SafePlayColors.neutral600,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch.adaptive(
+                  value: isEnabled,
+                  onChanged: (value) {
+                    // UI only - no logic
+                    setState(() {
+                      isEnabled = value;
+                    });
+                  },
+                  activeColor: SafePlayColors.brandOrange500,
+                ),
+              ],
+            ),
+            if (isEnabled) ...[
+              const SizedBox(height: 24),
+              // Time Limit Slider
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Daily Limit',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: SafePlayColors.brandOrange500.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _formatTimeLimit(dailyLimitMinutes),
+                          style: TextStyle(
+                            color: SafePlayColors.brandOrange500,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Slider(
+                    value: dailyLimitMinutes.toDouble(),
+                    min: 30,
+                    max: 240,
+                    divisions: 14, // 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 195, 210, 225, 240
+                    label: _formatTimeLimit(dailyLimitMinutes),
+                    activeColor: SafePlayColors.brandOrange500,
+                    inactiveColor: SafePlayColors.neutral300,
+                    onChanged: (value) {
+                      setState(() {
+                        dailyLimitMinutes = value.round();
+                      });
+                    },
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '30 min',
+                        style: TextStyle(
+                          color: SafePlayColors.neutral500,
+                          fontSize: 11,
+                        ),
+                      ),
+                      Text(
+                        '4 hours',
+                        style: TextStyle(
+                          color: SafePlayColors.neutral500,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Quick Presets
+              const Text(
+                'Quick Presets',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildTimePresetChip('1 hour', 60, dailyLimitMinutes, () {
+                    setState(() => dailyLimitMinutes = 60);
+                  }),
+                  _buildTimePresetChip('1.5 hours', 90, dailyLimitMinutes, () {
+                    setState(() => dailyLimitMinutes = 90);
+                  }),
+                  _buildTimePresetChip('2 hours', 120, dailyLimitMinutes, () {
+                    setState(() => dailyLimitMinutes = 120);
+                  }),
+                  _buildTimePresetChip('3 hours', 180, dailyLimitMinutes, () {
+                    setState(() => dailyLimitMinutes = 180);
+                  }),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Info Box
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: SafePlayColors.brandOrange500.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: SafePlayColors.brandOrange500.withOpacity(0.2),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      color: SafePlayColors.brandOrange500,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'When the time limit is reached, ${selectedChild.name} will see a friendly reminder to take a break. The app will pause until the next day.',
+                        style: TextStyle(
+                          color: SafePlayColors.neutral700,
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimePresetChip(
+    String label,
+    int minutes,
+    int currentMinutes,
+    VoidCallback onTap,
+  ) {
+    final isSelected = minutes == currentMinutes;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? SafePlayColors.brandOrange500
+              : SafePlayColors.neutral100,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? SafePlayColors.brandOrange500
+                : SafePlayColors.neutral300,
+            width: 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : SafePlayColors.neutral700,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            fontSize: 13,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatTimeLimit(int minutes) {
+    if (minutes < 60) {
+      return '$minutes min';
+    } else if (minutes == 60) {
+      return '1 hour';
+    } else {
+      final hours = minutes ~/ 60;
+      final mins = minutes % 60;
+      if (mins == 0) {
+        return '$hours ${hours == 1 ? 'hour' : 'hours'}';
+      } else {
+        return '$hours.${(mins / 60 * 10).round()} hours';
+      }
+    }
   }
 
   Widget _buildActivityItem(_RecentActivityItem activity) {

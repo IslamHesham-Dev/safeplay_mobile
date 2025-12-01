@@ -44,6 +44,7 @@ import 'web_game_detail_screen.dart';
 import '../safety/safe_search_screen.dart';
 import '../safety/wellbeing_check_screen.dart';
 import '../child/child_messages_screen.dart';
+import '../../widgets/screen_time_limit_popup.dart';
 
 /// Junior (6-8) specific dashboard screen with age-appropriate UI
 class JuniorDashboardScreen extends StatefulWidget {
@@ -107,6 +108,17 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     if (normalized == 'male' || normalized == 'boy') return 'male';
     if (normalized == 'female' || normalized == 'girl') return 'female';
     return 'female';
+  }
+
+  /// Shows the screen time limit popup when the daily limit is reached
+  /// Call this method when your time tracking logic detects the limit has been reached
+  void _showScreenTimeLimitPopup() {
+    if (_currentChild == null) return;
+    final childName = _currentChild!.name;
+    // Default to 2 hours (120 minutes) - replace with actual limit from parent settings
+    const dailyLimitMinutes = 120;
+    
+    ScreenTimeLimitPopup.show(context, childName, dailyLimitMinutes);
   }
 
   @override
