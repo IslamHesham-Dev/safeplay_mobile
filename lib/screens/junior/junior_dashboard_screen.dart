@@ -326,16 +326,14 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     final wasPlaying = _audioPlayer.state == PlayerState.playing;
     if (wasPlaying) {
       try {
-        await _audioPlayer.pause();
-      } catch (_) {
-        // Ignore pause errors; we'll restart afterwards
-      }
+        await _audioPlayer.stop();
+      } catch (_) {}
     }
 
     final result = await Navigator.of(context).push(route);
 
     if (mounted && wasPlaying) {
-      await _ensureBackgroundMusicPlaying();
+      await _playBackgroundMusic();
     }
     return result;
   }
@@ -2071,6 +2069,12 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   }
 
   Future<void> _playTask(Lesson task) async {
+    final wasPlaying = _audioPlayer.state == PlayerState.playing;
+    if (wasPlaying) {
+      try {
+        await _audioPlayer.stop();
+      } catch (_) {}
+    }
     await _gameLauncher.launchGame(
       context: context,
       lesson: task,

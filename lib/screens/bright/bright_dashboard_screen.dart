@@ -385,15 +385,13 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     final wasPlaying = _audioPlayer.state == PlayerState.playing;
     if (wasPlaying) {
       try {
-        await _audioPlayer.pause();
-      } catch (_) {
-        // Ignore pause errors
-      }
+        await _audioPlayer.stop();
+      } catch (_) {}
     }
 
     final result = await Navigator.of(context).push(route);
     if (mounted && wasPlaying) {
-      await _ensureBackgroundMusicPlaying();
+      await _playBackgroundMusic();
     }
     return result;
   }
@@ -2263,6 +2261,12 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   }
 
   Future<void> _playTask(Lesson task) async {
+    final wasPlaying = _audioPlayer.state == PlayerState.playing;
+    if (wasPlaying) {
+      try {
+        await _audioPlayer.stop();
+      } catch (_) {}
+    }
     await _gameLauncher.launchGame(
       context: context,
       lesson: task,
