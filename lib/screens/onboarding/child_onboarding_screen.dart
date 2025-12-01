@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../../design_system/colors.dart';
 import '../../navigation/route_names.dart';
 
@@ -17,12 +18,14 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
   int _currentPage = 0;
   late AnimationController _bounceController;
   late Animation<double> _bounceAnimation;
+  final AudioPlayer _voiceoverPlayer = AudioPlayer();
 
   final List<OnboardingPage> _pages = [
     OnboardingPage(
       title: 'Welcome to SafePlay! 🎉',
       subtitle: 'Your fun learning adventure starts here!',
-      description: 'Play games, learn new things, and have fun while staying safe online!',
+      description:
+          'Play games, learn new things, and have fun while staying safe online!',
       emoji: '🎮',
       color: const Color(0xFFFF9800),
       secondaryColor: const Color(0xFFFFB74D),
@@ -35,7 +38,8 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
     OnboardingPage(
       title: 'Choose Your Games 🕹️',
       subtitle: 'Lots of fun activities waiting for you!',
-      description: 'Pick from Science, Math, English, and more! Each subject has fun interactive games.',
+      description:
+          'Pick from Science, Math, English, and more! Each subject has fun interactive games.',
       emoji: '📚',
       color: const Color(0xFF9C27B0),
       secondaryColor: const Color(0xFFBA68C8),
@@ -49,13 +53,15 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
     OnboardingPage(
       title: 'Try Cool Simulations! 🧪',
       subtitle: 'Experiment freely and learn by doing!',
-      description: 'Play with real science simulations! Balance scales, mix states of matter, explore electricity, and more—all by yourself!',
+      description:
+          'Play with real science simulations! Balance scales, mix states of matter, explore electricity, and more—all by yourself!',
       emoji: '⚗️',
       color: const Color(0xFF00BCD4),
       secondaryColor: const Color(0xFF4DD0E1),
       features: [
         FeatureItem('⚖️', 'Balance Scale', 'Make equations equal'),
-        FeatureItem('💧', 'States of Matter', 'See atoms move in solids, liquids & gases'),
+        FeatureItem('💧', 'States of Matter',
+            'See atoms move in solids, liquids & gases'),
         FeatureItem('⚡', 'Static Electricity', 'Watch charges push and pull'),
       ],
       mockupType: MockupType.simulations,
@@ -63,7 +69,8 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
     OnboardingPage(
       title: 'Stay Safe Online 🛡️',
       subtitle: 'We keep you protected!',
-      description: 'SafePlay makes sure everything you see and do is safe and fun.',
+      description:
+          'SafePlay makes sure everything you see and do is safe and fun.',
       emoji: '🔒',
       color: SafePlayColors.brandTeal500,
       secondaryColor: SafePlayColors.brandTeal200,
@@ -77,7 +84,8 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
     OnboardingPage(
       title: 'Earn Coins! 🪙',
       subtitle: 'See how awesome you are!',
-      description: 'Complete games to earn coins! The more you play, the more coins you collect.',
+      description:
+          'Complete games to earn coins! The more you play, the more coins you collect.',
       emoji: '🚀',
       color: const Color(0xFF4CAF50),
       secondaryColor: const Color(0xFF81C784),
@@ -91,7 +99,8 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
     OnboardingPage(
       title: 'How Are You Feeling? 💖',
       subtitle: 'Tell us how you feel!',
-      description: 'We care about you! Share your feelings and we\'ll help you feel great.',
+      description:
+          'We care about you! Share your feelings and we\'ll help you feel great.',
       emoji: '😊',
       color: const Color(0xFFE91E63),
       secondaryColor: const Color(0xFFF48FB1),
@@ -128,13 +137,65 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
     _bounceAnimation = Tween<double>(begin: 0, end: 10).animate(
       CurvedAnimation(parent: _bounceController, curve: Curves.easeInOut),
     );
+    // Play voiceover for first page
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _playVoiceoverForPage(0);
+    });
   }
 
   @override
   void dispose() {
     _pageController.dispose();
     _bounceController.dispose();
+    _voiceoverPlayer.dispose();
     super.dispose();
+  }
+
+  Future<void> _playVoiceoverForPage(int pageIndex) async {
+    try {
+      // Stop any currently playing voiceover
+      await _voiceoverPlayer.stop();
+
+      // Map page index to voiceover file
+      String? voiceoverPath;
+      switch (pageIndex) {
+        case 0:
+          // Path relative to assets/ directory (AssetSource adds 'assets/' automatically)
+          voiceoverPath = 'audio/voiceovers/onboarding_screen/1.mp3';
+          break;
+        case 1:
+          voiceoverPath = 'audio/voiceovers/onboarding_screen/2.mp3';
+          break;
+        case 2:
+          voiceoverPath = 'audio/voiceovers/onboarding_screen/3.mp3';
+          break;
+        case 3:
+          voiceoverPath = 'audio/voiceovers/onboarding_screen/4.mp3';
+          break;
+        case 4:
+          voiceoverPath = 'audio/voiceovers/onboarding_screen/5.mp3';
+          break;
+        case 5:
+          voiceoverPath = 'audio/voiceovers/onboarding_screen/6.mp3';
+          break;
+        case 6:
+          voiceoverPath = 'audio/voiceovers/onboarding_screen/7.mp3';
+          break;
+        // Add more mappings as needed
+      }
+
+      if (voiceoverPath != null) {
+        // AssetSource automatically adds 'assets/' prefix
+        // The path should be: audio/voiceovers/onboarding screen/1.mp3
+        // Which becomes: assets/audio/voiceovers/onboarding screen/1.mp3
+        await _voiceoverPlayer.play(AssetSource(voiceoverPath));
+        debugPrint('✅ Playing voiceover: $voiceoverPath');
+      }
+    } catch (e) {
+      // Log error for debugging
+      debugPrint('❌ Error playing voiceover for page $pageIndex: $e');
+      debugPrint('   Attempted path: audio/voiceovers/onboarding_screen/1.mp3');
+    }
   }
 
   void _nextPage() {
@@ -172,7 +233,8 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
             children: [
               // Skip button
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -215,6 +277,7 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
                   controller: _pageController,
                   onPageChanged: (index) {
                     setState(() => _currentPage = index);
+                    _playVoiceoverForPage(index);
                   },
                   itemCount: _pages.length,
                   itemBuilder: (context, index) {
@@ -239,7 +302,8 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
                           },
                           style: OutlinedButton.styleFrom(
                             foregroundColor: _pages[_currentPage].color,
-                            side: BorderSide(color: _pages[_currentPage].color, width: 2),
+                            side: BorderSide(
+                                color: _pages[_currentPage].color, width: 2),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -248,9 +312,14 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.arrow_back_rounded, size: 20, color: _pages[_currentPage].color),
+                              Icon(Icons.arrow_back_rounded,
+                                  size: 20, color: _pages[_currentPage].color),
                               const SizedBox(width: 8),
-                              Text('Back', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _pages[_currentPage].color)),
+                              Text('Back',
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: _pages[_currentPage].color)),
                             ],
                           ),
                         ),
@@ -270,23 +339,31 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: _pages[_currentPage].color,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 elevation: 4,
-                                shadowColor: _pages[_currentPage].color.withOpacity(0.4),
+                                shadowColor:
+                                    _pages[_currentPage].color.withOpacity(0.4),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    _pages[_currentPage].isLast ? "Let's Play! 🎮" : 'Next',
-                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                                    _pages[_currentPage].isLast
+                                        ? "Let's Play! 🎮"
+                                        : 'Next',
+                                    style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white),
                                   ),
                                   if (!_pages[_currentPage].isLast) ...[
                                     const SizedBox(width: 8),
-                                    const Icon(Icons.arrow_forward_rounded, size: 20, color: Colors.white),
+                                    const Icon(Icons.arrow_forward_rounded,
+                                        size: 20, color: Colors.white),
                                   ],
                                 ],
                               ),
@@ -424,7 +501,8 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
-                  child: Text(feature.emoji, style: const TextStyle(fontSize: 24)),
+                  child:
+                      Text(feature.emoji, style: const TextStyle(fontSize: 24)),
                 ),
               ),
               const SizedBox(width: 16),
@@ -610,7 +688,8 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
     );
   }
 
-  Widget _buildSimulationCard(String emoji, String title, String description, Color color) {
+  Widget _buildSimulationCard(
+      String emoji, String title, String description, Color color) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -627,7 +706,8 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
               color: color.withOpacity(0.2),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Center(child: Text(emoji, style: const TextStyle(fontSize: 22))),
+            child: Center(
+                child: Text(emoji, style: const TextStyle(fontSize: 22))),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -708,7 +788,8 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: SafePlayColors.success,
                     borderRadius: BorderRadius.circular(8),
@@ -718,7 +799,11 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
                     children: [
                       Icon(Icons.shield, color: Colors.white, size: 14),
                       SizedBox(width: 4),
-                      Text('Safe', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                      Text('Safe',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
@@ -817,7 +902,8 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
                             color: page.color,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text('⬆️', style: TextStyle(fontSize: 16)),
+                          child:
+                              const Text('⬆️', style: TextStyle(fontSize: 16)),
                         ),
                         const SizedBox(width: 12),
                         Column(
@@ -843,7 +929,8 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
                       ],
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                         color: page.color,
                         borderRadius: BorderRadius.circular(8),
@@ -938,10 +1025,15 @@ class _ChildOnboardingScreenState extends State<ChildOnboardingScreen>
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: color.withOpacity(0.5), width: 2),
           ),
-          child: Center(child: Text(emoji, style: const TextStyle(fontSize: 28))),
+          child:
+              Center(child: Text(emoji, style: const TextStyle(fontSize: 28))),
         ),
         const SizedBox(height: 6),
-        Text(label, style: TextStyle(fontSize: 11, color: SafePlayColors.neutral600, fontWeight: FontWeight.w500)),
+        Text(label,
+            style: TextStyle(
+                fontSize: 11,
+                color: SafePlayColors.neutral600,
+                fontWeight: FontWeight.w500)),
       ],
     );
   }
@@ -986,4 +1078,3 @@ enum MockupType {
   progressTracking,
   wellbeing,
 }
-

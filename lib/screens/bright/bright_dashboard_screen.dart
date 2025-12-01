@@ -91,6 +91,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   final AudioPlayer _clickSoundPlayer = AudioPlayer();
   // Audio player dedicated to the reward jingle when returning to the dashboard
   final AudioPlayer _rewardSoundPlayer = AudioPlayer();
+  // Audio player for the welcome dashboard voiceover
+  final AudioPlayer _voiceoverPlayer = AudioPlayer();
 
   // Animation bookkeeping for the hero coin counter
   int _coinAnimationStartValue = 0;
@@ -126,6 +128,10 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     _animationController.forward();
     // Start background music
     _playBackgroundMusic();
+    // Play welcome voiceover after first frame when assets are ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_playWelcomeVoiceover());
+    });
   }
 
   Future<void> _playBackgroundMusic() async {
@@ -387,7 +393,24 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     _audioPlayer.dispose();
     _clickSoundPlayer.dispose();
     _rewardSoundPlayer.dispose();
+    _voiceoverPlayer.dispose();
     super.dispose();
+  }
+
+  Future<void> _playWelcomeVoiceover() async {
+    try {
+      await _voiceoverPlayer.setPlayerMode(PlayerMode.lowLatency);
+      await _voiceoverPlayer.setReleaseMode(ReleaseMode.stop);
+      await _voiceoverPlayer.setVolume(1.0);
+      await _voiceoverPlayer.stop();
+      await _voiceoverPlayer.play(
+        AssetSource('audio/voiceovers/welcome.mp3'),
+      );
+      debugPrint('Playing welcome voiceover for bright dashboard');
+    } catch (e, stack) {
+      debugPrint('Error playing welcome voiceover: $e');
+      debugPrint('$stack');
+    }
   }
 
   Future<void> _loadDashboardData() async {

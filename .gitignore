@@ -368,6 +368,10 @@ out/
 *.wav
 *.flac
 *.aac
+
+# Allow committed voiceover assets
+!assets/audio/voiceovers/
+!assets/audio/voiceovers/**
 *.ogg
 *.wma
 

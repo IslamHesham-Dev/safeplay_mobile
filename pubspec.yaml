@@ -105,6 +105,8 @@ flutter:
     - assets/images/avatars/
     - assets/audio/narration/
     - assets/audio/phonics/
+    - assets/audio/voiceovers/
+    - assets/audio/voiceovers/onboarding_screen/
     - assets/audio/first.mp3
     - assets/audio/third.mp3
     - assets/audio/sound effects/sound effects/activity completed.wav
