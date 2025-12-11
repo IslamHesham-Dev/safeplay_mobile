@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -29,17 +31,32 @@ class _BrightPicturePinLoginState extends State<BrightPicturePinLogin> {
   bool _pictureStepComplete = false;
   List<String>? _selectedPictures;
   bool _isLoading = false;
+  String? _enteredPin;
 
   void _onPicturesSelected(List<String> selectedPictures) {
+    final picturesCopy = List<String>.from(selectedPictures);
     setState(() {
-      _selectedPictures = selectedPictures;
+      _selectedPictures = picturesCopy;
       _pictureStepComplete = true;
     });
+    unawaited(_attemptLoginIfReady());
   }
 
   Future<void> _onPinComplete(String pin) async {
-    if (_selectedPictures == null) return;
+    setState(() {
+      _enteredPin = pin;
+    });
+    await _attemptLoginIfReady();
+  }
 
+  Future<void> _attemptLoginIfReady() async {
+    if (_selectedPictures == null || _enteredPin == null) return;
+    final pictures = List<String>.from(_selectedPictures!);
+    final pin = _enteredPin!;
+
+    if (pin.length != 4 || pictures.length != 3) return;
+
+    // Run the auth flow only when both pieces are ready
     setState(() {
       _isLoading = true;
     });
@@ -50,7 +67,7 @@ class _BrightPicturePinLoginState extends State<BrightPicturePinLogin> {
           '[BrightPicturePinLogin]: Authenticating ${widget.childId} with pictures $_selectedPictures');
       final success = await authProvider.signInChildWithPicturePin(
         widget.childId,
-        _selectedPictures!,
+        pictures,
         pin,
       );
 
@@ -69,6 +86,7 @@ class _BrightPicturePinLoginState extends State<BrightPicturePinLogin> {
         setState(() {
           _pictureStepComplete = false;
           _selectedPictures = null;
+          _enteredPin = null;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -190,6 +208,7 @@ class _BrightPicturePinLoginState extends State<BrightPicturePinLogin> {
                           const SizedBox(height: 24),
                           PinEntryWidget(
                             onPinComplete: _onPinComplete,
+                            onClear: () => setState(() => _enteredPin = null),
                           ),
                           const SizedBox(height: 16),
                           TextButton(
@@ -197,6 +216,7 @@ class _BrightPicturePinLoginState extends State<BrightPicturePinLogin> {
                               setState(() {
                                 _pictureStepComplete = false;
                                 _selectedPictures = null;
+                                _enteredPin = null;
                               });
                             },
                             child: const Text('Change Pictures'),

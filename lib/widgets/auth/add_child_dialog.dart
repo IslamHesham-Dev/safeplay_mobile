@@ -777,6 +777,7 @@ class _BrightAuthSetupDialogState extends State<BrightAuthSetupDialog> {
                 hintText: 'Enter 4 digits',
                 prefixIcon: Icon(Icons.lock),
               ),
+              onChanged: (_) => setState(() {}),
               validator: (value) {
                 if (value == null || value.length != 4) {
                   return 'PIN must be 4 digits';

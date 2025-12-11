@@ -771,18 +771,28 @@ class _BrightPicturePinLoginEmbeddedState
 
   bool _pictureStepComplete = false;
   List<String>? _selectedPictures;
+  String? _enteredPin;
 
   void _onPicturesSelected(List<String> selectedPictures) {
+    final picturesCopy = List<String>.from(selectedPictures);
     setState(() {
-      _selectedPictures = selectedPictures;
+      _selectedPictures = picturesCopy;
       _pictureStepComplete = true;
     });
+    _notifyIfReady();
   }
 
   void _onPinComplete(String pin) {
-    if (_selectedPictures != null) {
-      widget.onPicturePinComplete(_selectedPictures!, pin);
-    }
+    setState(() {
+      _enteredPin = pin;
+    });
+    _notifyIfReady();
+  }
+
+  void _notifyIfReady() {
+    if (_selectedPictures == null || _enteredPin == null) return;
+    if (_selectedPictures!.length != 3 || _enteredPin!.length != 4) return;
+    widget.onPicturePinComplete(_selectedPictures!, _enteredPin!);
   }
 
   @override
@@ -845,6 +855,7 @@ class _BrightPicturePinLoginEmbeddedState
             const SizedBox(height: 24),
             PinEntryWidget(
               onPinComplete: _onPinComplete,
+              onClear: () => setState(() => _enteredPin = null),
             ),
             const SizedBox(height: 16),
             TextButton(
@@ -852,6 +863,7 @@ class _BrightPicturePinLoginEmbeddedState
                 setState(() {
                   _pictureStepComplete = false;
                   _selectedPictures = null;
+                  _enteredPin = null;
                 });
               },
               child: const Text('Change Pictures'),
