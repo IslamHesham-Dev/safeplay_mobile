@@ -293,10 +293,9 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   }
 
   void _handleScroll() {
-    if (!_scrollController.hasClients) return;
-    final newOffset = _scrollController.offset.clamp(0, 160).toDouble();
-    if (newOffset != _scrollOffset) {
-      setState(() => _scrollOffset = newOffset);
+    // Keep the avatar and coin banner static by ignoring scroll offset changes.
+    if (_scrollOffset != 0) {
+      setState(() => _scrollOffset = 0);
     }
   }
 
