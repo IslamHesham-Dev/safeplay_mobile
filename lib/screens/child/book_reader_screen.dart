@@ -35,10 +35,6 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
     _loadPdf();
   }
 
-  void _popWithCompletion([bool completed = true]) {
-    Navigator.of(context).pop(completed);
-  }
-
   Future<void> _loadPdf() async {
     try {
       // Load PDF from assets and copy to local file system
@@ -71,100 +67,92 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        final completed = _error == null && _localPath != null;
-        _popWithCompletion(completed);
-        return false;
-      },
-      child: Scaffold(
-        backgroundColor: JuniorTheme.backgroundLight,
-        appBar: AppBar(
-          title: Text(
-            widget.book.title,
-            style: JuniorTheme.headingSmall,
-          ),
-          backgroundColor: JuniorTheme.primaryBlue,
-          foregroundColor: Colors.white,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () =>
-                _popWithCompletion(_error == null && _localPath != null),
-          ),
-          actions: [
-            if (_totalPages > 0)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    '$_currentPage / $_totalPages',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+    return Scaffold(
+      backgroundColor: JuniorTheme.backgroundLight,
+      appBar: AppBar(
+        title: Text(
+          widget.book.title,
+          style: JuniorTheme.headingSmall,
+        ),
+        backgroundColor: JuniorTheme.primaryBlue,
+        foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        actions: [
+          if (_totalPages > 0)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  '$_currentPage / $_totalPages',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-          ],
-        ),
-        body: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(),
-              )
-            : _error != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: Colors.red,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          _error!,
-                          style: JuniorTheme.bodyMedium,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () => _popWithCompletion(false),
-                          child: const Text('Go Back'),
-                        ),
-                      ],
-                    ),
-                  )
-                : _localPath != null
-                    ? PDFView(
-                        filePath: _localPath!,
-                        enableSwipe: true,
-                        swipeHorizontal: true, // Enable horizontal swiping
-                        autoSpacing: false,
-                        pageFling: true, // Enable page fling gesture
-                        onRender: (pages) {
-                          if (mounted) {
-                            setState(() {
-                              _totalPages = pages ?? 0;
-                            });
-                          }
-                        },
-                        onPageChanged: (page, total) {
-                          if (mounted) {
-                            setState(() {
-                              _currentPage = page ?? 1;
-                              _totalPages = total ?? 0;
-                            });
-                          }
-                        },
-                        onViewCreated: (PDFViewController controller) {
-                          _pdfViewController = controller;
-                        },
-                      )
-                    : const Center(
-                        child: Text('No PDF loaded'),
-                      ),
+            ),
+        ],
       ),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : _error != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: Colors.red,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        _error!,
+                        style: JuniorTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Go Back'),
+                      ),
+                    ],
+                  ),
+                )
+              : _localPath != null
+                  ? PDFView(
+                      filePath: _localPath!,
+                      enableSwipe: true,
+                      swipeHorizontal: true, // Enable horizontal swiping
+                      autoSpacing: false,
+                      pageFling: true, // Enable page fling gesture
+                      onRender: (pages) {
+                        if (mounted) {
+                          setState(() {
+                            _totalPages = pages ?? 0;
+                          });
+                        }
+                      },
+                      onPageChanged: (page, total) {
+                        if (mounted) {
+                          setState(() {
+                            _currentPage = page ?? 1;
+                            _totalPages = total ?? 0;
+                          });
+                        }
+                      },
+                      onViewCreated: (PDFViewController controller) {
+                        _pdfViewController = controller;
+                      },
+                    )
+                  : const Center(
+                      child: Text('No PDF loaded'),
+                    ),
     );
   }
 }

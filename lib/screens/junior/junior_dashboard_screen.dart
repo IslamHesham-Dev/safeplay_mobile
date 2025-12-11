@@ -80,13 +80,6 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   bool _screenLimitDialogShown = false;
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0.0;
-  static const int _interactiveTodoGoal = 2;
-  static const int _simulationTodoGoal = 2;
-  static const int _bookTodoGoal = 1;
-  static const int _bookRewardMinutes = 5;
-  int _interactiveTodoCount = 0;
-  int _simulationTodoCount = 0;
-  int _bookTodoCount = 0;
   List<Book> _books = [];
   final BookService _bookService = BookService();
   List<WebGame> _scienceWebGames = [];
@@ -276,7 +269,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   }
 
   void _handleScroll() {
-    // Keep hero header static while allowing body to scroll normally.
+    // Keep the avatar and coin banner static by ignoring scroll offset changes.
     if (_scrollOffset != 0) {
       setState(() => _scrollOffset = 0);
     }
@@ -288,26 +281,6 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     if (progress >= 1) return 1;
     return progress;
   }
-
-  void _incrementInteractiveTodo() {
-    if (_interactiveTodoCount >= _interactiveTodoGoal) return;
-    setState(() => _interactiveTodoCount++);
-  }
-
-  void _incrementSimulationTodo() {
-    if (_simulationTodoCount >= _simulationTodoGoal) return;
-    setState(() => _simulationTodoCount++);
-  }
-
-  void _incrementBookTodo() {
-    if (_bookTodoCount >= _bookTodoGoal) return;
-    setState(() => _bookTodoCount++);
-  }
-
-  bool get _areTodosComplete =>
-      _interactiveTodoCount >= _interactiveTodoGoal &&
-      _simulationTodoCount >= _simulationTodoGoal &&
-      _bookTodoCount >= _bookTodoGoal;
 
   ChildrenProgress _progressOrPlaceholder() {
     if (_childProgress != null) {
@@ -357,7 +330,6 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   Future<void> _applyMinutesReward({
     required int minutes,
     required String sourceTitle,
-    VoidCallback? onRewarded,
   }) async {
     if (minutes <= 0) return;
     final rewardPoints = minutes * 2;
@@ -373,9 +345,6 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     });
 
     await _playRewardSound();
-    if (onRewarded != null) {
-      onRewarded();
-    }
     debugPrint(
         'Reward applied from $sourceTitle: +$rewardPoints coins (minutes: $minutes)');
     await _recordScreenTimeUsage(minutes);
@@ -396,7 +365,6 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
       await _applyMinutesReward(
         minutes: game.estimatedMinutes,
         sourceTitle: game.title,
-        onRewarded: _incrementInteractiveTodo,
       );
     }
   }
@@ -1036,56 +1004,19 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
   }
 
   Widget _buildDailyTasksProgress() {
-    final completedCount =
-        math.min(_interactiveTodoCount, _interactiveTodoGoal).toInt() +
-            math.min(_simulationTodoCount, _simulationTodoGoal).toInt() +
-            math.min(_bookTodoCount, _bookTodoGoal).toInt();
-    final totalCount =
-        _interactiveTodoGoal + _simulationTodoGoal + _bookTodoGoal;
+    final completedCount = _completedTasks.length;
+    final totalCount = _todaysTasks.length;
 
     return JuniorDailyTasksProgressBar(
-      key: const ValueKey('junior_today_adventures_bar'),
       completedTasks: completedCount,
       totalTasks: totalCount,
       label: 'Today\'s Adventures',
-      showStatusMessages: false,
-    );
-  }
-
-  Widget _buildAdventureTodoBars() {
-    return Column(
-      key: const ValueKey('junior_todo_bars'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        JuniorDailyTasksProgressBar(
-          key: const ValueKey('junior_todo_interactive'),
-          completedTasks: _interactiveTodoCount,
-          totalTasks: _interactiveTodoGoal,
-          label: 'Play 2 interactive games',
-          showStatusMessages: false,
-        ),
-        const SizedBox(height: JuniorTheme.spacingSmall),
-        JuniorDailyTasksProgressBar(
-          key: const ValueKey('junior_todo_simulation'),
-          completedTasks: _simulationTodoCount,
-          totalTasks: _simulationTodoGoal,
-          label: 'Play 2 simulation games',
-          showStatusMessages: false,
-        ),
-        const SizedBox(height: JuniorTheme.spacingSmall),
-        JuniorDailyTasksProgressBar(
-          key: const ValueKey('junior_todo_book'),
-          completedTasks: _bookTodoCount,
-          totalTasks: _bookTodoGoal,
-          label: 'Read a book',
-          showStatusMessages: false,
-        ),
-      ],
     );
   }
 
   Widget _buildTodaysTasksSection() {
-    debugPrint('dY"< _buildTodaysTasksSection: _availableTasks=${_availableTasks.length}, _completedTasks=${_completedTasks.length}');
+    debugPrint(
+        '📋 _buildTodaysTasksSection: _availableTasks=${_availableTasks.length}, _completedTasks=${_completedTasks.length}');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1095,19 +1026,14 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
           style: JuniorTheme.headingMedium,
         ),
         const SizedBox(height: JuniorTheme.spacingMedium),
-        if (!_areTodosComplete) ...[
-          _buildAdventureTodoBars(),
-          const SizedBox(height: JuniorTheme.spacingMedium),
-          if (_availableTasks.isEmpty && _completedTasks.isEmpty)
-            _buildNoTasksMessage()
-          else
-            _buildTasksList(),
-        ] else ...[
-          _buildNoTasksMessage(),
-        ],
+        if (_availableTasks.isEmpty && _completedTasks.isEmpty)
+          _buildNoTasksMessage()
+        else
+          _buildTasksList(),
       ],
     );
   }
+
   Future<void> _loadBooks() async {
     try {
       final books = await _bookService.getBooks();
@@ -1208,18 +1134,11 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
                     child: BookCard(
                       book: book,
                       onTap: () async {
-                        final result = await _pushWithMusicResume<bool>(
+                        await _pushWithMusicResume(
                           MaterialPageRoute(
                             builder: (context) => BookReaderScreen(book: book),
                           ),
                         );
-                        if (result == true) {
-                          await _applyMinutesReward(
-                            minutes: _bookRewardMinutes,
-                            sourceTitle: 'Reading ${book.title}',
-                            onRewarded: _incrementBookTodo,
-                          );
-                        }
                       },
                     ),
                   ),
@@ -2286,10 +2205,7 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     await _gameLauncher.launchGame(
       context: context,
       lesson: task,
-      onGameClosed: () async {
-        await _resumeBackgroundMusicIfNeeded();
-        _incrementInteractiveTodo();
-      },
+      onGameClosed: _resumeBackgroundMusicIfNeeded,
     );
   }
 

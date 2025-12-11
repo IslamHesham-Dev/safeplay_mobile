@@ -254,14 +254,12 @@ class JuniorDailyTasksProgressBar extends StatelessWidget {
   final int completedTasks;
   final int totalTasks;
   final String? label;
-  final bool showStatusMessages;
 
   const JuniorDailyTasksProgressBar({
     super.key,
     required this.completedTasks,
     required this.totalTasks,
     this.label,
-    this.showStatusMessages = true,
   });
 
   @override
@@ -333,15 +331,13 @@ class JuniorDailyTasksProgressBar extends StatelessWidget {
             animated: true,
           ),
 
-          if (showStatusMessages) ...[
-            // Motivational message
-            if (progress >= 1.0) ...[
-              const SizedBox(height: JuniorTheme.spacingSmall),
-              _buildCompletionMessage(),
-            ] else if (progress > 0) ...[
-              const SizedBox(height: JuniorTheme.spacingSmall),
-              _buildProgressMessage(),
-            ],
+          // Motivational message
+          if (progress >= 1.0) ...[
+            const SizedBox(height: JuniorTheme.spacingSmall),
+            _buildCompletionMessage(),
+          ] else if (progress > 0) ...[
+            const SizedBox(height: JuniorTheme.spacingSmall),
+            _buildProgressMessage(),
           ],
         ],
       ),

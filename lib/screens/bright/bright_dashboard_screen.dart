@@ -92,13 +92,6 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   bool _screenLimitDialogShown = false;
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0.0;
-  static const int _interactiveTodoGoal = 2;
-  static const int _simulationTodoGoal = 2;
-  static const int _bookTodoGoal = 1;
-  static const int _bookRewardMinutes = 5;
-  int _interactiveTodoCount = 0;
-  int _simulationTodoCount = 0;
-  int _bookTodoCount = 0;
 
   // Audio player for background music
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -300,7 +293,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   }
 
   void _handleScroll() {
-    // Keep hero header static while allowing body to scroll normally.
+    // Keep the avatar and coin banner static by ignoring scroll offset changes.
     if (_scrollOffset != 0) {
       setState(() => _scrollOffset = 0);
     }
@@ -312,26 +305,6 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     if (progress >= 1) return 1;
     return progress;
   }
-
-  void _incrementInteractiveTodo() {
-    if (_interactiveTodoCount >= _interactiveTodoGoal) return;
-    setState(() => _interactiveTodoCount++);
-  }
-
-  void _incrementSimulationTodo() {
-    if (_simulationTodoCount >= _simulationTodoGoal) return;
-    setState(() => _simulationTodoCount++);
-  }
-
-  void _incrementBookTodo() {
-    if (_bookTodoCount >= _bookTodoGoal) return;
-    setState(() => _bookTodoCount++);
-  }
-
-  bool get _areTodosComplete =>
-      _interactiveTodoCount >= _interactiveTodoGoal &&
-      _simulationTodoCount >= _simulationTodoGoal &&
-      _bookTodoCount >= _bookTodoGoal;
 
   ChildrenProgress _progressOrPlaceholder() {
     if (_childProgress != null) {
@@ -381,7 +354,6 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   Future<void> _applyMinutesReward({
     required int minutes,
     required String sourceTitle,
-    VoidCallback? onRewarded,
   }) async {
     if (minutes <= 0) return;
     final rewardPoints = minutes * 2;
@@ -397,9 +369,6 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     });
 
     await _playRewardSound();
-    if (onRewarded != null) {
-      onRewarded();
-    }
     debugPrint(
         'Bright reward applied from $sourceTitle: +$rewardPoints coins (minutes: $minutes)');
     await _recordScreenTimeUsage(minutes);
@@ -425,7 +394,6 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
       await _applyMinutesReward(
         minutes: game.estimatedMinutes,
         sourceTitle: game.title,
-        onRewarded: _incrementInteractiveTodo,
       );
     }
   }
@@ -456,7 +424,6 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
       await _applyMinutesReward(
         minutes: simulation.estimatedMinutes,
         sourceTitle: simulation.title,
-        onRewarded: _incrementSimulationTodo,
       );
     }
   }
@@ -1078,57 +1045,19 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   }
 
   Widget _buildDailyTasksProgress() {
-    final completedCount =
-        math.min(_interactiveTodoCount, _interactiveTodoGoal).toInt() +
-            math.min(_simulationTodoCount, _simulationTodoGoal).toInt() +
-            math.min(_bookTodoCount, _bookTodoGoal).toInt();
-    final totalCount =
-        _interactiveTodoGoal + _simulationTodoGoal + _bookTodoGoal;
+    final completedCount = _completedTasks.length;
+    final totalCount = _todaysTasks.length;
 
     return JuniorDailyTasksProgressBar(
-      key: const ValueKey('bright_today_adventures_bar'),
       completedTasks: completedCount,
       totalTasks: totalCount,
       label: 'Today\'s Adventures',
-      showStatusMessages: false,
-    );
-  }
-
-  Widget _buildAdventureTodoBars() {
-    return Column(
-      key: const ValueKey('bright_todo_bars'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        JuniorDailyTasksProgressBar(
-          key: const ValueKey('bright_todo_interactive'),
-          completedTasks: _interactiveTodoCount,
-          totalTasks: _interactiveTodoGoal,
-          label: 'Play 2 interactive games',
-          showStatusMessages: false,
-        ),
-        const SizedBox(height: JuniorTheme.spacingSmall),
-        JuniorDailyTasksProgressBar(
-          key: const ValueKey('bright_todo_simulation'),
-          completedTasks: _simulationTodoCount,
-          totalTasks: _simulationTodoGoal,
-          label: 'Play 2 simulation games',
-          showStatusMessages: false,
-        ),
-        const SizedBox(height: JuniorTheme.spacingSmall),
-        JuniorDailyTasksProgressBar(
-          key: const ValueKey('bright_todo_book'),
-          completedTasks: _bookTodoCount,
-          totalTasks: _bookTodoGoal,
-          label: 'Read a book',
-          showStatusMessages: false,
-        ),
-      ],
     );
   }
 
   Widget _buildTodaysTasksSection() {
     debugPrint(
-        'A??,??o??1 _buildTodaysTasksSection: _availableTasks=${_availableTasks.length}, _completedTasks=${_completedTasks.length}');
+        'ðŸ“‹ _buildTodaysTasksSection: _availableTasks=${_availableTasks.length}, _completedTasks=${_completedTasks.length}');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1138,16 +1067,10 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
           style: JuniorTheme.headingMedium,
         ),
         const SizedBox(height: JuniorTheme.spacingMedium),
-        if (!_areTodosComplete) ...[
-          _buildAdventureTodoBars(),
-          const SizedBox(height: JuniorTheme.spacingMedium),
-          if (_availableTasks.isEmpty && _completedTasks.isEmpty)
-            _buildNoTasksMessage()
-          else
-            _buildTasksList(),
-        ] else ...[
-          _buildNoTasksMessage(),
-        ],
+        if (_availableTasks.isEmpty && _completedTasks.isEmpty)
+          _buildNoTasksMessage()
+        else
+          _buildTasksList(),
       ],
     );
   }
@@ -1168,9 +1091,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   Future<void> _loadScienceSimulations() async {
     try {
       final simulations = await _simulationService.getSimulations(
-        ageGroup: 'bright',
-        subject: 'science',
-      );
+          ageGroup: 'bright', subject: 'science');
       if (mounted) {
         setState(() {
           _scienceSimulations = simulations;
@@ -1184,9 +1105,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   Future<void> _loadMathSimulations() async {
     try {
       final simulations = await _simulationService.getSimulations(
-        ageGroup: 'bright',
-        subject: 'math',
-      );
+          ageGroup: 'bright', subject: 'math');
       if (mounted) {
         setState(() {
           _mathSimulations = simulations;
@@ -1199,8 +1118,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
 
   Future<void> _loadScienceWebGames() async {
     try {
-      final games =
-          await _webGameService.getWebGames(ageGroup: 'bright', subject: 'science');
+      final games = await _webGameService.getWebGames(
+          ageGroup: 'bright', subject: 'science');
       if (mounted) {
         setState(() {
           _scienceWebGames = games;
@@ -1213,8 +1132,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
 
   Future<void> _loadMathWebGames() async {
     try {
-      final games =
-          await _webGameService.getWebGames(ageGroup: 'bright', subject: 'math');
+      final games = await _webGameService.getWebGames(
+          ageGroup: 'bright', subject: 'math');
       if (mounted) {
         setState(() {
           _mathWebGames = games;
@@ -1227,8 +1146,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
 
   Future<void> _loadEnglishWebGames() async {
     try {
-      final games =
-          await _webGameService.getWebGames(ageGroup: 'bright', subject: 'english');
+      final games = await _webGameService.getWebGames(
+          ageGroup: 'bright', subject: 'english');
       if (mounted) {
         setState(() {
           _englishWebGames = games;
@@ -1238,6 +1157,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
       debugPrint('Error loading english web games: $e');
     }
   }
+
   Widget _buildBooksSection() {
     final childName = _currentChild?.name ?? 'Student';
 
@@ -1283,18 +1203,11 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                     child: BookCard(
                       book: book,
                       onTap: () async {
-                        final result = await _pushWithMusicResume<bool>(
+                        await _pushWithMusicResume(
                           MaterialPageRoute(
                             builder: (context) => BookReaderScreen(book: book),
                           ),
                         );
-                        if (result == true) {
-                          await _applyMinutesReward(
-                            minutes: _bookRewardMinutes,
-                            sourceTitle: 'Reading ${book.title}',
-                            onRewarded: _incrementBookTodo,
-                          );
-                        }
                       },
                     ),
                   ),
@@ -2487,10 +2400,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     await _gameLauncher.launchGame(
       context: context,
       lesson: task,
-      onGameClosed: () async {
-        await _resumeBackgroundMusicIfNeeded();
-        _incrementInteractiveTodo();
-      },
+      onGameClosed: _resumeBackgroundMusicIfNeeded,
     );
   }
 
