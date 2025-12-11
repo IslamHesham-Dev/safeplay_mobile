@@ -13,6 +13,7 @@ import '../../models/browser_activity_insight.dart';
 import '../../models/browser_control_settings.dart';
 import '../../models/chat_safety_alert.dart';
 import '../../models/wellbeing_entry.dart';
+import '../../models/wellbeing_insight.dart';
 import '../../models/user_profile.dart';
 import '../../models/user_type.dart';
 import '../../providers/activity_provider.dart';
@@ -151,6 +152,12 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       final wellbeingProvider = _wellbeingProvider;
       if (wellbeingProvider != null) {
         unawaited(wellbeingProvider.loadEntries(selected.id));
+        unawaited(
+          wellbeingProvider.loadInsights(
+            selected.id,
+            selected.name,
+          ),
+        );
       }
       final screenProvider = _screenTimeProvider;
       if (screenProvider != null) {
@@ -2778,6 +2785,113 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
+  _WellbeingInsightItem _mapWellbeingInsight(WellbeingInsight insight) {
+    final tone = insight.tone.toLowerCase();
+    Color color = SafePlayColors.brandTeal500;
+    IconData icon = Icons.favorite_rounded;
+
+    if (tone.contains('caution')) {
+      color = SafePlayColors.warning;
+      icon = Icons.flag_rounded;
+    } else if (tone.contains('positive')) {
+      color = SafePlayColors.success;
+      icon = Icons.emoji_emotions_rounded;
+    } else if (tone.contains('support')) {
+      color = SafePlayColors.brandTeal500;
+      icon = Icons.volunteer_activism_rounded;
+    } else {
+      color = SafePlayColors.neutral600;
+      icon = Icons.insights_rounded;
+    }
+
+    return _WellbeingInsightItem(
+      icon: icon,
+      color: color,
+      summary: insight.summary,
+      category: insight.category,
+      timeframe: insight.timeframe.isEmpty
+          ? 'Recent check-ins'
+          : insight.timeframe,
+    );
+  }
+
+  Widget _buildWellbeingInsightItem(_WellbeingInsightItem item) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: item.color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: item.color.withOpacity(0.15),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: item.color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              item.icon,
+              color: item.color,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.summary,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: item.color.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        item.category,
+                        style: TextStyle(
+                          color: item.color,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      item.timeframe,
+                      style: TextStyle(
+                        color: SafePlayColors.neutral500,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showAddKeywordDialog(
     String childId,
     BrowserControlProvider browserProvider,
@@ -2898,6 +3012,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     Future<void> refresh() async {
       if (selectedChild != null) {
         await wellbeingProvider.loadEntries(selectedChild.id);
+        await wellbeingProvider.loadInsights(
+          selectedChild.id,
+          selectedChild.name,
+        );
       }
     }
 
@@ -2976,6 +3094,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                       _buildRecentCheckinsCard(
                         recentEntries,
                         isLoading,
+                      ),
+                      const SizedBox(height: 20),
+                      _buildWellbeingAiReportCard(
+                        selectedChild,
+                        wellbeingProvider,
                       ),
                       const SizedBox(height: 20),
                       _buildWellbeingPrivacyNote(),
@@ -3155,6 +3278,149 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   style: TextStyle(
                     color: moodDefinition.color.withOpacity(0.7),
                     fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWellbeingAiReportCard(
+    ChildProfile child,
+    WellbeingProvider wellbeingProvider,
+  ) {
+    final insights = wellbeingProvider.insightsForChild(child.id);
+    final isLoading = wellbeingProvider.isInsightsLoading(child.id);
+    final error = wellbeingProvider.insightErrorFor(child.id);
+    final items = insights.map(_mapWellbeingInsight).toList();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: SafePlayColors.brandTeal500.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.psychology_rounded,
+                  color: SafePlayColors.brandTeal500,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'AI wellbeing report',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh_rounded),
+                onPressed: isLoading
+                    ? null
+                    : () => unawaited(
+                          wellbeingProvider.loadInsights(
+                            child.id,
+                            child.name,
+                          ),
+                        ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Private-friendly summary of recent feelings to guide your check-ins.',
+            style: TextStyle(
+              color: SafePlayColors.neutral600,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (isLoading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: CircularProgressIndicator(strokeWidth: 2.5),
+              ),
+            )
+          else if (error != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: SafePlayColors.error.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: SafePlayColors.error.withOpacity(0.2),
+                ),
+              ),
+              child: Text(
+                'Could not refresh the AI report: $error',
+                style: TextStyle(
+                  color: SafePlayColors.error.withOpacity(0.9),
+                  fontSize: 13,
+                ),
+              ),
+            )
+          else if (items.isEmpty)
+            Text(
+              '${child.name} has not completed enough wellbeing check-ins for an AI summary yet.',
+              style: TextStyle(
+                color: SafePlayColors.neutral600,
+                height: 1.4,
+              ),
+            )
+          else
+            ...items.map(_buildWellbeingInsightItem),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: SafePlayColors.neutral50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: SafePlayColors.neutral200,
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.shield_moon_rounded,
+                  color: SafePlayColors.neutral600,
+                  size: 18,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Summaries stay abstract (no raw notes) and are meant to support gentle conversations.',
+                    style: TextStyle(
+                      color: SafePlayColors.neutral600,
+                      fontSize: 12,
+                      height: 1.4,
+                    ),
                   ),
                 ),
               ],
@@ -4930,6 +5196,22 @@ class _BrowserActivityItem {
     required this.summary,
     required this.category,
     required this.timeAgo,
+  });
+}
+
+class _WellbeingInsightItem {
+  final IconData icon;
+  final Color color;
+  final String summary;
+  final String category;
+  final String timeframe;
+
+  _WellbeingInsightItem({
+    required this.icon,
+    required this.color,
+    required this.summary,
+    required this.category,
+    required this.timeframe,
   });
 }
 
