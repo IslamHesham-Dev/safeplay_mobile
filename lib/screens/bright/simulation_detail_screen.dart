@@ -813,75 +813,97 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
 
 
   Widget _buildFullscreenView() {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: InAppWebView(
-              initialUrlRequest: URLRequest(
-                url: WebUri(widget.simulation.iframeUrl),
-              ),
-              initialSettings: InAppWebViewSettings(
-                javaScriptEnabled: true,
-                mediaPlaybackRequiresUserGesture: false,
-                allowsInlineMediaPlayback: true,
-                useHybridComposition: true,
-                mixedContentMode: MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW,
-                domStorageEnabled: true,
-                databaseEnabled: true,
-                transparentBackground: true,
-                supportZoom: true,
-                builtInZoomControls: true,
-                displayZoomControls: false,
-              ),
-              onLoadStop: (controller, _) {},
-            ),
-          ),
-          if (_showInitialOverlay)
-            Positioned.fill(
-              child: Container(color: Colors.black),
-            ),
-          Positioned(
-            bottom: 0,
-            right: 0,
-            width: MediaQuery.of(context).size.width * 0.3,
-            height: MediaQuery.of(context).size.height * 0.08,
-            child: IgnorePointer(
-              child: Container(
-                color: widget.simulation.id == 'states-of-matter'
-                    ? Colors.white
-                    : Colors.black,
-              ),
-            ),
-          ),
-          Positioned(
-            top: 16,
-            left: 16,
-            child: SafeArea(
-              child: Material(
-                color: Colors.black.withValues(alpha: 0.6),
-                shape: const CircleBorder(),
-                child: InkWell(
-                  customBorder: const CircleBorder(),
-                  onTap: () {
-                    _cancelPostStartVoiceovers();
-                    // Return true if game was played (they entered fullscreen)
-                    Navigator.of(context).pop(_gameWasPlayed);
-                  },
-                  child: const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 28,
+    final mediaQuery = MediaQuery.of(context);
+    final originalPadding = mediaQuery.viewPadding;
+
+    return MediaQuery(
+      data: mediaQuery.copyWith(
+        padding: EdgeInsets.zero,
+        viewPadding: EdgeInsets.zero,
+        viewInsets: EdgeInsets.zero,
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final height = constraints.maxHeight + originalPadding.vertical;
+            final width = constraints.maxWidth + originalPadding.horizontal;
+
+            return SizedBox(
+              height: height,
+              width: width,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Positioned.fill(
+                    child: InAppWebView(
+                      initialUrlRequest: URLRequest(
+                        url: WebUri(widget.simulation.iframeUrl),
+                      ),
+                      initialSettings: InAppWebViewSettings(
+                        javaScriptEnabled: true,
+                        mediaPlaybackRequiresUserGesture: false,
+                        allowsInlineMediaPlayback: true,
+                        useHybridComposition: true,
+                        mixedContentMode: MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW,
+                        domStorageEnabled: true,
+                        databaseEnabled: true,
+                        transparentBackground: true,
+                        supportZoom: true,
+                        builtInZoomControls: true,
+                        displayZoomControls: false,
+                      ),
+                      onLoadStop: (controller, _) {},
                     ),
                   ),
-                ),
+                  if (_showInitialOverlay)
+                    Positioned.fill(
+                      child: Container(color: Colors.black),
+                    ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    width: width * 0.3,
+                    height: height * 0.08,
+                    child: IgnorePointer(
+                      child: Container(
+                        color: widget.simulation.id == 'states-of-matter'
+                            ? Colors.white
+                            : Colors.black,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: originalPadding.top + 16,
+                    left: 16,
+                    child: SafeArea(
+                      child: Material(
+                        color: Colors.black.withValues(alpha: 0.6),
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: () {
+                            _cancelPostStartVoiceovers();
+                            // Return true if game was played (they entered fullscreen)
+                            Navigator.of(context).pop(_gameWasPlayed);
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ),
-        ],
+            );
+          },
+        ),
       ),
     );
   }

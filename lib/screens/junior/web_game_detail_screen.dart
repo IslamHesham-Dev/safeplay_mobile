@@ -114,13 +114,17 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
       },
       child: Scaffold(
         backgroundColor: Colors.black,
-        body: _buildFullscreenMode(safeTop, screenHeight),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            // Return true if game was played (they entered fullscreen)
-            Navigator.of(context).pop(_gameWasPlayed);
-          },
-                child: const Icon(Icons.fullscreen_exit),
+        body: _buildFullscreenMode(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        floatingActionButton: Padding(
+          padding: EdgeInsets.only(bottom: mediaQuery.viewPadding.bottom),
+          child: FloatingActionButton(
+            onPressed: () {
+              // Return true if game was played (they entered fullscreen)
+              Navigator.of(context).pop(_gameWasPlayed);
+            },
+            child: const Icon(Icons.fullscreen_exit),
+          ),
         ),
       ),
     );
@@ -621,26 +625,47 @@ class _WebGameDetailScreenState extends State<WebGameDetailScreen> {
     );
   }
 
-  Widget _buildFullscreenMode(double safeTop, double screenHeight) {
-    return Stack(
-      children: [
-        _buildGameOverlay(
-          previewHeight: screenHeight,
-          safeTop: safeTop,
-          screenHeight: screenHeight,
-        ),
-        Positioned(
-          top: 16,
-          left: 16,
-          child: _buildBackOrExitButton(),
-        ),
-      ],
+  Widget _buildFullscreenMode() {
+    final mediaQuery = MediaQuery.of(context);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final viewPadding = mediaQuery.viewPadding;
+        final fullHeight = constraints.maxHeight + viewPadding.vertical;
+        final fullWidth = constraints.maxWidth + viewPadding.horizontal;
+        final topOffset = viewPadding.top;
+
+        return MediaQuery(
+          data: mediaQuery.copyWith(
+            padding: EdgeInsets.zero,
+            viewPadding: EdgeInsets.zero,
+            viewInsets: EdgeInsets.zero,
+          ),
+          child: SizedBox(
+            height: fullHeight,
+            width: fullWidth,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                _buildGameOverlay(
+                  previewHeight: fullHeight,
+                  screenHeight: fullHeight,
+                ),
+                Positioned(
+                  top: topOffset + 16,
+                  left: 16,
+                  child: _buildBackOrExitButton(),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildGameOverlay({
     required double previewHeight,
-    required double safeTop,
     required double screenHeight,
   }) {
     final colorValue =
