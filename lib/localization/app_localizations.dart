@@ -487,6 +487,8 @@ class AppLocalizations {
       'browser.using_defaults':
           'Using SafePlay defaults until the first cloud sync completes.',
       'browser.summary_hint':
+          'High-level summary of recent online activity. Privacy-focused insights.',
+      'browser.history_hint':
           "High-level summary of {name}'s online activity. Privacy-focused insights.",
       'browser.sync_never': 'Never synced yet',
       'browser.sync_just_now': 'Last synced just now',
@@ -1070,6 +1072,8 @@ class AppLocalizations {
       'browser.using_defaults':
           'يتم استخدام إعدادات سيف بلاي الافتراضية حتى يكتمل التزامن السحابي الأول.',
       'browser.summary_hint':
+          'ملخص عام للنشاط الإلكتروني الأخير مع الحفاظ على الخصوصية.',
+      'browser.history_hint':
           'ملخص عام لنشاط {name} الإلكتروني مع الحفاظ على الخصوصية.',
       'browser.sync_never': 'لم تتم المزامنة بعد',
       'browser.sync_just_now': 'آخر مزامنة للتو',

@@ -25,4 +25,9 @@ class LocaleProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kLocalePrefKey, locale.languageCode);
   }
+
+  Future<void> toggleLocale() async {
+    final nextCode = _locale.languageCode == 'en' ? 'ar' : 'en';
+    await setLocale(Locale(nextCode));
+  }
 }

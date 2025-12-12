@@ -196,11 +196,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined),
+            icon: const Icon(Icons.language_outlined),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Notifications coming soon')),
-              );
+              context.read<LocaleProvider>().toggleLocale();
             },
           ),
           const ParentSettingsMenu(),
@@ -2818,7 +2816,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           const SizedBox(height: 8),
           Text(
             loc
-                .t('browser.summary_hint')
+                .t('browser.history_hint')
                 .replaceFirst('{name}', child.name),
             style: TextStyle(
               color: SafePlayColors.neutral600,
