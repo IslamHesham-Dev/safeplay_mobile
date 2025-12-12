@@ -16,6 +16,7 @@ import '../../models/wellbeing_entry.dart';
 import '../../models/wellbeing_insight.dart';
 import '../../models/user_profile.dart';
 import '../../models/user_type.dart';
+import '../../models/game_activity.dart';
 import '../../providers/activity_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/activity_session_provider.dart';
@@ -906,11 +907,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                Text(
-                  context.loc.t('dashboard.recent_activities'),
-                  style:
-                      const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
+                    Text(
+                      context.loc.t('dashboard.recent_activities'),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
                     if (selectedChild != null)
                       Row(
                         children: [
@@ -1171,7 +1172,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                      context.loc.t('dashboard.enable_screen_time'),
+                        context.loc.t('dashboard.enable_screen_time'),
                         style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
@@ -1179,7 +1180,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                      context.loc.t('dashboard.auto_pause'),
+                        context.loc.t('dashboard.auto_pause'),
                         style: TextStyle(
                           color: SafePlayColors.neutral600,
                           fontSize: 12,
@@ -1458,15 +1459,15 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: controlsDisabled
-                          ? null
-                          : () {
-                              if (childId.isEmpty) return;
+                  child: OutlinedButton.icon(
+                    onPressed: controlsDisabled
+                        ? null
+                        : () {
+                            if (childId.isEmpty) return;
                             unawaited(
                               screenTimeProvider.unlockLimit(childId),
                             );
-                        },
+                          },
                     icon: const Icon(Icons.lock_open_rounded),
                     label: Text(context.loc.t('dashboard.unlock_today')),
                   ),
@@ -1693,38 +1694,20 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     BuildContext context,
     ActivitySessionEntry entry,
   ) {
-    final gameTranslations = {
-      'letter sound adventure': context.loc.t('game.letter_sound_adventure'),
-      'math maze': context.loc.t('game.math_maze'),
-      'science quiz': context.loc.t('game.science_quiz'),
-      'reading quest': context.loc.t('game.reading_quest'),
-      'shapes sorter': context.loc.t('game.shapes_sorter'),
-      'number grid race': context.loc.t('game.number_grid_race'),
-      'koala counter\'s adventure':
-          context.loc.t('game.koala_counter_adventure'),
-      'ordinal order challenge': context.loc.t('game.ordinal_order_challenge'),
-      'pattern builder': context.loc.t('game.pattern_builder'),
-      'bubblepop grammar': context.loc.t('game.bubblepop_grammar'),
-      'seashell quiz': context.loc.t('game.seashell_quiz'),
-      'fish tank quiz': context.loc.t('game.fish_tank_quiz'),
-      'add equations': context.loc.t('game.add_equations'),
-      'fraction navigator': context.loc.t('game.fraction_navigator'),
-      'inverse operation chain': context.loc.t('game.inverse_operation_chain'),
-      'data visualization lab': context.loc.t('game.data_visualization_lab'),
-      'cartesian grid explorer': context.loc.t('game.cartesian_grid_explorer'),
-      'memory match': context.loc.t('game.memory_match'),
-      'word builder': context.loc.t('game.word_builder'),
-      'story sequencer': context.loc.t('game.story_sequencer'),
-      'math adventures': context.loc.t('game.math_adventures'),
-      'reading adventures': context.loc.t('game.reading_adventures'),
-      'science adventures': context.loc.t('game.science_adventures'),
-    };
+    Activity? activity;
+    final activities = _activityProvider?.activities;
+    if (activities != null) {
+      for (final a in activities) {
+        if (a.id == entry.activityId) {
+          activity = a;
+          break;
+        }
+      }
+    }
     final subjectEnum = _mapRawSubjectToEnum(entry.subject);
     final subjectLabel =
         subjectEnum?.displayName ?? _formatSubjectLabel(context, entry.subject);
-    final normalizedTitle = entry.title.toLowerCase().trim();
-    final translatedTitle =
-        gameTranslations[normalizedTitle] ?? entry.title;
+    final translatedTitle = _translateActivityTitle(context, activity, entry);
     return _RecentActivityItem(
       title: translatedTitle,
       subjectLabel: subjectLabel,
@@ -1789,6 +1772,194 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     final normalized = raw.replaceAll(RegExp(r'[_\\-]+'), ' ').trim();
     if (normalized.isEmpty) return fallback;
     return normalized[0].toUpperCase() + normalized.substring(1);
+  }
+
+  String _translateGameTitle(BuildContext context, String rawTitle) {
+        var normalized = rawTitle.toLowerCase().trim();
+    normalized = normalized.replaceAll(RegExp(r"[\u2019\u00B4`']+"), "'");
+    normalized = normalized.replaceAll(RegExp(r"[!?.:]+$"), '');
+    normalized = normalized.replaceAll(RegExp(r"[^\p{L}\p{N}' ]+", unicode: true), ' ');
+    normalized = normalized.replaceAll(RegExp(r'\s+'), ' ');
+
+    final slugKey = 'game.' + normalized.replaceAll(' ', '_').replaceAll('-', '_');
+    final slugTranslation = context.loc.t(slugKey);
+    if (slugTranslation != slugKey) {
+      return slugTranslation;
+    }
+
+    final gameTranslations = {
+      'letter sound adventure': context.loc.t('game.letter_sound_adventure'),
+      'math maze': context.loc.t('game.math_maze'),
+      'science quiz': context.loc.t('game.science_quiz'),
+      'reading quest': context.loc.t('game.reading_quest'),
+      'shapes sorter': context.loc.t('game.shapes_sorter'),
+      'number grid race': context.loc.t('game.number_grid_race'),
+      "koala counter's adventure":
+          context.loc.t('game.koala_counter_adventure'),
+      'koala counter adventure': context.loc.t('game.koala_counter_adventure'),
+      'ordinal order challenge': context.loc.t('game.ordinal_order_challenge'),
+      'pattern builder': context.loc.t('game.pattern_builder'),
+      'bubblepop grammar': context.loc.t('game.bubblepop_grammar'),
+      'bubble pop grammar': context.loc.t('game.bubblepop_grammar'),
+      'seashell quiz': context.loc.t('game.seashell_quiz'),
+      'fish tank quiz': context.loc.t('game.fish_tank_quiz'),
+      'add equations': context.loc.t('game.add_equations'),
+      'fraction navigator': context.loc.t('game.fraction_navigator'),
+      'inverse operation chain': context.loc.t('game.inverse_operation_chain'),
+      'data visualization lab': context.loc.t('game.data_visualization_lab'),
+      'cartesian grid explorer': context.loc.t('game.cartesian_grid_explorer'),
+      'memory match': context.loc.t('game.memory_match'),
+      'word builder': context.loc.t('game.word_builder'),
+      'story sequencer': context.loc.t('game.story_sequencer'),
+      'math adventures': context.loc.t('game.math_adventures'),
+      'reading adventures': context.loc.t('game.reading_adventures'),
+      'science adventures': context.loc.t('game.science_adventures'),
+      'number hunt': context.loc.t('game.number_hunt'),
+      'koala jumps': context.loc.t('game.koala_jumps'),
+      'pattern wizard': context.loc.t('game.pattern_wizard'),
+      'equality explorer basics':
+          context.loc.t('game.equality_explorer_basics'),
+      'area model introduction': context.loc.t('game.area_model_introduction'),
+      'mean share and balance': context.loc.t('game.mean_share_balance'),
+      'balancing act': context.loc.t('game.balancing_act'),
+      'states of matter simulation':
+          context.loc.t('game.states_of_matter_simulation'),
+      'balloons static electricity':
+          context.loc.t('game.balloons_static_electricity'),
+      'exploring density': context.loc.t('game.exploring_density'),
+      'food chains': context.loc.t('game.food_chains'),
+      'microorganisms': context.loc.t('game.microorganisms'),
+      'human body health growth':
+          context.loc.t('game.human_body_health_growth'),
+      'teeth eating': context.loc.t('game.teeth_eating'),
+      'plants animals': context.loc.t('game.plants_animals'),
+      'keeping healthy': context.loc.t('game.keeping_healthy'),
+      'how plants grow': context.loc.t('game.how_plants_grow'),
+      'skeleton bones': context.loc.t('game.skeleton_bones'),
+      'plant animal differences':
+          context.loc.t('game.plant_animal_differences'),
+      'life cycle of a plant': context.loc.t('game.life_cycle_plant'),
+      'electricity circuits': context.loc.t('game.electricity_circuits'),
+      'forces in action': context.loc.t('game.forces_in_action'),
+      'how we see': context.loc.t('game.how_we_see'),
+      'earth sun moon': context.loc.t('game.earth_sun_moon'),
+      'circuits conductors': context.loc.t('game.circuits_conductors'),
+      'magnets springs': context.loc.t('game.magnets_springs'),
+      'sun light shadows': context.loc.t('game.sun_light_shadows'),
+      'changing sounds': context.loc.t('game.changing_sounds'),
+      'friction': context.loc.t('game.friction'),
+      'light dark': context.loc.t('game.light_dark'),
+      'changing state of water': context.loc.t('game.changing_state_water'),
+      'reversible changes': context.loc.t('game.reversible_changes'),
+      'properties of materials': context.loc.t('game.properties_materials'),
+      'rocks minerals soils': context.loc.t('game.rocks_minerals_soils'),
+      'melting points': context.loc.t('game.melting_points'),
+      'solids liquids and gases': context.loc.t('game.solids_liquids_gases'),
+      'heat transfer': context.loc.t('game.heat_transfer'),
+      'addition game for kids': context.loc.t('game.addition_kids'),
+      'subtraction game for kids': context.loc.t('game.subtraction_kids'),
+      'multiplication game for kids': context.loc.t('game.multiplication_kids'),
+      'division game for kids': context.loc.t('game.division_kids'),
+      'shapes game for kids': context.loc.t('game.shapes_kids'),
+      'angles game for kids': context.loc.t('game.angles_kids'),
+      'measurements game for kids': context.loc.t('game.measurements_kids'),
+      'grids coordinates game': context.loc.t('game.grids_coordinates_kids'),
+      'transformation game for kids': context.loc.t('game.transformation_kids'),
+      'fractions game for kids': context.loc.t('game.fractions_kids'),
+      'decimals game for kids': context.loc.t('game.decimals_kids'),
+      'number patterns game': context.loc.t('game.number_patterns_kids'),
+      'place values game for kids': context.loc.t('game.place_values_kids'),
+      'calculator game for kids': context.loc.t('game.calculator_kids'),
+      'money game for kids': context.loc.t('game.money_kids'),
+      'problem solving game for kids':
+          context.loc.t('game.problem_solving_kids'),
+      'probability game for kids': context.loc.t('game.probability_kids'),
+      'percentages game for kids': context.loc.t('game.percentages_kids'),
+      'mean median mode game': context.loc.t('game.mean_median_mode_kids'),
+      'frequency tables game': context.loc.t('game.frequency_tables_kids'),
+      'map routes directions game':
+          context.loc.t('game.map_routes_directions_kids'),
+      'poetry game for kids': context.loc.t('game.poetry_kids'),
+      'non fiction game for kids': context.loc.t('game.non_fiction_kids'),
+      'dictionary game for kids': context.loc.t('game.dictionary_kids'),
+      'punctuation games for kids': context.loc.t('game.punctuation_kids'),
+      'conjunction game for kids': context.loc.t('game.conjunction_kids'),
+      'prefix suffix game': context.loc.t('game.prefix_suffix_kids'),
+      'verb noun adjective game':
+          context.loc.t('game.verb_noun_adjective_kids'),
+      'debate game for kids': context.loc.t('game.debate_kids'),
+      'newspaper game for kids': context.loc.t('game.newspaper_kids'),
+      'advertising game': context.loc.t('game.advertising'),
+      'learn how to write a letter': context.loc.t('game.write_letter'),
+      'story writing game for kids': context.loc.t('game.story_writing_kids'),
+      'instructions game for kids': context.loc.t('game.instructions_kids'),
+      'fun crossword game for kids': context.loc.t('game.fun_crossword_kids'),
+      'letter matching game for kids':
+          context.loc.t('game.letter_matching_kids'),
+      'spiderman spelling game': context.loc.t('game.spiderman_spelling'),
+      'alphabet game for kids': context.loc.t('game.alphabet_kids'),
+      'easy spelling game for kids': context.loc.t('game.easy_spelling_kids'),
+      'word guessing puzzle game': context.loc.t('game.word_guessing_puzzle'),
+    };
+    if (gameTranslations.containsKey(normalized)) {
+      return gameTranslations[normalized]!;
+    }
+    for (final entry in gameTranslations.entries) {
+      if (normalized.contains(entry.key)) {
+        return entry.value;
+      }
+    }
+    return rawTitle;
+  }
+
+  String _translateActivityTitle(
+    BuildContext context,
+    Activity? activity,
+    ActivitySessionEntry entry,
+  ) {
+    // Prefer game type translation when available
+    if (activity is GameActivity) {
+      final key = _gameTypeLocalizationKey(activity.gameConfig.gameType);
+      if (key != null) return context.loc.t(key);
+    }
+    // Fallback: translate the stored activity title or the session title
+    final sourceTitle = activity?.title ?? entry.title;
+    return _translateGameTitle(context, sourceTitle);
+  }
+
+  String? _gameTypeLocalizationKey(GameType gameType) {
+    switch (gameType) {
+      case GameType.numberGridRace:
+        return 'game.number_grid_race';
+      case GameType.koalaCounterAdventure:
+        return 'game.koala_counter_adventure';
+      case GameType.ordinalDragOrder:
+        return 'game.ordinal_order_challenge';
+      case GameType.patternBuilder:
+        return 'game.pattern_builder';
+      case GameType.bubblePopGrammar:
+        return 'game.bubblepop_grammar';
+      case GameType.seashellQuiz:
+        return 'game.seashell_quiz';
+      case GameType.fishTankQuiz:
+        return 'game.fish_tank_quiz';
+      case GameType.addEquations:
+        return 'game.add_equations';
+      case GameType.fractionNavigator:
+        return 'game.fraction_navigator';
+      case GameType.inverseOperationChain:
+        return 'game.inverse_operation_chain';
+      case GameType.dataVisualization:
+        return 'game.data_visualization_lab';
+      case GameType.cartesianGrid:
+        return 'game.cartesian_grid_explorer';
+      case GameType.memoryMatch:
+        return 'game.memory_match';
+      case GameType.wordBuilder:
+        return 'game.word_builder';
+      case GameType.storySequencer:
+        return 'game.story_sequencer';
+    }
   }
 
   // ============ PARENTAL CONTROLS SCREEN ============
@@ -2871,9 +3042,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       color: color,
       summary: insight.summary,
       category: insight.category,
-      timeframe: insight.timeframe.isEmpty
-          ? 'Recent check-ins'
-          : insight.timeframe,
+      timeframe:
+          insight.timeframe.isEmpty ? 'Recent check-ins' : insight.timeframe,
     );
   }
 
@@ -3419,10 +3589,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-                    loc.t('browser.summary_hint'),
-                    style: TextStyle(
-                      color: SafePlayColors.neutral600,
-                      fontSize: 13,
+            loc.t('browser.summary_hint'),
+            style: TextStyle(
+              color: SafePlayColors.neutral600,
+              fontSize: 13,
             ),
           ),
           const SizedBox(height: 16),
