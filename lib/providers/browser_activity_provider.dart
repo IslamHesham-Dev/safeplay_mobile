@@ -28,7 +28,11 @@ class BrowserActivityProvider extends ChangeNotifier {
   bool isLoading(String childId) => _isLoading[childId] ?? false;
   String? errorFor(String childId) => _errors[childId];
 
-  Future<void> loadActivity(String childId, String childName) async {
+  Future<void> loadActivity(
+    String childId,
+    String childName, {
+    String localeCode = 'en',
+  }) async {
     if (childId.isEmpty) return;
     if (_isLoading[childId] == true) return;
     _isLoading[childId] = true;
@@ -44,6 +48,7 @@ class BrowserActivityProvider extends ChangeNotifier {
         final insights = await _insightsService.summarize(
           childName: childName,
           entries: entries,
+          localeCode: localeCode,
         );
         _insightsByChild[childId] = insights;
       }

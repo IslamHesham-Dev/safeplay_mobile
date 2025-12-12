@@ -30,6 +30,8 @@ import '../../widgets/parent/child_list_item.dart';
 import '../../widgets/parent/parent_settings_menu.dart';
 import '../../services/messaging_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../providers/locale_provider.dart';
+import '../../localization/app_localizations.dart';
 
 /// Parent dashboard screen
 class ParentDashboardScreen extends StatefulWidget {
@@ -127,6 +129,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       final browserProvider = _browserControlProvider;
       final activitySummaryProvider = _browserActivityProvider;
       final sessionProvider = _activitySessionProvider;
+      final localeCode = context.read<LocaleProvider>().locale.languageCode;
       if (parent != null && safetyProvider != null) {
         unawaited(
           safetyProvider.analyzeChild(
@@ -143,6 +146,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           activitySummaryProvider.loadActivity(
             selected.id,
             selected.name,
+            localeCode: localeCode,
           ),
         );
       }
@@ -156,6 +160,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           wellbeingProvider.loadInsights(
             selected.id,
             selected.name,
+            localeCode: localeCode,
           ),
         );
       }
@@ -170,9 +175,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.loc;
     return Scaffold(
       appBar: AppBar(
-        title: Text(_getAppBarTitle()),
+        title: Text(_getAppBarTitle(context)),
         elevation: 0,
         actions: [
           IconButton(
@@ -229,22 +235,24 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
-  String _getAppBarTitle() {
+  String _getAppBarTitle(BuildContext context) {
+    final loc = context.loc;
     switch (_currentNavIndex) {
       case 0:
-        return 'Parent Dashboard';
+        return loc.t('label.home');
       case 1:
-        return 'Browser Controls';
+        return loc.t('label.controls');
       case 2:
-        return 'Wellbeing Reports';
+        return loc.t('label.wellbeing');
       case 3:
-        return 'Messaging Safety';
+        return loc.t('label.messaging');
       default:
-        return 'Parent Dashboard';
+        return loc.t('label.home');
     }
   }
 
   Widget _buildBottomNavBar() {
+    final loc = context.loc;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -262,10 +270,13 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(0, Icons.home_rounded, 'Home'),
-              _buildNavItem(1, Icons.shield_rounded, 'Controls'),
-              _buildNavItem(2, Icons.favorite_rounded, 'Wellbeing'),
-              _buildNavItem(3, Icons.security_rounded, 'Alerts'),
+              _buildNavItem(0, Icons.home_rounded, loc.t('label.nav_home')),
+              _buildNavItem(
+                  1, Icons.shield_rounded, loc.t('label.nav_controls')),
+              _buildNavItem(
+                  2, Icons.favorite_rounded, loc.t('label.nav_wellbeing')),
+              _buildNavItem(
+                  3, Icons.security_rounded, loc.t('label.nav_alerts')),
             ],
           ),
         ),
@@ -2505,6 +2516,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   ) {
     if (child == null) return const SizedBox.shrink();
 
+    final loc = context.loc;
+    final localeCode = context.read<LocaleProvider>().locale.languageCode;
     final childId = child.id;
     final insights = activityProvider.insightsFor(childId);
     final isLoading = activityProvider.isLoading(childId);
@@ -2543,10 +2556,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Browser Activity History',
-                  style: TextStyle(
+                  loc.t('label.browser_activity'),
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
@@ -2559,13 +2572,14 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     : () => activityProvider.loadActivity(
                           child.id,
                           child.name,
+                          localeCode: localeCode,
                         ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
-            'High-level summary of ${child.name}\'s online activity. Privacy-focused insights.',
+            loc.t('browser.summary_hint'),
             style: TextStyle(
               color: SafePlayColors.neutral600,
               fontSize: 13,
@@ -2596,7 +2610,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Unable to load recent browsing insights.',
+                    loc.t('browser.error_title'),
                     style: TextStyle(
                       color: SafePlayColors.neutral700,
                       fontWeight: FontWeight.w600,
@@ -2622,7 +2636,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                '${child.name} hasn\'t generated enough Safe Browser activity for a summary yet. Encourage supervised browsing to see privacy-preserving insights here.',
+                loc.t('browser.empty'),
                 style: TextStyle(
                   color: SafePlayColors.neutral600,
                   height: 1.4,
@@ -3012,9 +3026,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     Future<void> refresh() async {
       if (selectedChild != null) {
         await wellbeingProvider.loadEntries(selectedChild.id);
+        final localeCode = context.read<LocaleProvider>().locale.languageCode;
         await wellbeingProvider.loadInsights(
           selectedChild.id,
           selectedChild.name,
+          localeCode: localeCode,
         );
       }
     }
@@ -3292,6 +3308,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     ChildProfile child,
     WellbeingProvider wellbeingProvider,
   ) {
+    final loc = context.loc;
+    final localeCode = context.read<LocaleProvider>().locale.languageCode;
     final insights = wellbeingProvider.insightsForChild(child.id);
     final isLoading = wellbeingProvider.isInsightsLoading(child.id);
     final error = wellbeingProvider.insightErrorFor(child.id);
@@ -3328,10 +3346,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'AI wellbeing report',
-                  style: TextStyle(
+                  loc.t('label.ai_wellbeing'),
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
                   ),
@@ -3345,6 +3363,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                           wellbeingProvider.loadInsights(
                             child.id,
                             child.name,
+                            localeCode: localeCode,
                           ),
                         ),
               ),
@@ -3352,10 +3371,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Private-friendly summary of recent feelings to guide your check-ins.',
-            style: TextStyle(
-              color: SafePlayColors.neutral600,
-              fontSize: 13,
+                    loc.t('browser.summary_hint'),
+                    style: TextStyle(
+                      color: SafePlayColors.neutral600,
+                      fontSize: 13,
             ),
           ),
           const SizedBox(height: 16),
@@ -3415,7 +3434,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Summaries stay abstract (no raw notes) and are meant to support gentle conversations.',
+                    loc.t('label.privacy_note'),
                     style: TextStyle(
                       color: SafePlayColors.neutral600,
                       fontSize: 12,

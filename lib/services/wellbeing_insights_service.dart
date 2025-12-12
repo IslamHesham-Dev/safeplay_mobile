@@ -18,12 +18,13 @@ class WellbeingInsightsService {
   Future<List<WellbeingInsight>> summarize({
     required String childName,
     required List<WellbeingEntry> entries,
+    String localeCode = 'en',
   }) async {
     if (entries.isEmpty) {
       return const [];
     }
     if (EnvConfig.openRouterApiKey.isEmpty) {
-      return _fallbackInsights(entries);
+      return _fallbackInsights(entries, localeCode);
     }
 
     final payload = entries
@@ -54,7 +55,7 @@ class WellbeingInsightsService {
             {
               'role': 'system',
               'content':
-                  'You are a wellbeing coach summarizing children\'s self check-ins for parents. Stay privacy-preserving: use trends, counts, and changes, not exact quotes. Offer gentle, supportive framing and simple next-step nudges. Respond as JSON array of {summary, category, timeframe, tone}.'
+                  'You are a wellbeing coach summarizing children\'s self check-ins for parents. Stay privacy-preserving: use trends, counts, and changes, not exact quotes. Offer gentle, supportive framing and simple next-step nudges. Respond as JSON array of {summary, category, timeframe, tone}. Language: ${localeCode == 'ar' ? 'Arabic' : 'English'}.'
             },
             {
               'role': 'user',
@@ -66,13 +67,13 @@ class WellbeingInsightsService {
       );
 
       if (response.statusCode >= 400) {
-        return _fallbackInsights(entries);
+        return _fallbackInsights(entries, localeCode);
       }
 
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
       final content = _extractContent(decoded);
       if (content == null) {
-        return _fallbackInsights(entries);
+        return _fallbackInsights(entries, localeCode);
       }
       final parsed = jsonDecode(content);
       if (parsed is List) {
@@ -81,9 +82,9 @@ class WellbeingInsightsService {
             .map(WellbeingInsight.fromJson)
             .toList();
       }
-      return _fallbackInsights(entries);
+      return _fallbackInsights(entries, localeCode);
     } catch (_) {
-      return _fallbackInsights(entries);
+      return _fallbackInsights(entries, localeCode);
     }
   }
 
@@ -100,7 +101,10 @@ class WellbeingInsightsService {
     return null;
   }
 
-  List<WellbeingInsight> _fallbackInsights(List<WellbeingEntry> entries) {
+  List<WellbeingInsight> _fallbackInsights(
+    List<WellbeingEntry> entries,
+    String localeCode,
+  ) {
     final total = entries.fold<int>(0, (sum, e) => sum + e.moodScore);
     final avgScore = entries.isEmpty ? 0 : total / entries.length;
     final moodCounts = <String, int>{};
@@ -116,10 +120,12 @@ class WellbeingInsightsService {
 
     return [
       WellbeingInsight(
-        summary:
-            'Average mood score is ${avgScore.toStringAsFixed(0)} across recent check-ins.',
-        category: 'Mood trend',
-        timeframe: 'Recent check-ins',
+        summary: localeCode == 'ar'
+            ? 'متوسط درجة المزاج هو ${avgScore.toStringAsFixed(0)} عبر أحدث التسجيلات.'
+            : 'Average mood score is ${avgScore.toStringAsFixed(0)} across recent check-ins.',
+        category: localeCode == 'ar' ? 'اتجاه المزاج' : 'Mood trend',
+        timeframe:
+            localeCode == 'ar' ? 'أحدث التسجيلات' : 'Recent check-ins',
         tone: avgScore >= 70
             ? 'positive'
             : avgScore >= 50
@@ -128,18 +134,24 @@ class WellbeingInsightsService {
       ),
       if (topMood != null)
         WellbeingInsight(
-          summary:
-              'Most common mood: ${topMood.key} (seen ${topMood.value} time${topMood.value == 1 ? '' : 's'}).',
-          category: 'Top mood',
-          timeframe: 'Recent check-ins',
+          summary: localeCode == 'ar'
+              ? 'أكثر مزاج تكرر: ${topMood.key} (ظهر ${topMood.value} مرة).'
+              : 'Most common mood: ${topMood.key} (seen ${topMood.value} time${topMood.value == 1 ? '' : 's'}).',
+          category: localeCode == 'ar' ? 'أكثر مزاج شيوعًا' : 'Top mood',
+          timeframe:
+              localeCode == 'ar' ? 'أحدث التسجيلات' : 'Recent check-ins',
           tone: 'neutral',
         ),
       WellbeingInsight(
         summary: noteCount > 0
-            ? '$noteCount check-in${noteCount == 1 ? '' : 's'} included a personal note. A quick chat could help you learn more.'
-            : 'No notes were added recently. Consider asking how they are doing today.',
-        category: 'Care prompt',
-        timeframe: 'This week',
+            ? (localeCode == 'ar'
+                ? '$noteCount تسجيل يحتوي على ملاحظة شخصية. محادثة سريعة قد تساعدك أكثر.'
+                : '$noteCount check-in${noteCount == 1 ? '' : 's'} included a personal note. A quick chat could help you learn more.')
+            : (localeCode == 'ar'
+                ? 'لا توجد ملاحظات مضافة مؤخرًا. اسأل طفلك كيف يشعر اليوم.'
+                : 'No notes were added recently. Consider asking how they are doing today.'),
+        category: localeCode == 'ar' ? 'تنبيه رعاية' : 'Care prompt',
+        timeframe: localeCode == 'ar' ? 'هذا الأسبوع' : 'This week',
         tone: 'supportive',
       ),
     ];

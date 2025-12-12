@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../navigation/route_names.dart';
 import '../../design_system/colors.dart';
+import '../../localization/app_localizations.dart';
+import '../../providers/locale_provider.dart';
+import '../../widgets/common/language_selector_dialog.dart';
 
 /// New SafePlay Portal login screen with modern design
 class SafePlayPortalLoginScreen extends StatefulWidget {
@@ -13,6 +17,23 @@ class SafePlayPortalLoginScreen extends StatefulWidget {
 }
 
 class _SafePlayPortalLoginScreenState extends State<SafePlayPortalLoginScreen> {
+  Future<void> _handleParentPortalTap(BuildContext context) async {
+    final localeProvider = context.read<LocaleProvider>();
+    final selected = await showDialog<Locale>(
+      context: context,
+      useRootNavigator: true,
+      builder: (_) => const LanguageSelectorDialog(),
+    );
+
+    if (selected != null) {
+      await localeProvider.setLocale(selected);
+    }
+
+    if (!mounted) return;
+    // Replace the stack entry to avoid bouncing back after splash/login rebuilds
+    context.go(RouteNames.parentOnboarding);
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -88,6 +109,7 @@ class _SafePlayPortalLoginScreenState extends State<SafePlayPortalLoginScreen> {
 
   Widget _buildContent(
       BuildContext context, bool isNarrow, double screenHeight) {
+    final loc = context.loc;
     // Calculate responsive spacing based on screen height
     // On smaller screens, reduce top padding significantly
     final topPadding = screenHeight < 700
@@ -146,7 +168,7 @@ class _SafePlayPortalLoginScreenState extends State<SafePlayPortalLoginScreen> {
             label: 'SafePlay Portal',
             header: true,
             child: Text(
-              'SafePlay Portal',
+              loc.t('label.safeplay_portal'),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Poppins',
@@ -160,9 +182,9 @@ class _SafePlayPortalLoginScreenState extends State<SafePlayPortalLoginScreen> {
           const SizedBox(height: 8),
           // Subtitle - black color
           Semantics(
-            label: 'Your Gateway to Safe Learning & Play',
+            label: loc.t('label.parent_subtitle'),
             child: Text(
-              'Your Gateway to Safe Learning & Play',
+              loc.t('label.parent_subtitle'),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Poppins',
@@ -193,9 +215,9 @@ class _SafePlayPortalLoginScreenState extends State<SafePlayPortalLoginScreen> {
             stripeColor: SafePlayColors.brandTeal500, // Match title color
             icon: Icons.family_restroom_rounded,
             iconColor: SafePlayColors.brandTeal500,
-            title: 'Parent Portal',
-            subtitle: 'Manage child profiles & progress',
-            onTap: () => context.push(RouteNames.parentOnboarding),
+            title: loc.t('label.parent_portal'),
+            subtitle: loc.t('label.parent_subtitle'),
+            onTap: () => _handleParentPortalTap(context),
             isNarrow: isNarrow,
             heroTag: 'parent_login',
           ),

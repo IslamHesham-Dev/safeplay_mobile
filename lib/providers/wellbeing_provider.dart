@@ -54,7 +54,11 @@ class WellbeingProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> loadInsights(String childId, String childName) async {
+  Future<void> loadInsights(
+    String childId,
+    String childName, {
+    String localeCode = 'en',
+  }) async {
     if (childId.isEmpty) return;
     if (_insightsLoading[childId] == true) return;
 
@@ -76,6 +80,7 @@ class WellbeingProvider extends ChangeNotifier {
       final insights = await _insightsService.summarize(
         childName: childName,
         entries: entries,
+        localeCode: localeCode,
       );
       _insightsByChild[childId] = insights;
       _insightsError.remove(childId);

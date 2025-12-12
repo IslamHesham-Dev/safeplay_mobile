@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../design_system/colors.dart';
 import '../../navigation/route_names.dart';
+import '../../localization/app_localizations.dart';
 
 /// Professional onboarding screen for parents
 class ParentOnboardingScreen extends StatefulWidget {
@@ -15,105 +16,115 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<ParentOnboardingPage> _pages = [
-    ParentOnboardingPage(
-      title: 'Welcome to SafePlay',
-      subtitle: 'Your Child\'s Safety is Our Priority',
-      description: 'SafePlay provides a secure, engaging learning environment where your children can explore, learn, and grow safely online.',
-      icon: Icons.family_restroom_rounded,
-      color: SafePlayColors.brandTeal500,
-      highlights: [
-        'Age-appropriate content for all children',
-        'AI-powered safety monitoring',
-        'Educational games and activities',
-        'Complete parental oversight',
-      ],
-    ),
-    ParentOnboardingPage(
-      title: 'Manage Child Profiles',
-      subtitle: 'Create & Customize Profiles',
-      description: 'Add multiple children with personalized profiles. Set age groups, configure login methods, and track individual progress.',
-      icon: Icons.people_alt_rounded,
-      color: SafePlayColors.brightIndigo,
-      highlights: [
-        'Support for Junior (3-6) and Bright (7-10) age groups',
-        'Customizable avatars and names',
-        'Individual progress tracking',
-        'Easy login setup for each child',
-      ],
-      mockupType: ParentMockupType.childProfiles,
-    ),
-    ParentOnboardingPage(
-      title: 'Browser Controls',
-      subtitle: 'Safe Internet Browsing',
-      description: 'Configure comprehensive browser controls to ensure your children only access safe, age-appropriate content online.',
-      icon: Icons.shield_rounded,
-      color: const Color(0xFF7E57C2),
-      highlights: [
-        'Safe search filtering enabled by default',
-        'Block social media and harmful content',
-        'Custom blocked keywords',
-        'Whitelist trusted websites',
-      ],
-      mockupType: ParentMockupType.browserControls,
-    ),
-    ParentOnboardingPage(
-      title: 'Wellbeing Monitoring',
-      subtitle: 'Track Emotional Health',
-      description: 'Stay connected with your child\'s emotional wellbeing through regular check-ins and mood tracking reports.',
-      icon: Icons.favorite_rounded,
-      color: const Color(0xFFE91E63),
-      highlights: [
-        'Weekly wellbeing check-ins',
-        'Mood tracking and history',
-        'Emotional health insights',
-        'Early concern detection',
-      ],
-      mockupType: ParentMockupType.wellbeing,
-    ),
-    ParentOnboardingPage(
-      title: 'Messaging Safety',
-      subtitle: 'AI-Powered Protection',
-      description: 'Our advanced AI monitors all messaging between students and teachers, instantly flagging any concerning content.',
-      icon: Icons.security_rounded,
-      color: SafePlayColors.error,
-      highlights: [
-        'Real-time message monitoring',
-        'Profanity and bullying detection',
-        'Instant parent notifications',
-        'Complete conversation transparency',
-      ],
-      mockupType: ParentMockupType.messagingSafety,
-    ),
-    ParentOnboardingPage(
-      title: 'Activity Tracking',
-      subtitle: 'Stay Informed',
-      description: 'Monitor your child\'s learning journey with detailed activity reports, achievements, and progress metrics.',
-      icon: Icons.insights_rounded,
-      color: const Color(0xFF4CAF50),
-      highlights: [
-        'Daily activity summaries',
-        'Learning progress reports',
-        'Achievement tracking',
-        'Time spent analytics',
-      ],
-      mockupType: ParentMockupType.activityTracking,
-    ),
-    ParentOnboardingPage(
-      title: 'Get Started',
-      subtitle: 'You\'re All Set!',
-      description: 'You\'re ready to create a safe learning environment for your children. Sign in to access your parent dashboard.',
-      icon: Icons.rocket_launch_rounded,
-      color: SafePlayColors.brandTeal500,
-      highlights: [
-        'Add your first child profile',
-        'Configure safety settings',
-        'Monitor progress anytime',
-        'View activity reports',
-      ],
-      isLast: true,
-    ),
-  ];
+  late List<ParentOnboardingPage> _pages;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _pages = _buildPages(context.loc);
+  }
+
+  List<ParentOnboardingPage> _buildPages(AppLocalizations loc) {
+    return [
+      ParentOnboardingPage(
+        title: loc.t('onboard.parent.1.title'),
+        subtitle: loc.t('onboard.parent.1.subtitle'),
+        description: loc.t('onboard.parent.1.desc'),
+        icon: Icons.family_restroom_rounded,
+        color: SafePlayColors.brandTeal500,
+        highlights: [
+          loc.t('onboard.parent.1.h1'),
+          loc.t('onboard.parent.1.h2'),
+          loc.t('onboard.parent.1.h3'),
+          loc.t('onboard.parent.1.h4'),
+        ],
+      ),
+      ParentOnboardingPage(
+        title: loc.t('onboard.parent.2.title'),
+        subtitle: loc.t('onboard.parent.2.subtitle'),
+        description: loc.t('onboard.parent.2.desc'),
+        icon: Icons.people_alt_rounded,
+        color: SafePlayColors.brightIndigo,
+        highlights: [
+          loc.t('onboard.parent.2.h1'),
+          loc.t('onboard.parent.2.h2'),
+          loc.t('onboard.parent.2.h3'),
+          loc.t('onboard.parent.2.h4'),
+        ],
+        mockupType: ParentMockupType.childProfiles,
+      ),
+      ParentOnboardingPage(
+        title: loc.t('onboard.parent.3.title'),
+        subtitle: loc.t('onboard.parent.3.subtitle'),
+        description: loc.t('onboard.parent.3.desc'),
+        icon: Icons.shield_rounded,
+        color: const Color(0xFF7E57C2),
+        highlights: [
+          loc.t('onboard.parent.3.h1'),
+          loc.t('onboard.parent.3.h2'),
+          loc.t('onboard.parent.3.h3'),
+          loc.t('onboard.parent.3.h4'),
+        ],
+        mockupType: ParentMockupType.browserControls,
+      ),
+      ParentOnboardingPage(
+        title: loc.t('onboard.parent.4.title'),
+        subtitle: loc.t('onboard.parent.4.subtitle'),
+        description: loc.t('onboard.parent.4.desc'),
+        icon: Icons.favorite_rounded,
+        color: const Color(0xFFE91E63),
+        highlights: [
+          loc.t('onboard.parent.4.h1'),
+          loc.t('onboard.parent.4.h2'),
+          loc.t('onboard.parent.4.h3'),
+          loc.t('onboard.parent.4.h4'),
+        ],
+        mockupType: ParentMockupType.wellbeing,
+      ),
+      ParentOnboardingPage(
+        title: loc.t('onboard.parent.5.title'),
+        subtitle: loc.t('onboard.parent.5.subtitle'),
+        description: loc.t('onboard.parent.5.desc'),
+        icon: Icons.security_rounded,
+        color: SafePlayColors.error,
+        highlights: [
+          loc.t('onboard.parent.5.h1'),
+          loc.t('onboard.parent.5.h2'),
+          loc.t('onboard.parent.5.h3'),
+          loc.t('onboard.parent.5.h4'),
+        ],
+        mockupType: ParentMockupType.messagingSafety,
+      ),
+      ParentOnboardingPage(
+        title: loc.t('onboard.parent.6.title'),
+        subtitle: loc.t('onboard.parent.6.subtitle'),
+        description: loc.t('onboard.parent.6.desc'),
+        icon: Icons.insights_rounded,
+        color: const Color(0xFF4CAF50),
+        highlights: [
+          loc.t('onboard.parent.6.h1'),
+          loc.t('onboard.parent.6.h2'),
+          loc.t('onboard.parent.6.h3'),
+          loc.t('onboard.parent.6.h4'),
+        ],
+        mockupType: ParentMockupType.activityTracking,
+      ),
+      ParentOnboardingPage(
+        title: loc.t('onboard.parent.7.title'),
+        subtitle: loc.t('onboard.parent.7.subtitle'),
+        description: loc.t('onboard.parent.7.desc'),
+        icon: Icons.rocket_launch_rounded,
+        color: SafePlayColors.brandTeal500,
+        highlights: [
+          loc.t('onboard.parent.7.h1'),
+          loc.t('onboard.parent.7.h2'),
+          loc.t('onboard.parent.7.h3'),
+          loc.t('onboard.parent.7.h4'),
+        ],
+        isLast: true,
+      ),
+    ];
+  }
 
   void _nextPage() {
     if (_currentPage < _pages.length - 1) {
@@ -138,6 +149,7 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.loc;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -186,7 +198,7 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
                   TextButton(
                     onPressed: _finishOnboarding,
                     child: Text(
-                      'Skip',
+                      loc.t('action.skip'),
                       style: TextStyle(
                         color: SafePlayColors.neutral500,
                         fontWeight: FontWeight.w600,
@@ -243,7 +255,10 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text('Back', style: TextStyle(fontWeight: FontWeight.w600)),
+                        child: Text(
+                          loc.t('action.previous'),
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
                       ),
                     ),
                   if (_currentPage > 0) const SizedBox(width: 16),
@@ -261,7 +276,9 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
                         elevation: 0,
                       ),
                       child: Text(
-                        _pages[_currentPage].isLast ? 'Get Started' : 'Continue',
+                        _pages[_currentPage].isLast
+                            ? loc.t('action.get_started')
+                            : loc.t('action.continue'),
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -335,7 +352,7 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
 
           // Mockup or highlights
           if (page.mockupType != null)
-            _buildMockup(page)
+            _buildMockup(context, page)
           else
             _buildHighlights(page),
         ],
@@ -384,24 +401,29 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
     );
   }
 
-  Widget _buildMockup(ParentOnboardingPage page) {
+  Widget _buildMockup(BuildContext context, ParentOnboardingPage page) {
     switch (page.mockupType) {
       case ParentMockupType.childProfiles:
-        return _buildChildProfilesMockup(page);
+        return _buildChildProfilesMockup(context, page);
       case ParentMockupType.browserControls:
-        return _buildBrowserControlsMockup(page);
+        return _buildBrowserControlsMockup(context, page);
       case ParentMockupType.wellbeing:
-        return _buildWellbeingMockup(page);
+        return _buildWellbeingMockup(context, page);
       case ParentMockupType.messagingSafety:
-        return _buildMessagingSafetyMockup(page);
+        return _buildMessagingSafetyMockup(context, page);
       case ParentMockupType.activityTracking:
-        return _buildActivityTrackingMockup(page);
+        return _buildActivityTrackingMockup(context, page);
       default:
         return _buildHighlights(page);
     }
   }
 
-  Widget _buildChildProfilesMockup(ParentOnboardingPage page) {
+  String _tr(BuildContext context, String en, String ar) =>
+      Localizations.localeOf(context).languageCode == 'ar' ? ar : en;
+
+  Widget _buildChildProfilesMockup(
+      BuildContext context, ParentOnboardingPage page) {
+    final t = (String en, String ar) => _tr(context, en, ar);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -417,9 +439,23 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
       ),
       child: Column(
         children: [
-          _buildMockChildCard('Emma', 'Junior (Age 5)', '👧', SafePlayColors.juniorPurple, true),
+          _buildMockChildCard(
+            t('Layan', 'ليان'),
+            t('Junior (Age 5)', 'جونيور (5 سنوات)'),
+            '👧',
+            SafePlayColors.juniorPurple,
+            true,
+            t,
+          ),
           const SizedBox(height: 12),
-          _buildMockChildCard('Liam', 'Bright (Age 8)', '👦', SafePlayColors.brightIndigo, false),
+          _buildMockChildCard(
+            t('Omar', 'عمر'),
+            t('Bright (Age 8)', 'برايت (8 سنوات)'),
+            '👦',
+            SafePlayColors.brightIndigo,
+            false,
+            t,
+          ),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12),
@@ -434,7 +470,7 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
                 Icon(Icons.add_circle_outline, color: page.color, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'Add Child Profile',
+                  t('Add Child Profile', 'إضافة ملف طفل'),
                   style: TextStyle(color: page.color, fontWeight: FontWeight.w600),
                 ),
               ],
@@ -445,7 +481,8 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
     );
   }
 
-  Widget _buildMockChildCard(String name, String ageGroup, String emoji, Color color, bool hasSetup) {
+  Widget _buildMockChildCard(String name, String ageGroup, String emoji,
+      Color color, bool hasSetup, String Function(String, String) t) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -490,7 +527,7 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  hasSetup ? 'Ready' : 'Setup',
+                  hasSetup ? t('Ready', 'جاهز') : t('Setup', 'إعداد'),
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -505,7 +542,9 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
     );
   }
 
-  Widget _buildBrowserControlsMockup(ParentOnboardingPage page) {
+  Widget _buildBrowserControlsMockup(
+      BuildContext context, ParentOnboardingPage page) {
+    final t = (String en, String ar) => _tr(context, en, ar);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -521,11 +560,13 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
       ),
       child: Column(
         children: [
-          _buildToggleRow('Safe Search', true, page.color),
+          _buildToggleRow(t('Safe Search', 'البحث الآمن'), true, page.color),
           const Divider(height: 24),
-          _buildToggleRow('Block Social Media', true, page.color),
+          _buildToggleRow(
+              t('Block Social Media', 'حظر التواصل الاجتماعي'), true, page.color),
           const Divider(height: 24),
-          _buildToggleRow('Block Violence', true, page.color),
+          _buildToggleRow(
+              t('Block Violence', 'حظر العنف'), true, page.color),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(12),
@@ -542,12 +583,19 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Blocked Keywords', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                      Text(
+                        t('Blocked Keywords', 'كلمات محظورة'),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 13),
+                      ),
                       const SizedBox(height: 4),
                       Wrap(
                         spacing: 6,
                         runSpacing: 6,
-                        children: ['violence', 'gambling'].map((k) => Container(
+                        children: [
+                          t('violence', 'عنف'),
+                          t('gambling', 'مقامرة')
+                        ].map((k) => Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
                             color: SafePlayColors.error.withOpacity(0.1),
@@ -596,7 +644,9 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
     );
   }
 
-  Widget _buildWellbeingMockup(ParentOnboardingPage page) {
+  Widget _buildWellbeingMockup(
+      BuildContext context, ParentOnboardingPage page) {
+    final t = (String en, String ar) => _tr(context, en, ar);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -628,9 +678,19 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text('Overall Wellbeing', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                      Text('Good', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
+                    children: [
+                      Text(
+                        t('Overall Wellbeing', 'الرفاه العام'),
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 12),
+                      ),
+                      Text(
+                        t('Good', 'جيد'),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20),
+                      ),
                     ],
                   ),
                 ),
@@ -650,11 +710,11 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildMiniMoodDay('Mon', '🤩'),
-              _buildMiniMoodDay('Tue', '😊'),
-              _buildMiniMoodDay('Wed', '😊'),
-              _buildMiniMoodDay('Thu', '😐'),
-              _buildMiniMoodDay('Fri', '🤩'),
+              _buildMiniMoodDay(_tr(context, 'Mon', 'الاثنين'), '🤩'),
+              _buildMiniMoodDay(_tr(context, 'Tue', 'الثلاثاء'), '😊'),
+              _buildMiniMoodDay(_tr(context, 'Wed', 'الأربعاء'), '😊'),
+              _buildMiniMoodDay(_tr(context, 'Thu', 'الخميس'), '😐'),
+              _buildMiniMoodDay(_tr(context, 'Fri', 'الجمعة'), '🤩'),
             ],
           ),
         ],
@@ -680,7 +740,9 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
     );
   }
 
-  Widget _buildMessagingSafetyMockup(ParentOnboardingPage page) {
+  Widget _buildMessagingSafetyMockup(
+      BuildContext context, ParentOnboardingPage page) {
+    final t = (String en, String ar) => _tr(context, en, ar);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -704,24 +766,31 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: SafePlayColors.brightIndigo.withOpacity(0.2)),
             ),
-            child: Row(
-              children: [
-                Icon(Icons.smart_toy_rounded, color: SafePlayColors.brightIndigo, size: 24),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text('AI Safety Guard', style: TextStyle(fontWeight: FontWeight.w600)),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: SafePlayColors.success,
-                    borderRadius: BorderRadius.circular(8),
+              child: Row(
+                children: [
+                  Icon(Icons.smart_toy_rounded, color: SafePlayColors.brightIndigo, size: 24),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(t('AI Safety Guard', 'حارس الأمان بالذكاء الاصطناعي'),
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
                   ),
-                  child: const Text('Active', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                ),
-              ],
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: SafePlayColors.success,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      t('Active', 'مفعل'),
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
           const SizedBox(height: 12),
           // Alert example
           Container(
@@ -746,8 +815,14 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Inappropriate Language', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                      Text('Detected 3h ago', style: TextStyle(color: SafePlayColors.neutral500, fontSize: 11)),
+                      Text(t('Inappropriate Language', 'لغة غير لائقة'),
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 13)),
+                      Text(
+                        t('Detected 3h ago', 'تم الاكتشاف منذ 3 ساعات'),
+                        style: TextStyle(
+                            color: SafePlayColors.neutral500, fontSize: 11),
+                      ),
                     ],
                   ),
                 ),
@@ -757,7 +832,13 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
                     color: SafePlayColors.warning,
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text('NEW', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                  child: Text(
+                    t('NEW', 'جديد'),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
@@ -767,7 +848,9 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
     );
   }
 
-  Widget _buildActivityTrackingMockup(ParentOnboardingPage page) {
+  Widget _buildActivityTrackingMockup(
+      BuildContext context, ParentOnboardingPage page) {
+    final t = (String en, String ar) => _tr(context, en, ar);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -786,11 +869,11 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
           // Stats row
           Row(
             children: [
-              Expanded(child: _buildStatBox('3', 'Children', SafePlayColors.brandTeal500)),
+              Expanded(child: _buildStatBox('3', t('Children', 'أطفال'), SafePlayColors.brandTeal500)),
               const SizedBox(width: 12),
-              Expanded(child: _buildStatBox('7d', 'Streak', SafePlayColors.brandOrange500)),
+              Expanded(child: _buildStatBox('7d', t('Streak', 'سلسلة'), SafePlayColors.brandOrange500)),
               const SizedBox(width: 12),
-              Expanded(child: _buildStatBox('100%', 'Safety', SafePlayColors.success)),
+              Expanded(child: _buildStatBox('100%', t('Safety', 'أمان'), SafePlayColors.success)),
             ],
           ),
           const SizedBox(height: 16),
@@ -816,8 +899,10 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Letter Sound Adventure', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                      Text('Emma • 2h ago', style: TextStyle(color: SafePlayColors.neutral500, fontSize: 11)),
+                      Text(_tr(context, 'Letter Sound Adventure', 'مغامرة أصوات الحروف'),
+                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                      Text(_tr(context, 'Emma • 2h ago', 'ليان • منذ ساعتين'),
+                          style: TextStyle(color: SafePlayColors.neutral500, fontSize: 11)),
                     ],
                   ),
                 ),

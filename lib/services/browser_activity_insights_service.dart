@@ -17,12 +17,13 @@ class BrowserActivityInsightsService {
   Future<List<BrowserActivityInsight>> summarize({
     required String childName,
     required List<BrowserActivityEntry> entries,
+    String localeCode = 'en',
   }) async {
     if (entries.isEmpty) {
       return const [];
     }
     if (EnvConfig.openRouterApiKey.isEmpty) {
-      return _fallbackInsights(entries);
+      return _fallbackInsights(entries, localeCode);
     }
 
     final payload = entries
@@ -53,7 +54,7 @@ class BrowserActivityInsightsService {
             {
               'role': 'system',
               'content':
-                  'You summarize children\'s browsing activity for parents. Provide meta-level information only: aggregate counts, themes, or patterns. Never quote exact search queries, URLs, or private details. Highlight mediation by explicitly noting when conversations might help. Respond as JSON array with objects containing "summary", "category", "timeframe", "tone".'
+                  'You summarize children\'s browsing activity for parents. Provide meta-level information only: aggregate counts, themes, or patterns. Never quote exact search queries, URLs, or private details. Highlight mediation by explicitly noting when conversations might help. Respond as JSON array with objects containing "summary", "category", "timeframe", "tone". Language: ${localeCode == 'ar' ? 'Arabic' : 'English'}.'
             },
             {
               'role': 'user',
@@ -65,13 +66,13 @@ class BrowserActivityInsightsService {
       );
 
       if (response.statusCode >= 400) {
-        return _fallbackInsights(entries);
+        return _fallbackInsights(entries, localeCode);
       }
 
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
       final content = _extractContent(decoded);
       if (content == null) {
-        return _fallbackInsights(entries);
+        return _fallbackInsights(entries, localeCode);
       }
       final parsed = jsonDecode(content);
       if (parsed is List) {
@@ -80,9 +81,9 @@ class BrowserActivityInsightsService {
             .map(BrowserActivityInsight.fromJson)
             .toList();
       }
-      return _fallbackInsights(entries);
+      return _fallbackInsights(entries, localeCode);
     } catch (_) {
-      return _fallbackInsights(entries);
+      return _fallbackInsights(entries, localeCode);
     }
   }
 
@@ -101,6 +102,7 @@ class BrowserActivityInsightsService {
 
   List<BrowserActivityInsight> _fallbackInsights(
     List<BrowserActivityEntry> entries,
+    String localeCode,
   ) {
     final grouped = <String, int>{};
     for (final entry in entries) {
@@ -109,12 +111,14 @@ class BrowserActivityInsightsService {
     }
 
     return grouped.entries.take(3).map((entry) {
-      final summary =
-          'Noticed ${entry.value} ${entry.key.toLowerCase()} activities recently.';
+      final summary = localeCode == 'ar'
+          ? 'تم رصد ${entry.value} نشاط(ات) في فئة ${entry.key.toLowerCase()} مؤخرًا.'
+          : 'Noticed ${entry.value} ${entry.key.toLowerCase()} activities recently.';
       return BrowserActivityInsight(
         summary: summary,
         category: entry.key,
-        timeframe: 'Recent activity',
+        timeframe:
+            localeCode == 'ar' ? 'النشاط الأخير' : 'Recent activity',
         tone: entry.key.toLowerCase().contains('sensitive')
             ? 'caution'
             : 'positive',

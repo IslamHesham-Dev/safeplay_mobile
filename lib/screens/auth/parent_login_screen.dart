@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../design_system/colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../navigation/route_names.dart';
+import '../../localization/app_localizations.dart';
 
 /// Parent login screen with email/password
 class ParentLoginScreen extends StatefulWidget {
@@ -105,9 +106,10 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.loc;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Parent Login'),
+        title: Text(loc.t('label.parent_login')),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go(RouteNames.login),
@@ -129,7 +131,7 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Welcome Back!',
+                  loc.t('label.welcome_parent'),
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
@@ -140,16 +142,16 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                   key: const Key('login_email_field'),
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: Icon(Icons.email),
+                  decoration: InputDecoration(
+                    labelText: loc.t('label.email'),
+                    prefixIcon: const Icon(Icons.email),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
+                      return loc.t('label.email');
                     }
                     if (!value.contains('@')) {
-                      return 'Please enter a valid email';
+                      return loc.t('label.email');
                     }
                     return null;
                   },
@@ -163,7 +165,7 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: loc.t('label.password'),
                     prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
                       icon: Icon(_obscurePassword
@@ -178,7 +180,7 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
+                      return loc.t('label.password');
                     }
                     return null;
                   },
@@ -191,7 +193,7 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () => context.push(RouteNames.forgotPassword),
-                    child: const Text('Forgot Password?'),
+                    child: Text(loc.t('label.forgot_password')),
                   ),
                 ),
 
@@ -215,7 +217,7 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                                     AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
-                          : const Text('Login'),
+                          : Text(loc.t('action.login')),
                     );
                   },
                 ),
@@ -225,7 +227,9 @@ class _ParentLoginScreenState extends State<ParentLoginScreen> {
                 // Sign up link
                 TextButton(
                   onPressed: () => context.push(RouteNames.parentSignup),
-                  child: const Text("Don't have an account? Sign Up"),
+                  child: Text(
+                    '${loc.t('label.no_account')} ${loc.t('action.signup')}',
+                  ),
                 ),
               ],
             ),

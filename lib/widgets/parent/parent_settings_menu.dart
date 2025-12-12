@@ -7,6 +7,9 @@ import '../../navigation/route_names.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/notification_service.dart';
 import '../../providers/child_provider.dart';
+import '../../providers/locale_provider.dart';
+import '../../localization/app_localizations.dart';
+import '../common/language_selector_dialog.dart';
 
 /// Modern hamburger-style settings menu for parent dashboard
 class ParentSettingsMenu extends StatefulWidget {
@@ -63,7 +66,19 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
     });
   }
 
+  Future<void> _showLanguagePicker() async {
+    final localeProvider = context.read<LocaleProvider>();
+    final selected = await showDialog<Locale>(
+      context: context,
+      builder: (_) => const LanguageSelectorDialog(),
+    );
+    if (selected != null) {
+      await localeProvider.setLocale(selected);
+    }
+  }
+
   Widget _buildSettingsSheet() {
+    final loc = context.loc;
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
@@ -116,16 +131,16 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Settings',
-                                style: TextStyle(
+                              Text(
+                                loc.t('settings.title'),
+                                style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                   color: SafePlayColors.neutral900,
                                 ),
                               ),
                               Text(
-                                'Manage your account and preferences',
+                                loc.t('settings.subtitle'),
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: SafePlayColors.neutral500,
@@ -152,8 +167,8 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
                       children: [
                         _buildMenuItem(
                           icon: Icons.lock_outline,
-                          title: 'Change Password',
-                          subtitle: 'Update your account password',
+                          title: loc.t('settings.change_password'),
+                          subtitle: loc.t('settings.change_password_desc'),
                           onTap: () {
                             Navigator.of(context).pop();
                             context.push(RouteNames.parentChangePassword);
@@ -161,8 +176,8 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
                         ),
                         _buildMenuItem(
                           icon: Icons.notifications_outlined,
-                          title: 'Notifications',
-                          subtitle: 'Manage notification preferences',
+                          title: loc.t('settings.notifications'),
+                          subtitle: loc.t('settings.notifications_desc'),
                           onTap: () {
                             Navigator.of(context).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -176,8 +191,8 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
                         ),
                         _buildMenuItem(
                           icon: Icons.privacy_tip_outlined,
-                          title: 'Privacy & Security',
-                          subtitle: 'Manage your privacy settings',
+                          title: loc.t('settings.privacy'),
+                          subtitle: loc.t('settings.privacy_desc'),
                           onTap: () {
                             Navigator.of(context).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -190,8 +205,8 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
                         ),
                         _buildMenuItem(
                           icon: Icons.help_outline,
-                          title: 'Help & Support',
-                          subtitle: 'Get help and contact support',
+                          title: loc.t('settings.help'),
+                          subtitle: loc.t('settings.help_desc'),
                           onTap: () {
                             Navigator.of(context).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -214,6 +229,15 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
                                 backgroundColor: SafePlayColors.info,
                               ),
                             );
+                          },
+                        ),
+                        _buildMenuItem(
+                          icon: Icons.language,
+                          title: loc.t('label.language_setting'),
+                          subtitle: loc.t('label.language_setting_desc'),
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            _showLanguagePicker();
                           },
                         ),
 
@@ -312,9 +336,9 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
                               const SizedBox(height: 8),
                               _buildMenuItem(
                                 icon: Icons.delete_forever_outlined,
-                                title: 'Delete Account',
+                                title: loc.t('settings.delete_account'),
                                 subtitle:
-                                    'Permanently delete your account and all data',
+                                    loc.t('settings.delete_account_desc'),
                                 onTap: () {
                                   Navigator.of(context).pop();
                                   context.push(RouteNames.parentDeleteAccount);
@@ -341,7 +365,7 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
                               }
                             },
                             icon: const Icon(Icons.logout, size: 20),
-                            label: const Text('Sign Out'),
+                            label: Text(loc.t('settings.sign_out')),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: Colors.red,
                               side: const BorderSide(color: Colors.red),

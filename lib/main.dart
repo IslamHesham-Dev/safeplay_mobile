@@ -3,6 +3,7 @@ import 'dart:ui' show PointerDeviceKind;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'design_system/theme.dart';
@@ -30,6 +31,8 @@ import 'services/notification_service.dart';
 import 'services/auth_service.dart';
 import 'services/wellbeing_service.dart';
 import 'utils/orientation_utils.dart';
+import 'localization/app_localizations.dart';
+import 'providers/locale_provider.dart';
 // Database initialization removed - it requires admin permissions and should be run manually
 // import 'services/database_initializer.dart';
 
@@ -37,12 +40,16 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await _initializeFirebase();
 
+  // Preload saved locale before bootstrapping the app
+  final localeProvider = LocaleProvider();
+  await localeProvider.loadSavedLocale();
+
   // Set preferred orientations (not applicable on web)
   if (!kIsWeb) {
     await allowAllDeviceOrientations();
   }
 
-  runApp(const SafePlayApp());
+  runApp(SafePlayApp(localeProvider: localeProvider));
 }
 
 Future<void> _initializeFirebase() async {
@@ -64,7 +71,9 @@ Future<void> _initializeFirebase() async {
 }
 
 class SafePlayApp extends StatefulWidget {
-  const SafePlayApp({super.key});
+  const SafePlayApp({super.key, required this.localeProvider});
+
+  final LocaleProvider localeProvider;
 
   @override
   State<SafePlayApp> createState() => _SafePlayAppState();
@@ -116,6 +125,9 @@ class _SafePlayAppState extends State<SafePlayApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider<LocaleProvider>.value(
+          value: widget.localeProvider,
+        ),
         ChangeNotifierProvider(
           create: (_) => AuthProvider(_authService),
         ),
@@ -167,9 +179,19 @@ class _SafePlayAppState extends State<SafePlayApp> {
             _notificationNavigatorRegistered = true;
           }
 
+          final locale = context.watch<LocaleProvider>().locale;
+
           return MaterialApp.router(
             title: 'SafePlay Portal',
             theme: SafePlayTheme.lightTheme,
+            locale: locale,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
             routerConfig: _appRouter!.router,
             scrollBehavior: const SafePlayScrollBehavior(),
             debugShowCheckedModeBanner: false,
