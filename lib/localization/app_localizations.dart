@@ -519,7 +519,7 @@ class AppLocalizations {
       'label.have_account': 'لديك حساب بالفعل؟',
       'label.home': 'لوحة الوالدين',
       'label.controls': 'ضوابط المتصفح',
-      'label.wellbeing': 'تقارير الرفاه',
+      'label.wellbeing': 'تقارير الصحة النفسية',
       'label.messaging': 'سلامة المراسلة',
       'label.nav_home': 'الرئيسية',
       'label.nav_controls': 'الضوابط',
@@ -595,7 +595,7 @@ class AppLocalizations {
       'wellbeing.note_privacy':
           'الملخصات ذات المستوى العام تحافظ على خصوصية الأطفال مع إظهار اتجاهات يمكن للوالدين التصرف حيالها.',
       'wellbeing.add_child_title': 'أضف طفلاً أولاً',
-      'wellbeing.add_child_subtitle': 'تحتاج إلى إضافة طفل قبل عرض تقارير الرفاه.',
+      'wellbeing.add_child_subtitle': 'تحتاج إلى إضافة طفل قبل عرض تقارير الصحة النفسية.',
       'wellbeing.select_child_title': 'اختر طفلاً',
       'wellbeing.select_child_subtitle': 'اختر طفلاً من القائمة أعلاه لعرض بيانات رفاهه.',
       'wellbeing.no_checkins_title': 'لا توجد تسجيلات حتى الآن',

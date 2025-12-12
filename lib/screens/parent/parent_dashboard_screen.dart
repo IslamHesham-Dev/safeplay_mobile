@@ -2704,42 +2704,46 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
 
   Widget _buildFullEmptyState(
       String title, String message, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(40),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(40),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-            child: Icon(icon, color: color, size: 48),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: SafePlayColors.neutral500, fontSize: 14),
-          ),
-        ],
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 48),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: SafePlayColors.neutral500, fontSize: 14),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -3355,6 +3359,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                         averageScore,
                         latestEntry,
                         isLoading,
+                        hasEntries,
                       ),
                       const SizedBox(height: 20),
                       _buildWeeklyMoodCard(
@@ -3474,10 +3479,13 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     double averageScore,
     WellbeingEntry? latestEntry,
     bool isLoading,
+    bool hasEntries,
   ) {
     final loc = context.loc;
     final note = latestEntry?.notes?.trim();
-    final scoreText = (!isLoading && averageScore == 0) ? '--' : '%';
+    final hasScore = hasEntries && !isLoading;
+    final clampedScore = averageScore.clamp(0, 100).toStringAsFixed(0);
+    final scoreText = hasScore ? '$clampedScore%' : '--';
     final localizedMoodLabel =
         _localizedMoodLabel(context, moodDefinition.label);
 
