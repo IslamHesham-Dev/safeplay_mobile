@@ -359,6 +359,9 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
                             onPressed: () async {
                               Navigator.of(context).pop();
                               final authProvider = context.read<AuthProvider>();
+                              final localeProvider =
+                                  context.read<LocaleProvider>();
+                              await localeProvider.setLocale(const Locale('en'));
                               await authProvider.signOut();
                               if (context.mounted) {
                                 context.go(RouteNames.login);
