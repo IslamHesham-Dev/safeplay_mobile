@@ -34,6 +34,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/locale_provider.dart';
 import '../../localization/app_localizations.dart';
 
+const Map<String, String> _moodLocalizationKeys = {
+  'amazing': 'wellbeing.mood.amazing',
+  'happy': 'wellbeing.mood.happy',
+  'good': 'wellbeing.mood.good',
+  'okay': 'wellbeing.mood.okay',
+  'sad': 'wellbeing.mood.sad',
+  'upset': 'wellbeing.mood.upset',
+};
+
+const Map<String, String> _insightTagKeys = {
+  'mood_trends': 'wellbeing.tag.mood_trends',
+  'recent_week': 'wellbeing.tag.recent_week',
+};
+
 /// Parent dashboard screen
 class ParentDashboardScreen extends StatefulWidget {
   const ParentDashboardScreen({super.key});
@@ -514,7 +528,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 Text(
                   childCount == 0
                       ? context.loc.t('dashboard.add_first_child')
-                      : context.loc.t('dashboard.your_children'),
+                      : context.loc
+                          .t('dashboard.managing_children')
+                          .replaceFirst('{count}', '$childCount'),
                   style: const TextStyle(color: Colors.white70, fontSize: 13),
                 ),
               ],
@@ -2054,7 +2070,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "${selectedChild.name}'s Browser",
+                                context.loc
+                                    .t('browser.child_browser_title')
+                                    .replaceFirst('{name}', selectedChild.name),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 20,
@@ -2157,8 +2175,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                             isLoading
                                 ? context.loc.t('browser.syncing')
                                 : _formatSyncDescription(
-                                    currentSettings.updatedAt,
-                                  ),
+                                    context, currentSettings.updatedAt),
                             style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 12,
@@ -3016,7 +3033,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
-  _WellbeingInsightItem _mapWellbeingInsight(WellbeingInsight insight) {
+  _WellbeingInsightItem _mapWellbeingInsight(
+    BuildContext context,
+    WellbeingInsight insight,
+  ) {
     final tone = insight.tone.toLowerCase();
     Color color = SafePlayColors.brandTeal500;
     IconData icon = Icons.favorite_rounded;
@@ -3039,9 +3059,12 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       icon: icon,
       color: color,
       summary: insight.summary,
-      category: insight.category,
-      timeframe:
-          insight.timeframe.isEmpty ? 'Recent check-ins' : insight.timeframe,
+      category: _formatInsightTag(context, insight.category),
+      timeframe: _formatInsightTag(
+        context,
+        insight.timeframe.isEmpty ? 'recent_checkins' : insight.timeframe,
+        isTimeframe: true,
+      ),
     );
   }
 
@@ -3244,6 +3267,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   ) {
     final selectedChild = childProvider.selectedChild;
     final hasChild = childProvider.children.isNotEmpty;
+    final loc = context.loc;
 
     Future<void> refresh() async {
       if (selectedChild != null) {
@@ -3269,15 +3293,15 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             const SizedBox(height: 20),
             if (!hasChild)
               _buildFullEmptyState(
-                'Add a child first',
-                'You need to add a child before viewing wellbeing reports.',
+                loc.t('wellbeing.add_child_title'),
+                loc.t('wellbeing.add_child_subtitle'),
                 Icons.child_care_rounded,
                 SafePlayColors.brandOrange500,
               )
             else if (selectedChild == null)
               _buildFullEmptyState(
-                'Select a child',
-                'Choose a child from the dropdown above to view their wellbeing data.',
+                loc.t('wellbeing.select_child_title'),
+                loc.t('wellbeing.select_child_subtitle'),
                 Icons.touch_app_rounded,
                 SafePlayColors.brandTeal500,
               )
@@ -3295,7 +3319,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                       ? moodDefinitionForScore(averageScore)
                       : kWellbeingMoods.last;
                   final latestEntry = hasEntries ? entries.first : null;
-                  final weeklySummary = _generateWeeklyMoodSummary(entries);
+                  final localeCode =
+                      context.read<LocaleProvider>().locale.languageCode;
+                  final weeklySummary =
+                      _generateWeeklyMoodSummary(entries, localeCode);
                   final recentEntries = wellbeingProvider.recentEntries(
                     selectedChild.id,
                     limit: 5,
@@ -3304,8 +3331,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   if (!hasEntries && !isLoading) {
                     final firstName = selectedChild.name.split(' ').first;
                     return _buildFullEmptyState(
-                      'No check-ins yet',
-                      'Encourage $firstName to share how they\'re feeling from their dashboard.',
+                      loc.t('wellbeing.no_checkins_title'),
+                      loc
+                          .t('wellbeing.no_checkins_message')
+                          .replaceFirst('{name}', firstName),
                       Icons.favorite_outline_rounded,
                       SafePlayColors.juniorPink,
                     );
@@ -3314,9 +3343,14 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildWellbeingHeader(selectedChild, latestEntry),
+                      _buildWellbeingHeader(
+                        context,
+                        selectedChild,
+                        latestEntry,
+                      ),
                       const SizedBox(height: 20),
                       _buildWellbeingOverviewCard(
+                        context,
                         moodDefinition,
                         averageScore,
                         latestEntry,
@@ -3324,12 +3358,14 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                       ),
                       const SizedBox(height: 20),
                       _buildWeeklyMoodCard(
+                        context,
                         weeklySummary,
                         hasEntries,
                         isLoading,
                       ),
                       const SizedBox(height: 20),
                       _buildRecentCheckinsCard(
+                        context,
                         recentEntries,
                         isLoading,
                       ),
@@ -3339,7 +3375,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                         wellbeingProvider,
                       ),
                       const SizedBox(height: 20),
-                      _buildWellbeingPrivacyNote(),
+                      _buildWellbeingPrivacyNote(context),
                     ],
                   );
                 },
@@ -3353,12 +3389,23 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   }
 
   Widget _buildWellbeingHeader(
+    BuildContext context,
     ChildProfile child,
     WellbeingEntry? latestEntry,
   ) {
+    final loc = context.loc;
+    final localeCode = context.read<LocaleProvider>().locale.languageCode;
     final timestampLabel = latestEntry == null
-        ? 'No check-ins yet'
-        : "Last shared ${DateFormat('MMM d \u2022 h:mm a').format(latestEntry.timestamp)}";
+        ? loc.t('wellbeing.no_checkins_title')
+        : loc
+            .t('wellbeing.last_shared')
+            .replaceFirst(
+              '{timestamp}',
+              DateFormat('MMM d \u2022 h:mm a', localeCode)
+                  .format(latestEntry.timestamp),
+            );
+    final title =
+        loc.t('wellbeing.child_header').replaceFirst('{name}', child.name);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -3398,7 +3445,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "${child.name}'s wellbeing",
+                  title,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
@@ -3422,13 +3469,17 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   }
 
   Widget _buildWellbeingOverviewCard(
+    BuildContext context,
     WellbeingMoodDefinition moodDefinition,
     double averageScore,
     WellbeingEntry? latestEntry,
     bool isLoading,
   ) {
+    final loc = context.loc;
     final note = latestEntry?.notes?.trim();
     final scoreText = (!isLoading && averageScore == 0) ? '--' : '%';
+    final localizedMoodLabel =
+        _localizedMoodLabel(context, moodDefinition.label);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -3466,16 +3517,16 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Overall wellbeing',
-                  style: TextStyle(
+                Text(
+                  loc.t('wellbeing.overview'),
+                  style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 13,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  moodDefinition.label,
+                  localizedMoodLabel,
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -3485,7 +3536,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 if (note != null && note.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Text(
-                    'Latest note: $note',
+                    loc
+                        .t('wellbeing.latest_note')
+                        .replaceFirst('{note}', note),
                     style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 13,
@@ -3512,7 +3565,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   ),
                 ),
                 Text(
-                  'Score',
+                  loc.t('wellbeing.score_label'),
                   style: TextStyle(
                     color: moodDefinition.color.withOpacity(0.7),
                     fontSize: 11,
@@ -3535,7 +3588,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     final insights = wellbeingProvider.insightsForChild(child.id);
     final isLoading = wellbeingProvider.isInsightsLoading(child.id);
     final error = wellbeingProvider.insightErrorFor(child.id);
-    final items = insights.map(_mapWellbeingInsight).toList();
+    final items =
+        insights.map((insight) => _mapWellbeingInsight(context, insight)).toList();
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -3673,11 +3727,13 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   }
 
   Widget _buildWeeklyMoodCard(
+    BuildContext context,
     List<_MoodDaySummary> summary,
     bool hasEntries,
     bool isLoading,
   ) {
-    final hasSignals = summary.any((day) => day.emoji != '—');
+    final loc = context.loc;
+    final hasSignals = summary.any((day) => day.emoji != '-');
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -3710,9 +3766,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
-                "This week's mood",
-                style: TextStyle(
+              Text(
+                loc.t('label.this_weeks_mood'),
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                 ),
@@ -3723,9 +3779,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           if (isLoading && !hasEntries)
             const Center(child: CircularProgressIndicator())
           else if (!hasSignals)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: Text('No mood entries yet this week.'),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Text(loc.t('wellbeing.no_mood_week')),
             )
           else
             Row(
@@ -3746,9 +3802,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   }
 
   Widget _buildRecentCheckinsCard(
+    BuildContext context,
     List<WellbeingEntry> entries,
     bool isLoading,
   ) {
+    final loc = context.loc;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -3780,9 +3838,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'Recent check-ins',
-                style: TextStyle(
+              Text(
+                loc.t('wellbeing.recent_checkins'),
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                 ),
@@ -3793,16 +3851,16 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           if (isLoading && entries.isEmpty)
             const Center(child: CircularProgressIndicator())
           else if (entries.isEmpty)
-            const Text('No wellbeing check-ins recorded yet.')
+            Text(loc.t('wellbeing.no_recent_checkins'))
           else
             ...entries.map(
               (entry) => _buildCheckinItem(
-                _formatCheckinDate(entry.timestamp),
+                _formatCheckinDate(context, entry.timestamp),
                 entry.moodEmoji,
-                entry.moodLabel,
+                _localizedMoodLabel(context, entry.moodLabel),
                 entry.notes?.isNotEmpty == true
                     ? entry.notes!
-                    : 'No note added',
+                    : loc.t('wellbeing.no_note_added'),
               ),
             ),
         ],
@@ -3810,7 +3868,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
-  Widget _buildWellbeingPrivacyNote() {
+  Widget _buildWellbeingPrivacyNote(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -3830,7 +3888,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              "Meta-level summaries keep kids' privacy intact while still showing trends parents can act on.",
+              context.loc.t('wellbeing.note_privacy'),
               style: TextStyle(
                 color: SafePlayColors.neutral600,
                 fontSize: 12,
@@ -3844,7 +3902,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   }
 
   List<_MoodDaySummary> _generateWeeklyMoodSummary(
-      List<WellbeingEntry> entries) {
+      List<WellbeingEntry> entries, String localeCode) {
     final now = DateTime.now();
     final Map<String, WellbeingEntry> latestPerDay = {};
     for (final entry in entries) {
@@ -3852,7 +3910,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       latestPerDay.putIfAbsent(key, () => entry);
     }
 
-    final formatter = DateFormat('EEE');
+    final formatter = DateFormat('EEE', localeCode);
     return List.generate(7, (index) {
       final date = now.subtract(Duration(days: 6 - index));
       final key = _dayKey(date);
@@ -4506,23 +4564,38 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
-  String _formatSyncDescription(DateTime? timestamp) {
-    if (timestamp == null) {
-      return 'Never synced yet';
-    }
-    final diff = DateTime.now().difference(timestamp);
-    if (diff.inMinutes < 1) return 'Last synced just now';
-    if (diff.inHours < 1) {
-      final minutes = diff.inMinutes;
-      return 'Last synced ${minutes} minute${minutes == 1 ? '' : 's'} ago';
-    }
-    if (diff.inDays < 1) {
-      final hours = diff.inHours;
-      return 'Last synced ${hours} hour${hours == 1 ? '' : 's'} ago';
-    }
-    final days = diff.inDays;
-    return 'Last synced ${days} day${days == 1 ? '' : 's'} ago';
+String _formatSyncDescription(BuildContext context, DateTime? timestamp) {
+  final loc = context.loc;
+  String withCount(String key, int count) {
+    final template = loc.t(key);
+    return template.contains('{count}')
+        ? template.replaceFirst('{count}', '$count')
+        : template;
   }
+
+  if (timestamp == null) {
+    return loc.t('browser.sync_never');
+  }
+  final diff = DateTime.now().difference(timestamp);
+  if (diff.inMinutes < 1) return loc.t('browser.sync_just_now');
+  if (diff.inHours < 1) {
+    final minutes = diff.inMinutes;
+    final key = minutes == 1
+        ? 'browser.sync_minutes_single'
+        : 'browser.sync_minutes_plural';
+    return withCount(key, minutes);
+  }
+  if (diff.inDays < 1) {
+    final hours = diff.inHours;
+    final key =
+        hours == 1 ? 'browser.sync_hours_single' : 'browser.sync_hours_plural';
+    return withCount(key, hours);
+  }
+  final days = diff.inDays;
+  final key =
+      days == 1 ? 'browser.sync_days_single' : 'browser.sync_days_plural';
+  return withCount(key, days);
+}
 
   String _formatSiteLabel(String site) {
     var normalized = site.trim();
@@ -4622,16 +4695,55 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
-  String _formatCheckinDate(DateTime timestamp) {
+  String _formatCheckinDate(BuildContext context, DateTime timestamp) {
+    final localeCode = context.read<LocaleProvider>().locale.languageCode;
     final now = DateTime.now();
     final diff = now.difference(timestamp);
+    final timeLabel = DateFormat('h:mm a', localeCode).format(timestamp);
     if (diff.inDays == 0) {
-      return DateFormat('h:mm a').format(timestamp);
+      return timeLabel;
     }
     if (diff.inDays == 1) {
-      return 'Yesterday • ${DateFormat('h:mm a').format(timestamp)}';
+      return context.loc
+          .t('wellbeing.checkin_yesterday')
+          .replaceFirst('{time}', timeLabel);
     }
-    return DateFormat('EEE • h:mm a').format(timestamp);
+    final dayLabel = DateFormat('EEE', localeCode).format(timestamp);
+    return context.loc
+        .t('wellbeing.checkin_day_time')
+        .replaceFirst('{day}', dayLabel)
+        .replaceFirst('{time}', timeLabel);
+  }
+
+  String _localizedMoodLabel(BuildContext context, String label) {
+    final key = _moodLocalizationKeys[label.trim().toLowerCase()];
+    if (key == null) return label;
+    final translated = context.loc.t(key);
+    return translated.isNotEmpty ? translated : label;
+  }
+
+  String _formatInsightTag(
+    BuildContext context,
+    String raw, {
+    bool isTimeframe = false,
+  }) {
+    final loc = context.loc;
+    final normalized = raw.trim().toLowerCase().replaceAll('-', '_');
+    final mappedKey = _insightTagKeys[normalized];
+    if (mappedKey != null) {
+      final translated = loc.t(mappedKey);
+      if (translated.isNotEmpty && translated != mappedKey) return translated;
+    }
+    if (isTimeframe && normalized == 'recent_checkins') {
+      return loc.t('wellbeing.recent_checkins');
+    }
+    final friendly = normalized
+        .replaceAll('_', ' ')
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .map((part) => part[0].toUpperCase() + part.substring(1))
+        .join(' ');
+    return friendly.isEmpty ? raw : friendly;
   }
 
   Widget _buildDetailedAlertItem(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 class AppLocalizations {
   AppLocalizations(this.locale);
   final Locale locale;
@@ -9,6 +10,7 @@ class AppLocalizations {
   static AppLocalizations of(BuildContext context) {
     return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
+
   static const LocalizationsDelegate<AppLocalizations> delegate =
       _AppLocalizationsDelegate();
   static const Map<String, Map<String, String>> _localizedValues = {
@@ -100,6 +102,7 @@ class AppLocalizations {
       'dashboard.add_first_child': 'Add your first child to begin',
       'dashboard.remaining_time': 'remaining out of',
       'dashboard.select_child_prompt': 'Select a child',
+      'dashboard.managing_children': 'Managing {count} children',
       'dashboard.view_all': 'View all',
       'dashboard.view_less': 'View less',
       'dashboard.add_child_to_see_activities':
@@ -124,6 +127,32 @@ class AppLocalizations {
       'wellbeing.recent_checkins': 'Recent check-ins',
       'wellbeing.note_privacy':
           "Meta-level summaries keep kids' privacy intact while still showing trends parents can act on.",
+      'wellbeing.add_child_title': 'Add a child first',
+      'wellbeing.add_child_subtitle':
+          'You need to add a child before viewing wellbeing reports.',
+      'wellbeing.select_child_title': 'Select a child',
+      'wellbeing.select_child_subtitle':
+          'Choose a child from the dropdown above to view their wellbeing data.',
+      'wellbeing.no_checkins_title': 'No check-ins yet',
+      'wellbeing.no_checkins_message':
+          "Encourage {name} to share how they're feeling from their dashboard.",
+      'wellbeing.child_header': "{name}'s wellbeing",
+      'wellbeing.last_shared': 'Last shared {timestamp}',
+      'wellbeing.latest_note': 'Latest note: {note}',
+      'wellbeing.score_label': 'Score',
+      'wellbeing.no_mood_week': 'No mood entries yet this week.',
+      'wellbeing.no_recent_checkins': 'No wellbeing check-ins recorded yet.',
+      'wellbeing.no_note_added': 'No note added',
+      'wellbeing.checkin_yesterday': 'Yesterday • {time}',
+      'wellbeing.checkin_day_time': '{day} • {time}',
+      'wellbeing.mood.amazing': 'Amazing',
+      'wellbeing.mood.happy': 'Happy',
+      'wellbeing.mood.good': 'Good',
+      'wellbeing.mood.okay': 'Okay',
+      'wellbeing.mood.sad': 'Sad',
+      'wellbeing.mood.upset': 'Upset',
+      'wellbeing.tag.mood_trends': 'Mood trends',
+      'wellbeing.tag.recent_week': 'This week',
       'messaging.title': 'Messaging Safety',
       'messaging.alerts': 'AI Alerts',
       'messaging.alert_inappropriate': 'Inappropriate Language',
@@ -234,8 +263,7 @@ class AppLocalizations {
       'auth.setup.pin_error_numeric': 'PIN must contain only numbers',
       'auth.setup.pin_confirm_label': 'Confirm PIN',
       'auth.setup.pin_error_mismatch': 'PINs do not match',
-      'auth.setup.pin_validation_prompt':
-          'Enter a 4-digit PIN and confirm it',
+      'auth.setup.pin_validation_prompt': 'Enter a 4-digit PIN and confirm it',
       'auth.setup.pin_validation_short': 'PIN must be 4 digits',
       'auth.setup.pin_validation_numeric': 'PIN must contain only numbers',
       'auth.setup.pin_validation_confirm_prompt': 'Please confirm your PIN',
@@ -386,10 +414,19 @@ class AppLocalizations {
       'browser.gambling_allowed': 'Gambling Allowed',
       'browser.violence_blocked': 'Violence Blocked',
       'browser.violence_allowed': 'Violence Allowed',
+      'browser.child_browser_title': "{name}'s Browser",
       'browser.cloud_rules': 'Cloud-backed safe browsing rules',
       'browser.syncing': 'Syncing latest settings...',
       'browser.using_defaults':
           'Using SafePlay defaults until the first cloud sync completes.',
+      'browser.sync_never': 'Never synced yet',
+      'browser.sync_just_now': 'Last synced just now',
+      'browser.sync_minutes_single': 'Last synced 1 minute ago',
+      'browser.sync_minutes_plural': 'Last synced {count} minutes ago',
+      'browser.sync_hours_single': 'Last synced 1 hour ago',
+      'browser.sync_hours_plural': 'Last synced {count} hours ago',
+      'browser.sync_days_single': 'Last synced 1 day ago',
+      'browser.sync_days_plural': 'Last synced {count} days ago',
       'onboard.parent.1.title': 'Welcome to SafePlay',
       'onboard.parent.1.subtitle': 'Your Child\'s Safety is Our Priority',
       'onboard.parent.1.desc':
@@ -525,8 +562,7 @@ class AppLocalizations {
       'dashboard.screen_time_desc': 'الحد اليومي لـ ',
       'dashboard.enable_screen_time': 'تفعيل حد وقت الشاشة',
       'dashboard.daily_limit_label': 'الحد اليومي',
-      'dashboard.auto_pause':
-          'إيقاف التطبيق تلقائيًا عند الوصول للحد اليومي',
+      'dashboard.auto_pause': 'إيقاف التطبيق تلقائيًا عند الوصول للحد اليومي',
       'dashboard.select_child_limits': 'اختر طفلًا لضبط الحدود',
       'dashboard.add_child': 'إضافة طفل',
       'dashboard.your_children': 'أطفالك',
@@ -534,6 +570,7 @@ class AppLocalizations {
       'dashboard.add_first_child': 'أضف أول طفل للبدء',
       'dashboard.remaining_time': 'متبقي من',
       'dashboard.select_child_prompt': 'اختر طفلًا',
+      'dashboard.managing_children': 'إدارة {count} الأطفال',
       'dashboard.view_all': 'عرض الكل',
       'dashboard.view_less': 'عرض أقل',
       'dashboard.add_child_to_see_activities': 'أضف طفلًا لعرض أنشطته الأخيرة.',
@@ -557,6 +594,29 @@ class AppLocalizations {
       'wellbeing.recent_checkins': 'أحدث تسجيلات الشعور',
       'wellbeing.note_privacy':
           'الملخصات ذات المستوى العام تحافظ على خصوصية الأطفال مع إظهار اتجاهات يمكن للوالدين التصرف حيالها.',
+      'wellbeing.add_child_title': 'أضف طفلاً أولاً',
+      'wellbeing.add_child_subtitle': 'تحتاج إلى إضافة طفل قبل عرض تقارير الرفاه.',
+      'wellbeing.select_child_title': 'اختر طفلاً',
+      'wellbeing.select_child_subtitle': 'اختر طفلاً من القائمة أعلاه لعرض بيانات رفاهه.',
+      'wellbeing.no_checkins_title': 'لا توجد تسجيلات حتى الآن',
+      'wellbeing.no_checkins_message': 'شجّع {name} على مشاركة شعوره من لوحته.',
+      'wellbeing.child_header': 'صحة {name} النفسية',
+      'wellbeing.last_shared': 'آخر مشاركة كانت في {timestamp}',
+      'wellbeing.latest_note': 'أحدث ملاحظة: {note}',
+      'wellbeing.score_label': 'النتيجة',
+      'wellbeing.no_mood_week': 'لا توجد تسجيلات مزاج لهذا الأسبوع.',
+      'wellbeing.no_recent_checkins': 'لا توجد تسجيلات رفاهية بعد.',
+      'wellbeing.no_note_added': 'لم تتم إضافة ملاحظة',
+      'wellbeing.checkin_yesterday': 'أمس • {time}',
+      'wellbeing.checkin_day_time': '{day} • {time}',
+      'wellbeing.mood.amazing': 'رائع',
+      'wellbeing.mood.happy': 'سعيد',
+      'wellbeing.mood.good': 'جيد',
+      'wellbeing.mood.okay': 'مقبول',
+      'wellbeing.mood.sad': 'حزين',
+      'wellbeing.mood.upset': 'منزعج',
+      'wellbeing.tag.mood_trends': 'اتجاهات المزاج',
+      'wellbeing.tag.recent_week': 'هذا الأسبوع',
       'messaging.title': 'سلامة المراسلة',
       'messaging.alerts': 'تنبيهات الذكاء الاصطناعي',
       'messaging.alert_inappropriate': 'لغة غير لائقة',
@@ -575,8 +635,7 @@ class AppLocalizations {
       'child.age_group_bright': 'برايت',
       'child.list_header': 'أطفالك ({count})',
       'child.empty_title': 'لا يوجد أطفال مضافون بعد',
-      'child.empty_subtitle':
-          'أضف طفلك الأول لبدء متابعة رحلته التعليمية',
+      'child.empty_subtitle': 'أضف طفلك الأول لبدء متابعة رحلته التعليمية',
       'child.empty_button': 'أضف طفلك الأول',
       'child.add.title': 'إضافة طفل',
       'child.add.header': 'إنشاء ملف طفل',
@@ -656,17 +715,18 @@ class AppLocalizations {
       'auth.setup.review_setup': 'مراجعة الإعداد',
       'auth.setup.saving': 'جاري الحفظ...',
       'auth.setup.pin_title': 'إنشاء رقم سري',
-      'auth.setup.pin_subtitle': 'أنشئ رقمًا سريًا من ٤ أرقام يمكن لـ {name} تذكره.',
+      'auth.setup.pin_subtitle':
+          'أنشئ رقمًا سريًا من ٤ أرقام يمكن لـ {name} تذكره.',
       'auth.setup.pin_label': 'رقم سري من ٤ أرقام',
       'auth.setup.pin_helper': 'أدخل رقمًا من ٤ أرقام (مثال: 1234)',
       'auth.setup.pin_error_length': 'يجب أن يكون الرقم السري ٤ أرقام بالضبط',
       'auth.setup.pin_error_numeric': 'يجب أن يحتوي الرقم السري على أرقام فقط',
       'auth.setup.pin_confirm_label': 'تأكيد الرقم السري',
       'auth.setup.pin_error_mismatch': 'الأرقام السرية غير متطابقة',
-      'auth.setup.pin_validation_prompt':
-          'أدخل رقمًا سريًا من ٤ أرقام ثم أكده',
+      'auth.setup.pin_validation_prompt': 'أدخل رقمًا سريًا من ٤ أرقام ثم أكده',
       'auth.setup.pin_validation_short': 'يجب أن يكون الرقم السري ٤ أرقام',
-      'auth.setup.pin_validation_numeric': 'يجب أن يحتوي الرقم السري على أرقام فقط',
+      'auth.setup.pin_validation_numeric':
+          'يجب أن يحتوي الرقم السري على أرقام فقط',
       'auth.setup.pin_validation_confirm_prompt': 'يرجى تأكيد الرقم السري',
       'auth.setup.pin_validation_confirm_short':
           'يجب أن يكون تأكيد الرقم السري ٤ أرقام',
@@ -777,7 +837,8 @@ class AppLocalizations {
       'game.easy_spelling_kids': 'لعبة التهجئة السهلة للأطفال',
       'game.word_guessing_puzzle': 'لعبة تخمين الكلمات',
       'browser.ai_safe_search': 'بحث آمن بالذكاء الاصطناعي',
-      'browser.ai_safe_search_desc': 'يُرشّح المواضيع الضارة داخل متصفح سيف بلاي.',
+      'browser.ai_safe_search_desc':
+          'يحظر المواضيع الضارة داخل متصفح سيف بلاي.',
       'browser.content_filters': 'مرشحات المحتوى',
       'browser.block_social': 'حظر التواصل الاجتماعي',
       'browser.block_social_desc':
@@ -786,7 +847,8 @@ class AppLocalizations {
       'browser.block_gambling_desc':
           'يوقف المحتوى المرتبط بالمراهنات والكازينوهات والصناديق الوهمية.',
       'browser.block_violence': 'حظر المحتوى العنيف',
-      'browser.block_violence_desc': 'يزيل الألعاب الدموية والمنتديات غير الآمنة.',
+      'browser.block_violence_desc':
+          'يزيل الألعاب الدموية والمنتديات غير الآمنة.',
       'browser.allowed_sites': 'المواقع المسموح بها',
       'browser.add_allowed_site': 'إضافة موقع مسموح',
       'browser.allowed_placeholder': 'أدخل رابط الموقع (مثال: example.com)',
@@ -852,8 +914,11 @@ class AppLocalizations {
       'onboard.parent.7.h1': 'أضف أول ملف لطفلك',
       'onboard.parent.7.h2': 'اضبط إعدادات الأمان',
       'onboard.parent.7.h3': 'راقب التقدم في أي وقت',
-      'onboard.parent.7.h4': 'اعرض تقارير النشاط',      'browser.allowed_empty_note': 'سيتم السماح فقط بوجهات سيف بلاي المنسقة. أضف مواقع موثوقة لإدراجها في القائمة البيضاء.',
-      'browser.keyword_empty_note': 'لا توجد كلمات مخصصة بعد. أضف عبارات لا تريد ظهورها إطلاقاً.',
+      'onboard.parent.7.h4': 'اعرض تقارير النشاط',
+      'browser.allowed_empty_note':
+          'سيتم السماح فقط بوجهات سيف بلاي المنسقة. أضف مواقع موثوقة لإدراجها في القائمة البيضاء.',
+      'browser.keyword_empty_note':
+          'لا توجد كلمات مخصصة بعد. أضف عبارات لا تريد ظهورها إطلاقاً.',
       'browser.dialog_add_allowed_title': 'إضافة موقع مسموح',
       'browser.dialog_add_allowed_hint': 'مثال: example.com',
       'browser.dialog_add_blocked_title': 'إضافة كلمة محظورة',
@@ -866,9 +931,19 @@ class AppLocalizations {
       'browser.gambling_allowed': 'المقامرة مسموحة',
       'browser.violence_blocked': 'المحتوى العنيف محظور',
       'browser.violence_allowed': 'المحتوى العنيف مسموح',
+      'browser.child_browser_title': 'متصفح {name}',
       'browser.cloud_rules': 'قواعد تصفح آمن مدعومة بالسحابة',
       'browser.syncing': 'جاري مزامنة الإعدادات الأخيرة...',
-      'browser.using_defaults': 'يتم استخدام إعدادات سيف بلاي الافتراضية حتى يكتمل التزامن السحابي الأول.',
+      'browser.using_defaults':
+          'يتم استخدام إعدادات سيف بلاي الافتراضية حتى يكتمل التزامن السحابي الأول.',
+      'browser.sync_never': 'لم تتم المزامنة بعد',
+      'browser.sync_just_now': 'آخر مزامنة للتو',
+      'browser.sync_minutes_single': 'آخر مزامنة منذ دقيقة واحدة',
+      'browser.sync_minutes_plural': 'آخر مزامنة منذ {count} دقيقة',
+      'browser.sync_hours_single': 'آخر مزامنة منذ ساعة واحدة',
+      'browser.sync_hours_plural': 'آخر مزامنة منذ {count} ساعة',
+      'browser.sync_days_single': 'آخر مزامنة منذ يوم واحد',
+      'browser.sync_days_plural': 'آخر مزامنة منذ {count} يوم',
     },
   };
   String t(String key) {
@@ -877,6 +952,7 @@ class AppLocalizations {
         key;
   }
 }
+
 class _AppLocalizationsDelegate
     extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
@@ -887,12 +963,15 @@ class _AppLocalizationsDelegate
   Future<AppLocalizations> load(Locale locale) async {
     return AppLocalizations(locale);
   }
+
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
+
 extension AppLocalizationsExtension on BuildContext {
   AppLocalizations get loc => AppLocalizations.of(this);
 }
+
 extension LocalizedString on String {
   String tr(BuildContext context) => AppLocalizations.of(context).t(this);
 }
