@@ -2817,10 +2817,13 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            loc.t('browser.summary_hint'),
+            loc
+                .t('browser.summary_hint')
+                .replaceFirst('{name}', child.name),
             style: TextStyle(
               color: SafePlayColors.neutral600,
               fontSize: 13,
+              height: 1.35,
             ),
           ),
           const SizedBox(height: 20),
@@ -2904,7 +2907,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'This summary respects privacy by showing abstracted activity patterns, not personal details.',
+                    loc.t('browser.summary_hint'),
                     style: TextStyle(
                       color: SafePlayColors.neutral600,
                       fontSize: 12,
@@ -3949,6 +3952,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     MessagingSafetyProvider safetyProvider,
   ) {
     final parent = authProvider.currentUser;
+    final loc = context.loc;
 
     final selectedChild = childProvider.selectedChild;
 
@@ -3992,15 +3996,15 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           const SizedBox(height: 20),
           if (!hasChild)
             _buildFullEmptyState(
-              'Add a child first',
-              'You need to add a child before viewing messaging alerts.',
+              loc.t('messaging.add_child_title'),
+              loc.t('messaging.add_child_subtitle'),
               Icons.child_care_rounded,
               SafePlayColors.brandOrange500,
             )
           else if (selectedChild == null)
             _buildFullEmptyState(
-              'Select a child',
-              'Choose a child from the dropdown above to view their messaging safety alerts.',
+              loc.t('messaging.select_child_title'),
+              loc.t('messaging.select_child_subtitle'),
               Icons.touch_app_rounded,
               SafePlayColors.brandTeal500,
             )
@@ -4040,7 +4044,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "${selectedChild.name}'s Messages",
+                          loc
+                              .t('messaging.child_header')
+                              .replaceFirst('{name}', selectedChild.name),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
@@ -4049,7 +4055,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${alerts.length} alerts | ${unreviewedCount} need review',
+                          loc
+                              .t('messaging.alerts_summary')
+                              .replaceFirst('{total}', '${alerts.length}')
+                              .replaceFirst('{unreviewed}', '$unreviewedCount'),
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 13,
@@ -4067,14 +4076,14 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                       color: Colors.white.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(Icons.shield_rounded,
+                        const Icon(Icons.shield_rounded,
                             color: Colors.white, size: 16),
-                        SizedBox(width: 6),
+                        const SizedBox(width: 6),
                         Text(
-                          'AI Guard',
-                          style: TextStyle(
+                          loc.t('messaging.ai_guard'),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
@@ -4117,16 +4126,18 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'AI Safety Guard',
-                              style: TextStyle(
+                            Text(
+                              loc.t('messaging.ai_safety_guard'),
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15,
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Monitoring chats between ${selectedChild.name} and teachers',
+                              loc
+                                  .t('messaging.ai_monitoring')
+                                  .replaceFirst('{name}', selectedChild.name),
                               style: TextStyle(
                                 color: SafePlayColors.neutral500,
                                 fontSize: 13,
@@ -4136,7 +4147,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                         ),
                       ),
                       IconButton(
-                        tooltip: 'Run new scan',
+                        tooltip: loc.t('messaging.run_scan'),
                         onPressed: parent == null || isLoading
                             ? null
                             : () {
@@ -4158,14 +4169,14 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                           color: SafePlayColors.success,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
-                            Icon(Icons.check_circle,
+                            const Icon(Icons.check_circle,
                                 color: Colors.white, size: 16),
-                            SizedBox(width: 6),
+                            const SizedBox(width: 6),
                             Text(
-                              'Active',
-                              style: TextStyle(
+                              loc.t('messaging.active'),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -4181,7 +4192,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                       Expanded(
                         child: _buildStatusCard(
                           icon: Icons.verified_user_rounded,
-                          label: 'Model',
+                          label: loc.t('messaging.model_label'),
                           value: 'DeepSeek V3.1',
                           color: SafePlayColors.brightIndigo,
                         ),
@@ -4190,10 +4201,12 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                       Expanded(
                         child: _buildStatusCard(
                           icon: Icons.access_time,
-                          label: 'Last scan',
+                          label: loc.t('messaging.last_scan'),
                           value: lastScan != null
                               ? _formatTime(lastScan)
-                              : (isLoading ? 'Scanning...' : 'Pending'),
+                              : (isLoading
+                                  ? loc.t('messaging.scanning')
+                                  : loc.t('messaging.pending')),
                           color: SafePlayColors.brandOrange500,
                         ),
                       ),
@@ -4201,8 +4214,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                       Expanded(
                         child: _buildStatusCard(
                           icon: Icons.warning_amber_rounded,
-                          label: 'Needs review',
-                          value: '$unreviewedCount alert(s)',
+                          label: loc.t('messaging.needs_review'),
+                          value: loc
+                              .t('messaging.alert_count')
+                              .replaceFirst('{count}', '$unreviewedCount'),
                           color: SafePlayColors.error,
                         ),
                       ),
@@ -4240,9 +4255,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                             color: SafePlayColors.juniorPurple, size: 24),
                       ),
                       const SizedBox(width: 12),
-                      const Text(
-                        'What We Monitor',
-                        style: TextStyle(
+                      Text(
+                        loc.t('messaging.monitor_title'),
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),
@@ -4254,7 +4269,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     children: [
                       Expanded(
                         child: _buildMonitorItem(
-                          'Profanity',
+                          context,
+                          loc.t('messaging.profanity'),
                           Icons.report_rounded,
                           SafePlayColors.error,
                           count: profanityCount,
@@ -4263,7 +4279,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildMonitorItem(
-                          'Bullying',
+                          context,
+                          loc.t('messaging.bullying'),
                           Icons.warning_rounded,
                           SafePlayColors.warning,
                           count: bullyingCount,
@@ -4276,7 +4293,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     children: [
                       Expanded(
                         child: _buildMonitorItem(
-                          'Sensitive Topics',
+                          context,
+                          loc.t('messaging.sensitive_topics'),
                           Icons.psychology_rounded,
                           SafePlayColors.juniorPurple,
                           count: sensitiveCount,
@@ -4285,7 +4303,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildMonitorItem(
-                          'Stranger Danger',
+                          context,
+                          loc.t('messaging.stranger_danger'),
                           Icons.person_off_rounded,
                           SafePlayColors.brandOrange500,
                           count: strangerCount,
@@ -4325,10 +4344,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                             color: SafePlayColors.error, size: 24),
                       ),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'Safety Alerts',
-                          style: TextStyle(
+                          loc.t('messaging.safety_alerts'),
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                           ),
@@ -4353,7 +4372,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          '${alerts.length} total',
+                          loc
+                              .t('messaging.total_alerts')
+                              .replaceFirst('{count}', '${alerts.length}'),
                           style: TextStyle(
                             color: SafePlayColors.neutral600,
                             fontSize: 12,
@@ -4410,16 +4431,19 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'All clear!',
-                                  style: TextStyle(
+                                Text(
+                                  loc.t('messaging.all_clear_title'),
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  "DeepSeek did not detect harmful content in ${selectedChild.name}'s latest messages.",
+                                  loc
+                                      .t('messaging.all_clear_body')
+                                      .replaceFirst(
+                                          '{name}', selectedChild.name),
                                   style: TextStyle(
                                     color: SafePlayColors.neutral600,
                                     fontSize: 13,
@@ -4490,11 +4514,13 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   }
 
   Widget _buildMonitorItem(
+    BuildContext context,
     String label,
     IconData icon,
     Color color, {
     int count = 0,
   }) {
+    final loc = context.loc;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -4521,8 +4547,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 const SizedBox(height: 4),
                 Text(
                   count == 0
-                      ? 'No recent alerts'
-                      : '$count recent alert${count == 1 ? '' : 's'}',
+                      ? loc.t('messaging.no_recent_alerts')
+                      : loc
+                          .t('messaging.recent_alerts_count')
+                          .replaceFirst('{count}', '$count'),
                   style: TextStyle(
                     color: SafePlayColors.neutral500,
                     fontSize: 11,
@@ -4754,15 +4782,93 @@ String _formatSyncDescription(BuildContext context, DateTime? timestamp) {
     return friendly.isEmpty ? raw : friendly;
   }
 
+  String _localizedCategoryLabel(
+      BuildContext context, SafetyCategory category) {
+    final loc = context.loc;
+    switch (category) {
+      case SafetyCategory.profanity:
+        return loc.t('messaging.profanity');
+      case SafetyCategory.bullying:
+        return loc.t('messaging.bullying');
+      case SafetyCategory.sensitiveTopics:
+        return loc.t('messaging.sensitive_topics');
+      case SafetyCategory.strangerDanger:
+        return loc.t('messaging.stranger_danger');
+      case SafetyCategory.other:
+        return loc.t('messaging.safety_alerts');
+    }
+  }
+
+  String _localizedAlertTitle(
+    BuildContext context,
+    ChatSafetyAlert alert,
+    String categoryLabel, {
+    required bool isArabic,
+  }) {
+    final loc = context.loc;
+    final key = switch (alert.category) {
+      SafetyCategory.profanity => 'messaging.title.profanity',
+      SafetyCategory.bullying => 'messaging.title.bullying',
+      SafetyCategory.sensitiveTopics => 'messaging.title.sensitive',
+      SafetyCategory.strangerDanger => 'messaging.title.stranger',
+      SafetyCategory.other => 'messaging.title.other',
+    };
+    final localized = loc.t(key);
+    if (isArabic) return localized;
+    return alert.title ?? '$categoryLabel ${loc.t('messaging.detected')}';
+  }
+
+  String _localizedAlertContext(
+    BuildContext context,
+    ChatSafetyAlert alert, {
+    required bool isArabic,
+  }) {
+    if (!isArabic) return alert.context;
+    final loc = context.loc;
+    final key = switch (alert.category) {
+      SafetyCategory.profanity => 'messaging.desc.profanity',
+      SafetyCategory.bullying => 'messaging.desc.bullying',
+      SafetyCategory.sensitiveTopics => 'messaging.desc.sensitive',
+      SafetyCategory.strangerDanger => 'messaging.desc.stranger',
+      SafetyCategory.other => 'messaging.desc.other',
+    };
+    return loc.t(key);
+  }
+
+  String _localizedDirectionLabel(BuildContext context, String rawLabel) {
+    final loc = context.loc;
+    final normalized = rawLabel.toLowerCase();
+    if (normalized.contains('teacher') && normalized.contains('child')) {
+      final teacherFirst = normalized.indexOf('teacher') <
+          normalized.indexOf('child');
+      return loc.t('messaging.full_chat_between')
+          .replaceFirst(
+              '{from}',
+              teacherFirst
+                  ? loc.t('messaging.role.teacher')
+                  : loc.t('messaging.role.child'))
+          .replaceFirst(
+              '{to}',
+              teacherFirst
+                  ? loc.t('messaging.role.child')
+                  : loc.t('messaging.role.teacher'));
+    }
+    return rawLabel;
+  }
+
   Widget _buildDetailedAlertItem(
     ChatSafetyAlert alert,
     String childId,
     MessagingSafetyProvider safetyProvider,
   ) {
+    final localeCode = Localizations.localeOf(context).languageCode;
+    final isArabic = localeCode == 'ar';
     final severity = alert.severity.toLowerCase();
     final reviewed = alert.reviewed;
     final time = alert.timestamp;
     final aiConfidence = alert.confidencePercent;
+    final loc = context.loc;
+    final categoryLabel = _localizedCategoryLabel(context, alert.category);
 
     Color severityColor;
     IconData severityIcon;
@@ -4771,17 +4877,17 @@ String _formatSyncDescription(BuildContext context, DateTime? timestamp) {
       case 'high':
         severityColor = SafePlayColors.error;
         severityIcon = Icons.error_rounded;
-        severityLabel = 'High Priority';
+        severityLabel = loc.t('messaging.severity_high');
         break;
       case 'medium':
         severityColor = SafePlayColors.warning;
         severityIcon = Icons.warning_rounded;
-        severityLabel = 'Medium Priority';
+        severityLabel = loc.t('messaging.severity_medium');
         break;
       default:
         severityColor = SafePlayColors.brandOrange500;
         severityIcon = Icons.info_rounded;
-        severityLabel = 'Low Priority';
+        severityLabel = loc.t('messaging.severity_low');
     }
 
     return Container(
@@ -4829,7 +4935,8 @@ String _formatSyncDescription(BuildContext context, DateTime? timestamp) {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        alert.title ?? '${alert.category.label} detected',
+                        _localizedAlertTitle(context, alert, categoryLabel,
+                            isArabic: isArabic),
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
@@ -4892,9 +4999,9 @@ String _formatSyncDescription(BuildContext context, DateTime? timestamp) {
                       color: severityColor,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text(
-                      'NEW',
-                      style: TextStyle(
+                    child: Text(
+                      loc.t('messaging.new_badge'),
+                      style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,
                           fontWeight: FontWeight.bold),
@@ -4934,7 +5041,12 @@ String _formatSyncDescription(BuildContext context, DateTime? timestamp) {
                             children: [
                               _buildRoleChip(alert.offenderRole),
                               _buildRoleChip(alert.targetRole),
-                              _buildDirectionChip(alert.directionLabel),
+                              _buildDirectionChip(
+                                _localizedDirectionLabel(
+                                  context,
+                                  alert.directionLabel,
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -4962,7 +5074,7 @@ String _formatSyncDescription(BuildContext context, DateTime? timestamp) {
                               size: 14, color: severityColor),
                           const SizedBox(width: 6),
                           Text(
-                            'Flagged Message',
+                            loc.t('messaging.flagged_message'),
                             style: TextStyle(
                                 color: severityColor,
                                 fontSize: 11,
@@ -4993,7 +5105,11 @@ String _formatSyncDescription(BuildContext context, DateTime? timestamp) {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        alert.context,
+                        _localizedAlertContext(
+                          context,
+                          alert,
+                          isArabic: isArabic,
+                        ),
                         style: TextStyle(
                             color: SafePlayColors.neutral600, fontSize: 12),
                       ),
@@ -5009,7 +5125,7 @@ String _formatSyncDescription(BuildContext context, DateTime? timestamp) {
                         size: 16, color: SafePlayColors.brightIndigo),
                     const SizedBox(width: 6),
                     Text(
-                      'AI Confidence: ',
+                      loc.t('messaging.ai_confidence'),
                       style: TextStyle(
                           color: SafePlayColors.neutral600, fontSize: 12),
                     ),
@@ -5043,7 +5159,7 @@ String _formatSyncDescription(BuildContext context, DateTime? timestamp) {
                           },
                           icon: const Icon(Icons.chat_bubble_outline_rounded,
                               size: 16),
-                          label: const Text('View Full Chat'),
+                          label: Text(loc.t('messaging.view_full_chat')),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: SafePlayColors.brightIndigo,
                             side: BorderSide(
@@ -5058,18 +5174,22 @@ String _formatSyncDescription(BuildContext context, DateTime? timestamp) {
                       const SizedBox(width: 10),
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () {
+                         onPressed: () {
                             safetyProvider.markAlertReviewed(childId, alert.id);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                    'Marked alert from ${alert.offenderName} as reviewed.'),
+                                  loc
+                                      .t('messaging.reviewed_snackbar')
+                                      .replaceFirst(
+                                          '{name}', alert.offenderName),
+                                ),
                               ),
                             );
                           },
                           icon: const Icon(Icons.check_rounded,
                               size: 16, color: Colors.white),
-                          label: const Text('Mark Reviewed'),
+                          label: Text(loc.t('messaging.mark_reviewed')),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: SafePlayColors.success,
                             foregroundColor: Colors.white,
@@ -5095,7 +5215,10 @@ String _formatSyncDescription(BuildContext context, DateTime? timestamp) {
     final isTeacher = normalized.contains('teacher');
     final color =
         isTeacher ? SafePlayColors.brightIndigo : SafePlayColors.brandTeal500;
-    final label = isTeacher ? 'Teacher' : 'Child';
+    final loc = context.loc;
+    final label = isTeacher
+        ? loc.t('messaging.role.teacher')
+        : loc.t('messaging.role.child');
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -5139,7 +5262,7 @@ String _formatSyncDescription(BuildContext context, DateTime? timestamp) {
     final selectedChild = childProvider.selectedChild;
     if (selectedChild == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a child first')),
+        SnackBar(content: Text(context.loc.t('messaging.select_child_first'))),
       );
       return;
     }
@@ -5302,7 +5425,13 @@ String _formatSyncDescription(BuildContext context, DateTime? timestamp) {
       }
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading chat: ${e.toString()}')),
+          SnackBar(
+            content: Text(
+              context.loc
+                  .t('messaging.chat_load_error')
+                  .replaceFirst('{error}', e.toString()),
+            ),
+          ),
         );
       }
     }
@@ -5348,16 +5477,19 @@ String _formatSyncDescription(BuildContext context, DateTime? timestamp) {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Full Chat Conversation',
-                            style: TextStyle(
+                          Text(
+                            context.loc.t('messaging.full_chat_title'),
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${alert.offenderName} ↔ ${alert.targetName}',
+                            context.loc
+                                .t('messaging.full_chat_between')
+                                .replaceFirst('{from}', alert.offenderName)
+                                .replaceFirst('{to}', alert.targetName),
                             style: TextStyle(
                               color: SafePlayColors.neutral600,
                               fontSize: 13,
@@ -5375,23 +5507,23 @@ String _formatSyncDescription(BuildContext context, DateTime? timestamp) {
               ),
               // Chat messages
               Expanded(
-                child: chatMessages.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(32),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.chat_bubble_outline_rounded,
-                                  size: 48, color: SafePlayColors.neutral400),
-                              const SizedBox(height: 16),
-                              Text(
-                                'No messages found',
-                                style: TextStyle(
-                                  color: SafePlayColors.neutral600,
-                                  fontSize: 14,
-                                ),
-                              ),
+                        child: chatMessages.isEmpty
+                            ? Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(32),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.chat_bubble_outline_rounded,
+                                          size: 48, color: SafePlayColors.neutral400),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        context.loc.t('messaging.no_messages'),
+                                        style: TextStyle(
+                                          color: SafePlayColors.neutral600,
+                                          fontSize: 14,
+                                        ),
+                                      ),
                             ],
                           ),
                         ),
@@ -5459,7 +5591,8 @@ String _formatSyncDescription(BuildContext context, DateTime? timestamp) {
                                                 BorderRadius.circular(4),
                                           ),
                                           child: Text(
-                                            'FLAGGED',
+                                            context.loc
+                                                .t('messaging.flagged_badge'),
                                             style: TextStyle(
                                               color: SafePlayColors.error,
                                               fontSize: 9,
@@ -5509,15 +5642,15 @@ String _formatSyncDescription(BuildContext context, DateTime? timestamp) {
                     Icon(Icons.info_outline_rounded,
                         color: SafePlayColors.neutral600, size: 18),
                     const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Showing messages around the flagged incident from the database.',
-                        style: TextStyle(
-                          color: SafePlayColors.neutral600,
-                          fontSize: 12,
-                        ),
-                      ),
+                Expanded(
+                  child: Text(
+                    context.loc.t('messaging.chat_context_note'),
+                    style: TextStyle(
+                      color: SafePlayColors.neutral600,
+                      fontSize: 12,
                     ),
+                  ),
+                ),
                   ],
                 ),
               ),
