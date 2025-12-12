@@ -2062,9 +2062,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
-                                'Cloud-backed safe browsing rules',
-                                style: TextStyle(
+                              Text(
+                                context.loc.t('browser.cloud_rules'),
+                                style: const TextStyle(
                                   color: Colors.white70,
                                   fontSize: 13,
                                 ),
@@ -2084,7 +2084,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                             ),
                           ),
                           icon: const Icon(Icons.refresh, size: 16),
-                          label: const Text('Refresh'),
+                          label: Text(context.loc.t('action.refresh')),
                         ),
                       ],
                     ),
@@ -2095,8 +2095,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                       children: [
                         _buildStatusChip(
                           label: currentSettings.safeSearchEnabled
-                              ? 'Safe Search On'
-                              : 'Safe Search Off',
+                              ? context.loc.t('browser.safe_search_on')
+                              : context.loc.t('browser.safe_search_off'),
                           icon: Icons.search_rounded,
                           isActive: currentSettings.safeSearchEnabled,
                           activeColor: Colors.white,
@@ -2107,8 +2107,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                         ),
                         _buildStatusChip(
                           label: currentSettings.blockSocialMedia
-                              ? 'Social Apps Blocked'
-                              : 'Social Apps Allowed',
+                              ? context.loc.t('browser.social_blocked')
+                              : context.loc.t('browser.social_allowed'),
                           icon: Icons.group_off_rounded,
                           isActive: currentSettings.blockSocialMedia,
                           activeColor: Colors.white,
@@ -2119,8 +2119,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                         ),
                         _buildStatusChip(
                           label: currentSettings.blockGambling
-                              ? 'Gambling Blocked'
-                              : 'Gambling Allowed',
+                              ? context.loc.t('browser.gambling_blocked')
+                              : context.loc.t('browser.gambling_allowed'),
                           icon: Icons.casino_rounded,
                           isActive: currentSettings.blockGambling,
                           activeColor: Colors.white,
@@ -2131,8 +2131,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                         ),
                         _buildStatusChip(
                           label: currentSettings.blockViolence
-                              ? 'Violence Blocked'
-                              : 'Violence Allowed',
+                              ? context.loc.t('browser.violence_blocked')
+                              : context.loc.t('browser.violence_allowed'),
                           icon: Icons.no_crash_rounded,
                           isActive: currentSettings.blockViolence,
                           activeColor: Colors.white,
@@ -2155,7 +2155,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                         Expanded(
                           child: Text(
                             isLoading
-                                ? 'Syncing latest settings...'
+                                ? context.loc.t('browser.syncing')
                                 : _formatSyncDescription(
                                     currentSettings.updatedAt,
                                   ),
@@ -2167,14 +2167,14 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                         ),
                       ],
                     ),
-                    if (usingDefaults && !isLoading)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text(
-                          'Using SafePlay defaults until the first cloud sync completes.',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
+                      if (usingDefaults && !isLoading)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            context.loc.t('browser.using_defaults'),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
                             fontStyle: FontStyle.italic,
                           ),
                         ),
@@ -2267,9 +2267,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               ],
               const SizedBox(height: 16),
               _buildControlCard(
-                title: 'AI Safe Search',
-                subtitle:
-                    'Filters harmful topics directly in the SafePlay browser.',
+                title: context.loc.t('browser.ai_safe_search'),
+                subtitle: context.loc.t('browser.ai_safe_search_desc'),
                 icon: Icons.search_rounded,
                 color: SafePlayColors.brandTeal500,
                 trailing: Switch.adaptive(
@@ -2315,9 +2314,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Text(
-                          'Content Filters',
-                          style: TextStyle(
+                        Text(
+                          context.loc.t('browser.content_filters'),
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                           ),
@@ -2326,36 +2325,35 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     ),
                     const SizedBox(height: 20),
                     _buildFilterToggle(
-                      'Block Social Media',
+                      context.loc.t('browser.block_social'),
                       currentSettings.blockSocialMedia,
                       controlsDisabled
                           ? null
                           : (value) =>
                               browserProvider.setSocialFilter(childId, value),
-                      description:
-                          'Prevents Facebook, TikTok, Discord & similar sites.',
+                      description: context.loc.t('browser.block_social_desc'),
                       icon: Icons.groups_2_rounded,
                     ),
                     _buildFilterToggle(
-                      'Block Gambling Sites',
+                      context.loc.t('browser.block_gambling'),
                       currentSettings.blockGambling,
                       controlsDisabled
                           ? null
                           : (value) =>
                               browserProvider.setGamblingFilter(childId, value),
                       description:
-                          'Stops betting, casino and loot-box content.',
+                          context.loc.t('browser.block_gambling_desc'),
                       icon: Icons.casino_rounded,
                     ),
                     _buildFilterToggle(
-                      'Block Violent Media',
+                      context.loc.t('browser.block_violence'),
                       currentSettings.blockViolence,
                       controlsDisabled
                           ? null
                           : (value) =>
                               browserProvider.setViolenceFilter(childId, value),
                       description:
-                          'Removes graphic games, gore and unsafe forums.',
+                          context.loc.t('browser.block_violence_desc'),
                       icon: Icons.no_crash_rounded,
                     ),
                   ],
@@ -2393,10 +2391,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Blocked Keywords',
-                            style: TextStyle(
+                            context.loc.t('browser.blocked_keywords'),
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
                             ),
@@ -2417,7 +2415,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     const SizedBox(height: 16),
                     if (blockedKeywords.isEmpty)
                       Text(
-                        'No custom keywords yet. Add phrases you never want to appear.',
+                        context.loc.t('browser.keyword_empty_note'),
                         style: TextStyle(
                           color: SafePlayColors.neutral500,
                           fontSize: 13,
@@ -2488,10 +2486,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Allowed Sites',
-                            style: TextStyle(
+                            context.loc.t('browser.allowed_sites'),
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
                             ),
@@ -2512,7 +2510,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     const SizedBox(height: 16),
                     if (allowedSites.isEmpty)
                       Text(
-                        'Only SafePlay curated destinations will be accessible. Add trusted domains to whitelist them.',
+                        context.loc.t('browser.allowed_empty_note'),
                         style: TextStyle(
                           color: SafePlayColors.neutral500,
                           fontSize: 13,
@@ -3137,14 +3135,14 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           children: [
             Icon(Icons.block_rounded, color: SafePlayColors.error, size: 24),
             const SizedBox(width: 10),
-            const Text('Add Blocked Keyword'),
+            Text(context.loc.t('browser.dialog_add_blocked_title')),
           ],
         ),
         content: TextField(
           controller: controller,
           autofocus: true,
           decoration: InputDecoration(
-            hintText: 'Enter keyword to block',
+            hintText: context.loc.t('browser.dialog_add_blocked_hint'),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -3155,7 +3153,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel',
+            child: Text(context.loc.t('action.cancel'),
                 style: TextStyle(color: SafePlayColors.neutral500)),
           ),
           ElevatedButton(
@@ -3171,7 +3169,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('Add', style: TextStyle(color: Colors.white)),
+            child: Text(
+              context.loc.t('browser.add_blocked_keyword'),
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -3192,14 +3193,14 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             Icon(Icons.verified_rounded,
                 color: SafePlayColors.success, size: 24),
             const SizedBox(width: 10),
-            const Text('Add Allowed Site'),
+            Text(context.loc.t('browser.dialog_add_allowed_title')),
           ],
         ),
         content: TextField(
           controller: controller,
           autofocus: true,
           decoration: InputDecoration(
-            hintText: 'e.g., example.com',
+            hintText: context.loc.t('browser.dialog_add_allowed_hint'),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -3210,7 +3211,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel',
+            child: Text(context.loc.t('action.cancel'),
                 style: TextStyle(color: SafePlayColors.neutral500)),
           ),
           ElevatedButton(
@@ -3226,7 +3227,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('Add', style: TextStyle(color: Colors.white)),
+            child: Text(
+              context.loc.t('browser.add_allowed_site'),
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),

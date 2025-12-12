@@ -1,22 +1,16 @@
 import 'package:flutter/material.dart';
-
 class AppLocalizations {
   AppLocalizations(this.locale);
-
   final Locale locale;
-
   static const supportedLocales = [
     Locale('en'),
     Locale('ar'),
   ];
-
   static AppLocalizations of(BuildContext context) {
     return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
-
   static const LocalizationsDelegate<AppLocalizations> delegate =
       _AppLocalizationsDelegate();
-
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
       'lang.english': 'English',
@@ -124,8 +118,6 @@ class AppLocalizations {
       'dashboard.unlock_today': 'Unlock for today',
       'browser.controls_title': 'Browser Controls',
       'browser.safe_search': 'Safe Search',
-      'browser.block_social': 'Block Social Media',
-      'browser.block_violence': 'Block Violence',
       'browser.note_privacy':
           'This summary respects privacy by showing abstracted activity patterns, not personal details.',
       'wellbeing.overview': 'Overall wellbeing',
@@ -354,6 +346,50 @@ class AppLocalizations {
       'game.alphabet_kids': 'Alphabet Game for Kids',
       'game.easy_spelling_kids': 'Easy Spelling Game for Kids',
       'game.word_guessing_puzzle': 'Word Guessing Puzzle Game',
+      'browser.ai_safe_search': 'AI Safe Search',
+      'browser.ai_safe_search_desc':
+          'Filters harmful topics directly in the SafePlay browser.',
+      'browser.content_filters': 'Content Filters',
+      'browser.block_social_desc':
+          'Prevents Facebook, TikTok, Discord & similar sites.',
+      'browser.block_social': 'Block Social Media',
+      'browser.block_gambling': 'Block Gambling Sites',
+      'browser.block_gambling_desc':
+          'Stops betting, casino and loot-box content.',
+      'browser.block_violence': 'Block Violent Media',
+      'browser.block_violence_desc':
+          'Removes graphic games, gore and unsafe forums.',
+      'browser.allowed_sites': 'Allowed Sites',
+      'browser.add_allowed_site': 'Add allowed site',
+      'browser.allowed_placeholder': 'Enter site URL (e.g. example.com)',
+      'browser.no_allowed_sites': 'No allowed sites added yet',
+      'browser.blocked_keywords': 'Blocked Keywords',
+      'browser.add_blocked_keyword': 'Add blocked keyword',
+      'browser.keyword_placeholder':
+          'Blacklist keywords like violent, graphic...',
+      'browser.no_blocked_keywords': 'No blocked keywords added yet',
+      'browser.whats_allowed': "What's allowed",
+      'browser.whats_blocked': "What's blocked",
+      'browser.allowed_empty_note':
+          'Only SafePlay curated destinations will be accessible. Add trusted domains to whitelist them.',
+      'browser.keyword_empty_note':
+          'No custom keywords yet. Add phrases you never want to appear.',
+      'browser.dialog_add_allowed_title': 'Add Allowed Site',
+      'browser.dialog_add_allowed_hint': 'e.g., example.com',
+      'browser.dialog_add_blocked_title': 'Add Blocked Keyword',
+      'browser.dialog_add_blocked_hint': 'Enter keyword to block',
+      'browser.safe_search_on': 'Safe Search On',
+      'browser.safe_search_off': 'Safe Search Off',
+      'browser.social_blocked': 'Social Apps Blocked',
+      'browser.social_allowed': 'Social Apps Allowed',
+      'browser.gambling_blocked': 'Gambling Blocked',
+      'browser.gambling_allowed': 'Gambling Allowed',
+      'browser.violence_blocked': 'Violence Blocked',
+      'browser.violence_allowed': 'Violence Allowed',
+      'browser.cloud_rules': 'Cloud-backed safe browsing rules',
+      'browser.syncing': 'Syncing latest settings...',
+      'browser.using_defaults':
+          'Using SafePlay defaults until the first cloud sync completes.',
       'onboard.parent.1.title': 'Welcome to SafePlay',
       'onboard.parent.1.subtitle': 'Your Child\'s Safety is Our Priority',
       'onboard.parent.1.desc':
@@ -515,8 +551,6 @@ class AppLocalizations {
       'dashboard.unlock_today': 'إلغاء القفل لليوم',
       'browser.controls_title': 'ضوابط المتصفح',
       'browser.safe_search': 'البحث الآمن',
-      'browser.block_social': 'حظر التواصل الاجتماعي',
-      'browser.block_violence': 'حظر العنف',
       'browser.note_privacy':
           'هذا الملخص يحترم الخصوصية بعرض أنماط نشاط مجردة دون تفاصيل شخصية.',
       'wellbeing.overview': 'الرفاه العام',
@@ -742,6 +776,27 @@ class AppLocalizations {
       'game.alphabet_kids': 'لعبة الحروف للأطفال',
       'game.easy_spelling_kids': 'لعبة التهجئة السهلة للأطفال',
       'game.word_guessing_puzzle': 'لعبة تخمين الكلمات',
+      'browser.ai_safe_search': 'بحث آمن بالذكاء الاصطناعي',
+      'browser.ai_safe_search_desc': 'يُرشّح المواضيع الضارة داخل متصفح سيف بلاي.',
+      'browser.content_filters': 'مرشحات المحتوى',
+      'browser.block_social': 'حظر التواصل الاجتماعي',
+      'browser.block_social_desc':
+          'يمنع مواقع مثل فيسبوك، تيك توك، ديسكورد وغيرها.',
+      'browser.block_gambling': 'حظر مواقع المقامرة',
+      'browser.block_gambling_desc':
+          'يوقف المحتوى المرتبط بالمراهنات والكازينوهات والصناديق الوهمية.',
+      'browser.block_violence': 'حظر المحتوى العنيف',
+      'browser.block_violence_desc': 'يزيل الألعاب الدموية والمنتديات غير الآمنة.',
+      'browser.allowed_sites': 'المواقع المسموح بها',
+      'browser.add_allowed_site': 'إضافة موقع مسموح',
+      'browser.allowed_placeholder': 'أدخل رابط الموقع (مثال: example.com)',
+      'browser.no_allowed_sites': 'لا توجد مواقع مسموح بها بعد',
+      'browser.blocked_keywords': 'الكلمات المحظورة',
+      'browser.add_blocked_keyword': 'إضافة كلمة محظورة',
+      'browser.keyword_placeholder': 'أضف كلمات مثل: عنيف، دموي...',
+      'browser.no_blocked_keywords': 'لا توجد كلمات محظورة بعد',
+      'browser.whats_allowed': 'ما هو مسموح',
+      'browser.whats_blocked': 'ما هو محظور',
       'onboard.parent.1.title': 'مرحبًا بك في سيف بلاي',
       'onboard.parent.1.subtitle': 'سلامة طفلك هي أولويتنا',
       'onboard.parent.1.desc':
@@ -797,38 +852,47 @@ class AppLocalizations {
       'onboard.parent.7.h1': 'أضف أول ملف لطفلك',
       'onboard.parent.7.h2': 'اضبط إعدادات الأمان',
       'onboard.parent.7.h3': 'راقب التقدم في أي وقت',
-      'onboard.parent.7.h4': 'اعرض تقارير النشاط',
+      'onboard.parent.7.h4': 'اعرض تقارير النشاط',      'browser.allowed_empty_note': 'سيتم السماح فقط بوجهات سيف بلاي المنسقة. أضف مواقع موثوقة لإدراجها في القائمة البيضاء.',
+      'browser.keyword_empty_note': 'لا توجد كلمات مخصصة بعد. أضف عبارات لا تريد ظهورها إطلاقاً.',
+      'browser.dialog_add_allowed_title': 'إضافة موقع مسموح',
+      'browser.dialog_add_allowed_hint': 'مثال: example.com',
+      'browser.dialog_add_blocked_title': 'إضافة كلمة محظورة',
+      'browser.dialog_add_blocked_hint': 'أدخل الكلمة المراد حظرها',
+      'browser.safe_search_on': 'البحث الآمن مفعل',
+      'browser.safe_search_off': 'البحث الآمن معطل',
+      'browser.social_blocked': 'تطبيقات التواصل محظورة',
+      'browser.social_allowed': 'تطبيقات التواصل مسموحة',
+      'browser.gambling_blocked': 'المقامرة محظورة',
+      'browser.gambling_allowed': 'المقامرة مسموحة',
+      'browser.violence_blocked': 'المحتوى العنيف محظور',
+      'browser.violence_allowed': 'المحتوى العنيف مسموح',
+      'browser.cloud_rules': 'قواعد تصفح آمن مدعومة بالسحابة',
+      'browser.syncing': 'جاري مزامنة الإعدادات الأخيرة...',
+      'browser.using_defaults': 'يتم استخدام إعدادات سيف بلاي الافتراضية حتى يكتمل التزامن السحابي الأول.',
     },
   };
-
   String t(String key) {
     return _localizedValues[locale.languageCode]?[key] ??
         _localizedValues['en']?[key] ??
         key;
   }
 }
-
 class _AppLocalizationsDelegate
     extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
-
   @override
   bool isSupported(Locale locale) =>
       ['en', 'ar'].contains(locale.languageCode.toLowerCase());
-
   @override
   Future<AppLocalizations> load(Locale locale) async {
     return AppLocalizations(locale);
   }
-
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
-
 extension AppLocalizationsExtension on BuildContext {
   AppLocalizations get loc => AppLocalizations.of(this);
 }
-
 extension LocalizedString on String {
   String tr(BuildContext context) => AppLocalizations.of(context).t(this);
 }
