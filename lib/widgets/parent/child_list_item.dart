@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../design_system/colors.dart';
+import '../../localization/app_localizations.dart';
 import '../../models/user_profile.dart';
 import '../../models/user_type.dart';
 import '../../navigation/route_names.dart';
@@ -26,6 +27,7 @@ class ChildListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.loc;
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -72,8 +74,9 @@ class ChildListItem extends StatelessWidget {
                           runSpacing: 0,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            _buildAgeGroupBadge(),
-                            if (onSetupLogin != null) _buildSetupLoginButton(),
+                            _buildAgeGroupBadge(loc),
+                            if (onSetupLogin != null)
+                              _buildSetupLoginButton(loc),
                           ],
                         ),
                       ],
@@ -89,8 +92,10 @@ class ChildListItem extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           child.age != null
-                              ? 'Age ${child.age}'
-                              : 'Age not set',
+                              ? loc
+                                  .t('child.age_value')
+                                  .replaceFirst('{age}', '${child.age}')
+                              : loc.t('child.age_not_set'),
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: SafePlayColors.neutral600,
@@ -105,7 +110,9 @@ class ChildListItem extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Grade ${child.grade}',
+                            loc
+                                .t('child.grade_value')
+                                .replaceFirst('{grade}', '${child.grade}'),
                             style:
                                 Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: SafePlayColors.neutral600,
@@ -120,7 +127,9 @@ class ChildListItem extends StatelessWidget {
                         children: [
                           _buildStatChip(
                             Icons.local_fire_department,
-                            '${child.streakDays} day streak',
+                            loc
+                                .t('child.streak_value')
+                                .replaceFirst('{days}', '${child.streakDays}'),
                             SafePlayColors.success,
                           ),
                         ],
@@ -158,7 +167,7 @@ class ChildListItem extends StatelessWidget {
     );
   }
 
-  Widget _buildAgeGroupBadge() {
+  Widget _buildAgeGroupBadge(AppLocalizations loc) {
     final isJunior = child.ageGroup == AgeGroup.junior;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -175,7 +184,9 @@ class ChildListItem extends StatelessWidget {
         ),
       ),
       child: Text(
-        isJunior ? 'Junior' : 'Bright',
+        isJunior
+            ? loc.t('child.age_group_junior')
+            : loc.t('child.age_group_bright'),
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
@@ -216,7 +227,7 @@ class ChildListItem extends StatelessWidget {
     );
   }
 
-  Widget _buildSetupLoginButton() {
+  Widget _buildSetupLoginButton(AppLocalizations loc) {
     // Check if authData exists and has the required fields
     final authData = child.authData;
     final hasAuthSetup = authData != null &&
@@ -246,7 +257,7 @@ class ChildListItem extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             Text(
-              'Login Ready',
+              loc.t('child.login_ready'),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -268,17 +279,17 @@ class ChildListItem extends StatelessWidget {
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.security,
-                size: 16,
-                color: _getAgeGroupColor(),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                'Setup Login',
-                style: TextStyle(
-                  fontSize: 12,
+          children: [
+            Icon(
+              Icons.security,
+              size: 16,
+              color: _getAgeGroupColor(),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              loc.t('child.setup_login'),
+              style: TextStyle(
+                fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: _getAgeGroupColor(),
                 ),
@@ -294,15 +305,18 @@ class ChildListItem extends StatelessWidget {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        final loc = context.loc;
         return AlertDialog(
-          title: const Text('Delete Child Profile'),
+          title: Text(loc.t('child.delete.title')),
           content: Text(
-            'Are you sure you want to delete ${child.name}\'s profile? This action cannot be undone.',
+            loc
+                .t('child.delete.confirm')
+                .replaceFirst('{name}', child.name),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: Text(loc.t('action.cancel')),
             ),
             TextButton(
               onPressed: () {
@@ -312,7 +326,7 @@ class ChildListItem extends StatelessWidget {
               style: TextButton.styleFrom(
                 foregroundColor: Colors.red,
               ),
-              child: const Text('Delete'),
+              child: Text(loc.t('action.delete')),
             ),
           ],
         );
@@ -350,6 +364,8 @@ class ChildrenListWidget extends StatelessWidget {
       return _buildEmptyState(context);
     }
 
+    final loc = context.loc;
+
     return Column(
       children: [
         // Header
@@ -357,7 +373,9 @@ class ChildrenListWidget extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Your Children (${children.length})',
+              loc
+                  .t('child.list_header')
+                  .replaceFirst('{count}', '${children.length}'),
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -365,7 +383,7 @@ class ChildrenListWidget extends StatelessWidget {
             TextButton.icon(
               onPressed: () => context.push(RouteNames.parentAddChild),
               icon: const Icon(Icons.add),
-              label: const Text('Add Child'),
+              label: Text(loc.t('dashboard.add_child')),
               style: TextButton.styleFrom(
                 foregroundColor: SafePlayColors.brandTeal500,
               ),
@@ -407,14 +425,14 @@ class ChildrenListWidget extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No children added yet',
+            context.loc.t('child.empty_title'),
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: SafePlayColors.neutral600,
                 ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Add your first child to start tracking their learning journey',
+            context.loc.t('child.empty_subtitle'),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: SafePlayColors.neutral500,
@@ -424,7 +442,7 @@ class ChildrenListWidget extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: () => context.push(RouteNames.parentAddChild),
             icon: const Icon(Icons.add),
-            label: const Text('Add Your First Child'),
+            label: Text(context.loc.t('child.empty_button')),
             style: ElevatedButton.styleFrom(
               backgroundColor: SafePlayColors.brandTeal500,
               foregroundColor: Colors.white,

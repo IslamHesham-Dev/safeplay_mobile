@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../constants/authentication_options.dart';
 import '../../design_system/colors.dart';
+import '../../localization/app_localizations.dart';
 import '../../models/user_profile.dart';
 import '../../navigation/route_names.dart';
 import '../../providers/child_provider.dart';
@@ -30,9 +31,12 @@ class _JuniorAuthSetupScreenState extends State<JuniorAuthSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.loc;
     return Scaffold(
       appBar: AppBar(
-        title: Text('Setup ${widget.child.name}\'s Login'),
+        title: Text(
+          loc.t('auth.setup.title').replaceFirst('{name}', widget.child.name),
+        ),
         backgroundColor: SafePlayColors.brandTeal500,
         foregroundColor: Colors.white,
       ),
@@ -61,7 +65,7 @@ class _JuniorAuthSetupScreenState extends State<JuniorAuthSetupScreen> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: _previousStep,
-                        child: const Text('Back'),
+                        child: Text(loc.t('auth.setup.back')),
                       ),
                     ),
                   if (_currentStep > 0) const SizedBox(width: 16),
@@ -98,6 +102,7 @@ class _JuniorAuthSetupScreenState extends State<JuniorAuthSetupScreen> {
   }
 
   Widget _buildInstructionsStep() {
+    final loc = context.loc;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -108,14 +113,14 @@ class _JuniorAuthSetupScreenState extends State<JuniorAuthSetupScreen> {
         ),
         const SizedBox(height: 24),
         Text(
-          'Setup ${widget.child.name}\'s Login',
+          loc.t('auth.setup.title').replaceFirst('{name}', widget.child.name),
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
         ),
         const SizedBox(height: 16),
         Text(
-          'Help your child create a picture password they can remember easily.',
+          loc.t('auth.setup.instructions_emoji'),
           style: Theme.of(context).textTheme.bodyLarge,
         ),
         const SizedBox(height: 24),
@@ -134,7 +139,7 @@ class _JuniorAuthSetupScreenState extends State<JuniorAuthSetupScreen> {
                   Icon(Icons.info_outline, color: SafePlayColors.brandTeal500),
                   const SizedBox(width: 8),
                   Text(
-                    'How it works:',
+                    loc.t('auth.setup.how_it_works'),
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: SafePlayColors.brandTeal500,
@@ -143,10 +148,10 @@ class _JuniorAuthSetupScreenState extends State<JuniorAuthSetupScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              const Text('1. Choose 4 emoji pictures your child likes'),
-              const Text('2. Remember the order you select them'),
-              const Text('3. Your child will use this sequence to login'),
-              const Text('4. Make sure it\'s something they can remember!'),
+              Text('1. ${loc.t('auth.setup.emoji.step1')}'),
+              Text('2. ${loc.t('auth.setup.emoji.step2')}'),
+              Text('3. ${loc.t('auth.setup.emoji.step3')}'),
+              Text('4. ${loc.t('auth.setup.emoji.step4')}'),
             ],
           ),
         ),
@@ -155,18 +160,21 @@ class _JuniorAuthSetupScreenState extends State<JuniorAuthSetupScreen> {
   }
 
   Widget _buildSelectionStep() {
+    final loc = context.loc;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Choose 4 Emojis',
+          loc.t('auth.setup.choose_emojis_title'),
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
         ),
         const SizedBox(height: 8),
         Text(
-          'Select 4 emoji pictures that ${widget.child.name} will use to login.',
+          loc
+              .t('auth.setup.choose_emojis_subtitle')
+              .replaceFirst('{name}', widget.child.name),
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: 16),
@@ -184,7 +192,10 @@ class _JuniorAuthSetupScreenState extends State<JuniorAuthSetupScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Selected (${_selectedEmojis.length}/4):',
+                  loc.t('auth.setup.selected_count').replaceFirst(
+                        '{current}',
+                        '${_selectedEmojis.length}',
+                      ).replaceFirst('{total}', '4'),
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
@@ -258,6 +269,7 @@ class _JuniorAuthSetupScreenState extends State<JuniorAuthSetupScreen> {
   }
 
   Widget _buildConfirmationStep() {
+    final loc = context.loc;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -268,14 +280,20 @@ class _JuniorAuthSetupScreenState extends State<JuniorAuthSetupScreen> {
         ),
         const SizedBox(height: 24),
         Text(
-          'Confirm ${widget.child.name}\'s Login',
+          loc.t('auth.setup.confirm_title').replaceFirst(
+                '{name}',
+                widget.child.name,
+              ),
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
         ),
         const SizedBox(height: 16),
         Text(
-          'This is the sequence ${widget.child.name} will use to login:',
+          loc.t('auth.setup.confirm_sequence_subtitle').replaceFirst(
+                '{name}',
+                widget.child.name,
+              ),
           style: Theme.of(context).textTheme.bodyLarge,
         ),
         const SizedBox(height: 24),
@@ -291,7 +309,7 @@ class _JuniorAuthSetupScreenState extends State<JuniorAuthSetupScreen> {
           child: Column(
             children: [
               Text(
-                'Login Sequence',
+                loc.t('auth.setup.login_sequence'),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -345,7 +363,10 @@ class _JuniorAuthSetupScreenState extends State<JuniorAuthSetupScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Make sure ${widget.child.name} can remember this sequence!',
+                  loc.t('auth.setup.remember_sequence').replaceFirst(
+                        '{name}',
+                        widget.child.name,
+                      ),
                   style: TextStyle(color: SafePlayColors.warning),
                 ),
               ),
@@ -380,15 +401,18 @@ class _JuniorAuthSetupScreenState extends State<JuniorAuthSetupScreen> {
   }
 
   String _getNextButtonText() {
+    final loc = context.loc;
     switch (_currentStep) {
       case 0:
-        return 'Start Selection';
+        return loc.t('auth.setup.start_selection');
       case 1:
-        return 'Confirm Selection';
+        return loc.t('auth.setup.confirm_selection');
       case 2:
-        return _isLoading ? 'Saving...' : 'Save Login';
+        return _isLoading
+            ? loc.t('auth.setup.saving')
+            : loc.t('auth.setup.save_login');
       default:
-        return 'Next';
+        return loc.t('auth.setup.next');
     }
   }
 
@@ -415,8 +439,8 @@ class _JuniorAuthSetupScreenState extends State<JuniorAuthSetupScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login setup completed successfully!'),
+          SnackBar(
+            content: Text(context.loc.t('auth.setup.success')),
             backgroundColor: SafePlayColors.success,
           ),
         );
@@ -427,7 +451,8 @@ class _JuniorAuthSetupScreenState extends State<JuniorAuthSetupScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(
+                '${context.loc.t('auth.setup.error_prefix')}${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );

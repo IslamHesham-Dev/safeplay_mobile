@@ -175,7 +175,6 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = context.loc;
     return Scaffold(
       appBar: AppBar(
         title: Text(_getAppBarTitle(context)),
@@ -227,7 +226,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           ? FloatingActionButton.extended(
               onPressed: () => context.push(RouteNames.parentAddChild),
               icon: const Icon(Icons.person_add_alt_1),
-              label: const Text('Add Child'),
+              label: Text(context.loc.t('dashboard.add_child')),
               backgroundColor: SafePlayColors.brandTeal500,
               foregroundColor: Colors.white,
             )
@@ -467,7 +466,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
 
   Widget _buildWelcomeSection(
       BuildContext context, UserProfile? user, int childCount) {
-    final greeting = _greetingForNow();
+    final greeting = _greetingForNow(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -513,8 +512,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 const SizedBox(height: 8),
                 Text(
                   childCount == 0
-                      ? "Let's add your children to get started."
-                      : "Managing ${childCount == 1 ? '1 child' : '$childCount children'}",
+                      ? context.loc.t('dashboard.add_first_child')
+                      : context.loc.t('dashboard.your_children'),
                   style: const TextStyle(color: Colors.white70, fontSize: 13),
                 ),
               ],
@@ -536,6 +535,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
 
   Widget _buildChildSelectorCard(
       BuildContext context, ChildProvider childProvider) {
+    final loc = context.loc;
     if (childProvider.children.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(20),
@@ -562,7 +562,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'No children added yet',
+                    context.loc.t('dashboard.no_children'),
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
@@ -570,7 +570,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Add a child to start monitoring their safety.',
+                    context.loc.t('dashboard.add_first_child'),
                     style: TextStyle(
                         color: SafePlayColors.neutral600, fontSize: 13),
                   ),
@@ -605,7 +605,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   color: SafePlayColors.brandTeal500, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Active Child',
+                loc.t('dashboard.active_child'),
                 style: Theme.of(context)
                     .textTheme
                     .titleSmall
@@ -633,7 +633,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'Selected',
+                        loc.t('dashboard.selected'),
                         style: TextStyle(
                           color: SafePlayColors.success,
                           fontSize: 11,
@@ -659,7 +659,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 border: InputBorder.none,
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                hintText: 'Select a child',
+                hintText: loc.t('dashboard.select_child_prompt'),
                 hintStyle: TextStyle(color: SafePlayColors.neutral400),
               ),
               dropdownColor: Colors.white,
@@ -705,8 +705,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                               ),
                               child: Text(
                                 child.ageGroup == AgeGroup.junior
-                                    ? 'Junior'
-                                    : 'Bright',
+                                    ? context.loc.t('label.wellbeing')
+                                    : context.loc.t('label.controls'),
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
@@ -767,11 +767,12 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
 
   Widget _buildStatsRow(
       BuildContext context, int childCount, ChildProfile? activeChild) {
+    final loc = context.loc;
     return Row(
       children: [
         Expanded(
           child: _buildStatCard(
-            label: 'Children',
+            label: loc.t('dashboard.children'),
             value: childCount.toString(),
             icon: Icons.people_alt_rounded,
             color: SafePlayColors.brandTeal500,
@@ -780,7 +781,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         const SizedBox(width: 10),
         Expanded(
           child: _buildStatCard(
-            label: 'Streak',
+            label: loc.t('dashboard.streak'),
             value: activeChild == null ? '-' : '${activeChild.streakDays}d',
             icon: Icons.local_fire_department_rounded,
             color: SafePlayColors.brandOrange500,
@@ -789,7 +790,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         const SizedBox(width: 10),
         Expanded(
           child: _buildStatCard(
-            label: 'Safety',
+            label: loc.t('dashboard.safety'),
             value: '100%',
             icon: Icons.verified_user_rounded,
             color: SafePlayColors.success,
@@ -865,7 +866,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     final visibleSessions =
         showAll ? sessions : sessions.take(3).toList(growable: false);
     final recentItems = visibleSessions
-        .map(_mapSessionToRecentActivity)
+        .map((entry) => _mapSessionToRecentActivity(context, entry))
         .toList(growable: false);
 
     return Container(
@@ -905,11 +906,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Recent Activities',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
+                Text(
+                  context.loc.t('dashboard.recent_activities'),
+                  style:
+                      const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
                     if (selectedChild != null)
                       Row(
                         children: [
@@ -923,7 +924,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            '${selectedChild.name}\'s activity',
+                            '${selectedChild.name} • ${context.loc.t('dashboard.recent_activities')}',
                             style: TextStyle(
                                 color: SafePlayColors.success,
                                 fontSize: 12,
@@ -933,7 +934,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                       )
                     else
                       Text(
-                        hasChild ? 'Select a child above' : 'Add a child first',
+                        hasChild
+                            ? context.loc.t('dashboard.select_child_limits')
+                            : context.loc.t('dashboard.add_first_child'),
                         style: TextStyle(
                             color: SafePlayColors.neutral400, fontSize: 12),
                       ),
@@ -942,7 +945,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               ),
               IconButton(
                 icon: const Icon(Icons.refresh_rounded),
-                tooltip: 'Refresh activity feed',
+                tooltip: context.loc.t('action.refresh'),
                 onPressed: (selectedChild == null || isLoading)
                     ? null
                     : () {
@@ -962,7 +965,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     });
                   },
                   child: Text(
-                    _showAllRecentActivities ? 'Show Less' : 'View All',
+                    _showAllRecentActivities
+                        ? context.loc.t('dashboard.view_less')
+                        : context.loc.t('dashboard.view_all'),
                     style: TextStyle(
                       color: SafePlayColors.brightIndigo,
                       fontSize: 13,
@@ -975,13 +980,13 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           const SizedBox(height: 16),
           if (!hasChild)
             _buildEmptyStateMessage(
-              'Add a child to see their recent activities.',
+              context.loc.t('dashboard.add_child_to_see_activities'),
               Icons.child_care_rounded,
               SafePlayColors.brandOrange500,
             )
           else if (selectedChild == null)
             _buildEmptyStateMessage(
-              'Select a child from the dropdown to view their activities.',
+              context.loc.t('dashboard.select_child_limits'),
               Icons.touch_app_rounded,
               SafePlayColors.brandTeal500,
             )
@@ -994,7 +999,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             )
           else if (!hasSessions)
             _buildEmptyStateMessage(
-              'No activities yet for ${selectedChild.name}.',
+              context.loc
+                  .t('dashboard.no_recent_activities')
+                  .replaceFirst('{name}', selectedChild.name),
               Icons.hourglass_empty_rounded,
               SafePlayColors.neutral400,
             )
@@ -1006,7 +1013,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: Text(
-                'Showing cached insights. Refresh to try again.',
+                context.loc.t('dashboard.cached_insights'),
                 style: TextStyle(
                   color: SafePlayColors.warning,
                   fontSize: 12,
@@ -1033,7 +1040,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'This summary respects privacy by showing abstracted activity patterns, not personal details.',
+                    context.loc.t('browser.note_privacy'),
                     style: TextStyle(
                       color: SafePlayColors.neutral600,
                       fontSize: 12,
@@ -1070,7 +1077,6 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         120;
     final remainingMinutes = settings?.remainingMinutes ?? displayMinutes;
     final limitMinutes = settings?.dailyLimitMinutes ?? displayMinutes;
-    final usedMinutes = settings?.usedMinutesToday ?? 0;
     final isLocked = settings?.shouldLock ?? false;
     final controlsDisabled = childId.isEmpty || isLoading || isSaving;
 
@@ -1114,16 +1120,16 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Screen Time Limit',
-                      style: TextStyle(
+                    Text(
+                      context.loc.t('dashboard.screen_time'),
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
                     ),
                     if (selectedChild != null)
                       Text(
-                        'Daily limit for ${selectedChild.name}',
+                        '${context.loc.t('dashboard.screen_time_desc')}${selectedChild.name}',
                         style: TextStyle(
                           color: SafePlayColors.neutral500,
                           fontSize: 12,
@@ -1132,8 +1138,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     else
                       Text(
                         hasChild
-                            ? 'Select a child to set limits'
-                            : 'Add a child first',
+                            ? context.loc.t('dashboard.select_child_limits')
+                            : context.loc.t('dashboard.add_first_child'),
                         style: TextStyle(
                           color: SafePlayColors.neutral400,
                           fontSize: 12,
@@ -1147,13 +1153,13 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           const SizedBox(height: 20),
           if (!hasChild)
             _buildEmptyStateMessage(
-              'Add a child to set screen time limits.',
+              context.loc.t('dashboard.add_first_child'),
               Icons.child_care_rounded,
               SafePlayColors.brandOrange500,
             )
           else if (selectedChild == null)
             _buildEmptyStateMessage(
-              'Select a child from the dropdown to configure their screen time.',
+              context.loc.t('dashboard.select_child_limits'),
               Icons.touch_app_rounded,
               SafePlayColors.brandTeal500,
             )
@@ -1164,16 +1170,16 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Enable Screen Time Limit',
-                        style: TextStyle(
+                      Text(
+                      context.loc.t('dashboard.enable_screen_time'),
+                        style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Automatically pause the app when daily limit is reached',
+                      context.loc.t('dashboard.auto_pause'),
                         style: TextStyle(
                           color: SafePlayColors.neutral600,
                           fontSize: 12,
@@ -1222,9 +1228,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Daily Limit',
-                        style: TextStyle(
+                      Text(
+                        context.loc.t('dashboard.daily_limit_label'),
+                        style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
                         ),
@@ -1239,7 +1245,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          _formatTimeLimit(displayMinutes),
+                          _formatTimeLimit(context, displayMinutes),
                           style: TextStyle(
                             color: SafePlayColors.brandOrange500,
                             fontWeight: FontWeight.bold,
@@ -1255,7 +1261,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     min: 30,
                     max: 240,
                     divisions: 14,
-                    label: _formatTimeLimit(displayMinutes),
+                    label: _formatTimeLimit(context, displayMinutes),
                     activeColor: SafePlayColors.brandOrange500,
                     inactiveColor: SafePlayColors.neutral300,
                     onChanged: controlsDisabled
@@ -1291,14 +1297,14 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '30 min',
+                        '30 ${context.loc.t('dashboard.minutes')}',
                         style: TextStyle(
                           color: SafePlayColors.neutral500,
                           fontSize: 11,
                         ),
                       ),
                       Text(
-                        '4 hours',
+                        '4 ${context.loc.t('dashboard.hours')}',
                         style: TextStyle(
                           color: SafePlayColors.neutral500,
                           fontSize: 11,
@@ -1309,9 +1315,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 ],
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Quick Presets',
-                style: TextStyle(
+              Text(
+                context.loc.t('dashboard.quick_presets'),
+                style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),
@@ -1322,7 +1328,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 runSpacing: 8,
                 children: [
                   _buildTimePresetChip(
-                    '1 hour',
+                    '1 ${context.loc.t('dashboard.hours')}',
                     60,
                     displayMinutes,
                     controlsDisabled
@@ -1335,7 +1341,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                             ),
                   ),
                   _buildTimePresetChip(
-                    '1.5 hours',
+                    '1.5 ${context.loc.t('dashboard.hours')}',
                     90,
                     displayMinutes,
                     controlsDisabled
@@ -1348,7 +1354,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                             ),
                   ),
                   _buildTimePresetChip(
-                    '2 hours',
+                    '2 ${context.loc.t('dashboard.hours')}',
                     120,
                     displayMinutes,
                     controlsDisabled
@@ -1361,7 +1367,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                             ),
                   ),
                   _buildTimePresetChip(
-                    '3 hours',
+                    '3 ${context.loc.t('dashboard.hours')}',
                     180,
                     displayMinutes,
                     controlsDisabled
@@ -1396,7 +1402,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'When the time limit is reached, ${selectedChild.name} will see a friendly reminder to take a break. The app will pause until the next day.',
+                        context.loc.t('dashboard.limit_reached'),
                         style: TextStyle(
                           color: SafePlayColors.neutral700,
                           fontSize: 12,
@@ -1428,8 +1434,17 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     Expanded(
                       child: Text(
                         isLocked
-                            ? '${selectedChild.name} has reached the daily screen time limit.'
-                            : '${_formatMinutes(remainingMinutes)} remaining out of ${_formatMinutes(limitMinutes)} today.',
+                            ? '${selectedChild.name} ${context.loc.t('dashboard.limit_reached')}'
+                            : context.loc
+                                .t('dashboard.remaining_time_text')
+                                .replaceFirst(
+                                  '{time}',
+                                  _formatMinutes(context, remainingMinutes),
+                                )
+                                .replaceFirst(
+                                  '{total}',
+                                  _formatMinutes(context, limitMinutes),
+                                ),
                         style: TextStyle(
                           color: SafePlayColors.neutral700,
                           fontSize: 12,
@@ -1443,17 +1458,17 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: controlsDisabled
-                        ? null
-                        : () {
-                            if (childId.isEmpty) return;
+                    child: OutlinedButton.icon(
+                      onPressed: controlsDisabled
+                          ? null
+                          : () {
+                              if (childId.isEmpty) return;
                             unawaited(
                               screenTimeProvider.unlockLimit(childId),
                             );
-                          },
+                        },
                     icon: const Icon(Icons.lock_open_rounded),
-                    label: const Text('Unlock for today'),
+                    label: Text(context.loc.t('dashboard.unlock_today')),
                   ),
                 ),
               ],
@@ -1526,30 +1541,28 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
-  String _formatMinutes(int minutes) {
-    if (minutes < 60) return '$minutes min';
+  String _formatMinutes(BuildContext context, int minutes) {
+    final loc = context.loc;
+    if (minutes < 60) return '$minutes ${loc.t('dashboard.minutes')}';
     final hours = minutes ~/ 60;
     final mins = minutes % 60;
     if (mins == 0) {
-      return '$hours ${hours == 1 ? 'hour' : 'hours'}';
+      return '$hours ${loc.t('dashboard.hours')}';
     }
-    return '$hours h $mins m';
+    return '$hours ${loc.t('dashboard.hours')} $mins ${loc.t('dashboard.minutes')}';
   }
 
-  String _formatTimeLimit(int minutes) {
+  String _formatTimeLimit(BuildContext context, int minutes) {
+    final loc = context.loc;
     if (minutes < 60) {
-      return '$minutes min';
-    } else if (minutes == 60) {
-      return '1 hour';
-    } else {
-      final hours = minutes ~/ 60;
-      final mins = minutes % 60;
-      if (mins == 0) {
-        return '$hours ${hours == 1 ? 'hour' : 'hours'}';
-      } else {
-        return '$hours.${(mins / 60 * 10).round()} hours';
-      }
+      return '$minutes ${loc.t('dashboard.minutes')}';
     }
+    final hours = minutes ~/ 60;
+    final mins = minutes % 60;
+    if (mins == 0) {
+      return '$hours ${loc.t('dashboard.hours')}';
+    }
+    return '$hours ${loc.t('dashboard.hours')} $mins ${loc.t('dashboard.minutes')}';
   }
 
   Widget _buildActivityItem(_RecentActivityItem activity) {
@@ -1677,16 +1690,46 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   }
 
   _RecentActivityItem _mapSessionToRecentActivity(
+    BuildContext context,
     ActivitySessionEntry entry,
   ) {
+    final gameTranslations = {
+      'letter sound adventure': context.loc.t('game.letter_sound_adventure'),
+      'math maze': context.loc.t('game.math_maze'),
+      'science quiz': context.loc.t('game.science_quiz'),
+      'reading quest': context.loc.t('game.reading_quest'),
+      'shapes sorter': context.loc.t('game.shapes_sorter'),
+      'number grid race': context.loc.t('game.number_grid_race'),
+      'koala counter\'s adventure':
+          context.loc.t('game.koala_counter_adventure'),
+      'ordinal order challenge': context.loc.t('game.ordinal_order_challenge'),
+      'pattern builder': context.loc.t('game.pattern_builder'),
+      'bubblepop grammar': context.loc.t('game.bubblepop_grammar'),
+      'seashell quiz': context.loc.t('game.seashell_quiz'),
+      'fish tank quiz': context.loc.t('game.fish_tank_quiz'),
+      'add equations': context.loc.t('game.add_equations'),
+      'fraction navigator': context.loc.t('game.fraction_navigator'),
+      'inverse operation chain': context.loc.t('game.inverse_operation_chain'),
+      'data visualization lab': context.loc.t('game.data_visualization_lab'),
+      'cartesian grid explorer': context.loc.t('game.cartesian_grid_explorer'),
+      'memory match': context.loc.t('game.memory_match'),
+      'word builder': context.loc.t('game.word_builder'),
+      'story sequencer': context.loc.t('game.story_sequencer'),
+      'math adventures': context.loc.t('game.math_adventures'),
+      'reading adventures': context.loc.t('game.reading_adventures'),
+      'science adventures': context.loc.t('game.science_adventures'),
+    };
     final subjectEnum = _mapRawSubjectToEnum(entry.subject);
     final subjectLabel =
-        subjectEnum?.displayName ?? _formatSubjectLabel(entry.subject);
+        subjectEnum?.displayName ?? _formatSubjectLabel(context, entry.subject);
+    final normalizedTitle = entry.title.toLowerCase().trim();
+    final translatedTitle =
+        gameTranslations[normalizedTitle] ?? entry.title;
     return _RecentActivityItem(
-      title: entry.title,
+      title: translatedTitle,
       subjectLabel: subjectLabel,
       subjectColor: _subjectColor(subjectEnum),
-      timeLabel: _formatDurationLabel(entry.durationMinutes),
+      timeLabel: _formatDurationLabel(context, entry.durationMinutes),
       completionPercent: 100,
     );
   }
@@ -1728,18 +1771,23 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     }
   }
 
-  String _formatDurationLabel(int? minutes) {
+  String _formatDurationLabel(BuildContext context, int? minutes) {
     if (minutes == null || minutes <= 0) {
-      return 'Teacher-assigned session';
+      return context.loc.t('activity.teacher_assigned');
     }
-    if (minutes == 1) return '1 min session';
-    return '$minutes min session';
+    if (minutes == 1) {
+      return context.loc.t('activity.single_min_session');
+    }
+    return context.loc
+        .t('activity.minutes_session')
+        .replaceFirst('{minutes}', minutes.toString());
   }
 
-  String _formatSubjectLabel(String? raw) {
-    if (raw == null || raw.isEmpty) return 'Learning';
+  String _formatSubjectLabel(BuildContext context, String? raw) {
+    final fallback = context.loc.t('activity.learning');
+    if (raw == null || raw.isEmpty) return fallback;
     final normalized = raw.replaceAll(RegExp(r'[_\\-]+'), ' ').trim();
-    if (normalized.isEmpty) return 'Learning';
+    if (normalized.isEmpty) return fallback;
     return normalized[0].toUpperCase() + normalized.substring(1);
   }
 
@@ -5186,11 +5234,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
-  String _greetingForNow() {
+  String _greetingForNow(BuildContext context) {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return context.loc.t('greeting.morning');
+    if (hour < 17) return context.loc.t('greeting.afternoon');
+    return context.loc.t('greeting.evening');
   }
 }
 

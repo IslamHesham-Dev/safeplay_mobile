@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../design_system/colors.dart';
+import '../../localization/app_localizations.dart';
 import '../../models/user_profile.dart';
 import '../../models/user_type.dart';
 import '../../navigation/route_names.dart';
@@ -51,13 +52,14 @@ class _EditChildScreenState extends State<EditChildScreen> {
   }
 
   Future<void> _handleSubmit() async {
+    final loc = context.loc;
     if (!_formKey.currentState!.validate()) return;
 
     // Validate gender selection
     if (_selectedGender == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select your child\'s gender'),
+        SnackBar(
+          content: Text(loc.t('child.form.gender_missing')),
           backgroundColor: Colors.red,
         ),
       );
@@ -90,8 +92,8 @@ class _EditChildScreenState extends State<EditChildScreen> {
       if (success) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Child profile updated successfully!'),
+            SnackBar(
+              content: Text(loc.t('child.edit.success')),
               backgroundColor: SafePlayColors.success,
             ),
           );
@@ -119,9 +121,10 @@ class _EditChildScreenState extends State<EditChildScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.loc;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Child Profile'),
+        title: Text(loc.t('child.edit.title')),
         actions: [
           if (_isLoading)
             const Padding(
@@ -146,14 +149,16 @@ class _EditChildScreenState extends State<EditChildScreen> {
 
                 // Header
                 Text(
-                  'Edit ${widget.child.name}\'s Profile',
+                  loc
+                      .t('child.edit.header')
+                      .replaceFirst('{name}', widget.child.name),
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Update your child\'s information and authentication',
+                  loc.t('child.edit.subtitle'),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: SafePlayColors.neutral600,
                       ),
@@ -163,14 +168,14 @@ class _EditChildScreenState extends State<EditChildScreen> {
                 // Child Name
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Child\'s Name',
-                    prefixIcon: Icon(Icons.person_outline),
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc.t('child.form.name_label'),
+                    prefixIcon: const Icon(Icons.person_outline),
+                    border: const OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your child\'s name';
+                      return loc.t('child.form.name_error');
                     }
                     return null;
                   },
@@ -181,11 +186,11 @@ class _EditChildScreenState extends State<EditChildScreen> {
                 TextFormField(
                   controller: _ageController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Age',
-                    prefixIcon: Icon(Icons.child_care_outlined),
-                    border: OutlineInputBorder(),
-                    helperText: 'Enter an age between 6 and 12',
+                  decoration: InputDecoration(
+                    labelText: loc.t('child.form.age_label'),
+                    prefixIcon: const Icon(Icons.child_care_outlined),
+                    border: const OutlineInputBorder(),
+                    helperText: loc.t('child.form.age_helper'),
                   ),
                   onChanged: (value) {
                     final age = int.tryParse(value.trim());
@@ -204,11 +209,11 @@ class _EditChildScreenState extends State<EditChildScreen> {
                   },
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your child\'s age';
+                      return loc.t('child.form.age_error');
                     }
                     final age = int.tryParse(value.trim());
                     if (age == null || age < 6 || age > 12) {
-                      return 'Age must be a number between 6 and 12';
+                      return loc.t('child.form.age_range_error');
                     }
                     return null;
                   },
@@ -217,7 +222,7 @@ class _EditChildScreenState extends State<EditChildScreen> {
 
                 // Gender Selection
                 Text(
-                  'Gender',
+                  loc.t('child.form.gender_label'),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -226,12 +231,18 @@ class _EditChildScreenState extends State<EditChildScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: _buildGenderCard('male', 'Male', Icons.boy,
+                      child: _buildGenderCard(
+                          'male',
+                          loc.t('child.form.gender_male'),
+                          Icons.boy,
                           SafePlayColors.brandTeal500),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _buildGenderCard('female', 'Female', Icons.girl,
+                      child: _buildGenderCard(
+                          'female',
+                          loc.t('child.form.gender_female'),
+                          Icons.girl,
                           SafePlayColors.brandOrange500),
                     ),
                   ],
@@ -240,7 +251,7 @@ class _EditChildScreenState extends State<EditChildScreen> {
 
                 // Age Group Selection
                 Text(
-                  'Age Group',
+                  loc.t('child.form.age_group_label'),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -251,8 +262,8 @@ class _EditChildScreenState extends State<EditChildScreen> {
                     Expanded(
                       child: _buildAgeGroupCard(
                         AgeGroup.junior,
-                        'Junior Explorer',
-                        'Ages 6-8',
+                        loc.t('child.form.age_group_junior'),
+                        loc.t('child.form.age_group_junior_desc'),
                         Icons.child_care,
                         SafePlayColors.brandTeal500,
                       ),
@@ -261,8 +272,8 @@ class _EditChildScreenState extends State<EditChildScreen> {
                     Expanded(
                       child: _buildAgeGroupCard(
                         AgeGroup.bright,
-                        'Bright Minds',
-                        'Ages 9-12',
+                        loc.t('child.form.age_group_bright'),
+                        loc.t('child.form.age_group_bright_desc'),
                         Icons.school,
                         SafePlayColors.brandOrange500,
                       ),
@@ -287,22 +298,22 @@ class _EditChildScreenState extends State<EditChildScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : const Text(
-                          'Update Child Profile',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : Text(
+                              loc.t('child.edit.submit'),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
                         ),
                 ),
               ],
@@ -314,6 +325,7 @@ class _EditChildScreenState extends State<EditChildScreen> {
   }
 
   Widget _buildAuthenticationSection() {
+    final loc = context.loc;
     final hasAuth =
         widget.child.authData != null && widget.child.authData!.isNotEmpty;
     final authType = widget.child.authData?['authType'] as String?;
@@ -337,7 +349,7 @@ class _EditChildScreenState extends State<EditChildScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Authentication',
+                loc.t('child.auth.section_title'),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -354,13 +366,13 @@ class _EditChildScreenState extends State<EditChildScreen> {
                   size: 16,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  authType == 'emoji' || authType == 'picture'
-                      ? 'Junior Authentication (4 emojis)'
-                      : 'Bright Authentication (3 pictures + PIN)',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: SafePlayColors.success,
-                        fontWeight: FontWeight.w500,
+              Text(
+                authType == 'emoji' || authType == 'picture'
+                    ? loc.t('child.auth.junior')
+                    : loc.t('child.auth.bright'),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: SafePlayColors.success,
+                      fontWeight: FontWeight.w500,
                       ),
                 ),
               ],
@@ -381,7 +393,7 @@ class _EditChildScreenState extends State<EditChildScreen> {
                       }
                     },
                     icon: const Icon(Icons.edit),
-                    label: const Text('Change Authentication'),
+                    label: Text(loc.t('child.auth.change')),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: SafePlayColors.brandTeal500,
                       side: BorderSide(color: SafePlayColors.brandTeal500),
@@ -399,11 +411,11 @@ class _EditChildScreenState extends State<EditChildScreen> {
                   size: 16,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  'No authentication set up',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: SafePlayColors.warning,
-                        fontWeight: FontWeight.w500,
+              Text(
+                loc.t('child.auth.none'),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: SafePlayColors.warning,
+                      fontWeight: FontWeight.w500,
                       ),
                 ),
               ],
@@ -424,7 +436,7 @@ class _EditChildScreenState extends State<EditChildScreen> {
                       }
                     },
                     icon: const Icon(Icons.add),
-                    label: const Text('Set Up Authentication'),
+                    label: Text(loc.t('child.auth.setup')),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: SafePlayColors.brandTeal500,
                       foregroundColor: Colors.white,
@@ -561,8 +573,10 @@ class _EditChildScreenState extends State<EditChildScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'Age ${typedAge}',
-                  style: const TextStyle(
+                  context.loc
+                      .t('child.age_value')
+                      .replaceFirst('{age}', '$typedAge'),
+                  style: TextStyle(
                     fontSize: 10,
                     color: Colors.orange,
                     fontWeight: FontWeight.w500,
@@ -579,8 +593,10 @@ class _EditChildScreenState extends State<EditChildScreen> {
   void _showAgeMismatchAlert(AgeGroup selectedGroup, int? childAge) {
     if (childAge == null) return;
 
-    final groupName =
-        selectedGroup == AgeGroup.junior ? 'Junior Explorer' : 'Bright Minds';
+    final loc = context.loc;
+    final groupName = selectedGroup == AgeGroup.junior
+        ? loc.t('child.form.age_group_junior')
+        : loc.t('child.form.age_group_bright');
     final ageRange = selectedGroup == AgeGroup.junior ? '6-8' : '9-12';
 
     showDialog(
@@ -594,7 +610,7 @@ class _EditChildScreenState extends State<EditChildScreen> {
               size: 24,
             ),
             const SizedBox(width: 8),
-            const Text('Age Mismatch'),
+            Text(loc.t('child.form.age_mismatch_title')),
           ],
         ),
         content: Column(
@@ -602,19 +618,23 @@ class _EditChildScreenState extends State<EditChildScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Your child is ${childAge} years old, but $groupName is designed for ages $ageRange.',
+              loc
+                  .t('child.form.age_mismatch_body')
+                  .replaceFirst('{age}', '$childAge')
+                  .replaceFirst('{group}', groupName)
+                  .replaceFirst('{range}', ageRange),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Please select the appropriate age group or adjust the age.',
-              style: TextStyle(fontWeight: FontWeight.w500),
+            Text(
+              loc.t('child.form.age_mismatch_hint'),
+              style: const TextStyle(fontWeight: FontWeight.w500),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+            child: Text(loc.t('action.ok')),
           ),
         ],
       ),

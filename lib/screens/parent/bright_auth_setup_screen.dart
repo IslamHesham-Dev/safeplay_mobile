@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../constants/authentication_options.dart';
 import '../../design_system/colors.dart';
+import '../../localization/app_localizations.dart';
 import '../../models/user_profile.dart';
 import '../../navigation/route_names.dart';
 import '../../providers/child_provider.dart';
@@ -65,41 +66,45 @@ class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
   }
 
   String _getPinValidationMessage() {
+    final loc = context.loc;
     final pin = _pinController.text.trim();
     final confirmPin = _confirmPinController.text.trim();
 
     if (pin.isEmpty && confirmPin.isEmpty) {
-      return 'Enter a 4-digit PIN and confirm it';
+      return loc.t('auth.setup.pin_validation_prompt');
     }
 
     if (pin.length < 4) {
-      return 'PIN must be 4 digits';
+      return loc.t('auth.setup.pin_validation_short');
     }
 
     if (!RegExp(r'^\d{4}$').hasMatch(pin)) {
-      return 'PIN must contain only numbers';
+      return loc.t('auth.setup.pin_validation_numeric');
     }
 
     if (confirmPin.isEmpty) {
-      return 'Please confirm your PIN';
+      return loc.t('auth.setup.pin_validation_confirm_prompt');
     }
 
     if (confirmPin.length < 4) {
-      return 'Confirm PIN must be 4 digits';
+      return loc.t('auth.setup.pin_validation_confirm_short');
     }
 
     if (pin != confirmPin) {
-      return 'PINs do not match';
+      return loc.t('auth.setup.pin_validation_mismatch');
     }
 
-    return 'PIN is valid!';
+    return loc.t('auth.setup.pin_validation_valid');
   }
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.loc;
     return Scaffold(
       appBar: AppBar(
-        title: Text('Setup ${widget.child.name}\'s Login'),
+        title: Text(
+          loc.t('auth.setup.title').replaceFirst('{name}', widget.child.name),
+        ),
         backgroundColor: SafePlayColors.brandOrange500,
         foregroundColor: Colors.white,
       ),
@@ -128,7 +133,7 @@ class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: _previousStep,
-                        child: const Text('Back'),
+                        child: Text(loc.t('auth.setup.back')),
                       ),
                     ),
                   if (_currentStep > 0) const SizedBox(width: 16),
@@ -167,6 +172,7 @@ class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
   }
 
   Widget _buildInstructionsStep() {
+    final loc = context.loc;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -177,14 +183,14 @@ class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
         ),
         const SizedBox(height: 24),
         Text(
-          'Setup ${widget.child.name}\'s Login',
+          loc.t('auth.setup.title').replaceFirst('{name}', widget.child.name),
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
         ),
         const SizedBox(height: 16),
         Text(
-          'Help your child create a secure login with pictures and a PIN.',
+          loc.t('auth.setup.instructions_bright'),
           style: Theme.of(context).textTheme.bodyLarge,
         ),
         const SizedBox(height: 24),
@@ -204,7 +210,7 @@ class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
                       color: SafePlayColors.brandOrange500),
                   const SizedBox(width: 8),
                   Text(
-                    'How it works:',
+                    loc.t('auth.setup.how_it_works'),
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: SafePlayColors.brandOrange500,
@@ -213,10 +219,10 @@ class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              const Text('1. Choose 3 pictures your child likes'),
-              const Text('2. Create a 4-digit PIN number'),
-              const Text('3. Your child will use both to login'),
-              const Text('4. Make sure they can remember both!'),
+              Text('1. ${loc.t('auth.setup.pictures.step1')}'),
+              Text('2. ${loc.t('auth.setup.pictures.step2')}'),
+              Text('3. ${loc.t('auth.setup.pictures.step3')}'),
+              Text('4. ${loc.t('auth.setup.pictures.step4')}'),
             ],
           ),
         ),
@@ -225,18 +231,21 @@ class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
   }
 
   Widget _buildPictureSelectionStep() {
+    final loc = context.loc;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Choose 3 Pictures',
+          loc.t('auth.setup.choose_pictures_title'),
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
         ),
         const SizedBox(height: 8),
         Text(
-          'Select 3 pictures that ${widget.child.name} will use to login.',
+          loc
+              .t('auth.setup.choose_pictures_subtitle')
+              .replaceFirst('{name}', widget.child.name),
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: 16),
@@ -254,7 +263,10 @@ class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Selected (${_selectedPictures.length}/3):',
+                  loc.t('auth.setup.selected_count').replaceFirst(
+                        '{current}',
+                        '${_selectedPictures.length}',
+                      ).replaceFirst('{total}', '3'),
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
@@ -297,18 +309,22 @@ class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
   }
 
   Widget _buildPinStep() {
+    final loc = context.loc;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Create PIN',
+          loc.t('auth.setup.pin_title'),
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
         ),
         const SizedBox(height: 8),
         Text(
-          'Create a 4-digit PIN that ${widget.child.name} can remember.',
+          loc.t('auth.setup.pin_subtitle').replaceFirst(
+                '{name}',
+                widget.child.name,
+              ),
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: 32),
@@ -319,18 +335,18 @@ class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
           keyboardType: TextInputType.number,
           obscureText: true,
           maxLength: 4,
-          decoration: const InputDecoration(
-            labelText: '4-Digit PIN',
-            prefixIcon: Icon(Icons.lock_outline),
-            border: OutlineInputBorder(),
-            helperText: 'Enter a 4-digit number (e.g., 1234)',
+          decoration: InputDecoration(
+            labelText: loc.t('auth.setup.pin_label'),
+            prefixIcon: const Icon(Icons.lock_outline),
+            border: const OutlineInputBorder(),
+            helperText: loc.t('auth.setup.pin_helper'),
           ),
           validator: (value) {
             if (value == null || value.length != 4) {
-              return 'PIN must be exactly 4 digits';
+              return loc.t('auth.setup.pin_error_length');
             }
             if (!RegExp(r'^\d{4}$').hasMatch(value)) {
-              return 'PIN must contain only numbers';
+              return loc.t('auth.setup.pin_error_numeric');
             }
             return null;
           },
@@ -343,14 +359,14 @@ class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
           keyboardType: TextInputType.number,
           obscureText: true,
           maxLength: 4,
-          decoration: const InputDecoration(
-            labelText: 'Confirm PIN',
-            prefixIcon: Icon(Icons.lock_outline),
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: loc.t('auth.setup.pin_confirm_label'),
+            prefixIcon: const Icon(Icons.lock_outline),
+            border: const OutlineInputBorder(),
           ),
           validator: (value) {
             if (value != _pinController.text) {
-              return 'PINs do not match';
+              return loc.t('auth.setup.pin_error_mismatch');
             }
             return null;
           },
@@ -413,7 +429,10 @@ class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Make sure ${widget.child.name} can remember this PIN!',
+                  loc.t('auth.setup.remember_pin').replaceFirst(
+                        '{name}',
+                        widget.child.name,
+                      ),
                   style: TextStyle(color: SafePlayColors.warning),
                 ),
               ),
@@ -425,6 +444,7 @@ class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
   }
 
   Widget _buildConfirmationStep() {
+    final loc = context.loc;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -435,14 +455,20 @@ class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
         ),
         const SizedBox(height: 24),
         Text(
-          'Confirm ${widget.child.name}\'s Login',
+          loc.t('auth.setup.confirm_title').replaceFirst(
+                '{name}',
+                widget.child.name,
+              ),
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
         ),
         const SizedBox(height: 16),
         Text(
-          'This is what ${widget.child.name} will use to login:',
+          loc.t('auth.setup.confirm_login_subtitle').replaceFirst(
+                '{name}',
+                widget.child.name,
+              ),
           style: Theme.of(context).textTheme.bodyLarge,
         ),
         const SizedBox(height: 24),
@@ -459,7 +485,7 @@ class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Selected Pictures:',
+                loc.t('auth.setup.confirm_selected_pictures'),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -498,7 +524,7 @@ class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'PIN:',
+                loc.t('auth.setup.confirm_pin_label'),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -550,17 +576,20 @@ class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
   }
 
   String _getNextButtonText() {
+    final loc = context.loc;
     switch (_currentStep) {
       case 0:
-        return 'Select Pictures';
+        return loc.t('auth.setup.select_pictures');
       case 1:
-        return 'Create PIN';
+        return loc.t('auth.setup.create_pin');
       case 2:
-        return 'Review Setup';
+        return loc.t('auth.setup.review_setup');
       case 3:
-        return _isLoading ? 'Saving...' : 'Save Login';
+        return _isLoading
+            ? loc.t('auth.setup.saving')
+            : loc.t('auth.setup.save_login');
       default:
-        return 'Next';
+        return loc.t('auth.setup.next');
     }
   }
 
@@ -590,9 +619,10 @@ class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
       );
 
       if (mounted) {
+        final loc = context.loc;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login setup completed successfully!'),
+          SnackBar(
+            content: Text(loc.t('auth.setup.success')),
             backgroundColor: SafePlayColors.success,
           ),
         );
@@ -603,7 +633,8 @@ class _BrightAuthSetupScreenState extends State<BrightAuthSetupScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(
+                '${context.loc.t('auth.setup.error_prefix')}${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );

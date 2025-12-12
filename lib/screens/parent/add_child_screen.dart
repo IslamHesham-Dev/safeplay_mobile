@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../design_system/colors.dart';
+import '../../localization/app_localizations.dart';
 import '../../models/user_profile.dart';
 import '../../models/user_type.dart';
 import '../../navigation/route_names.dart';
@@ -34,13 +35,14 @@ class _AddChildScreenState extends State<AddChildScreen> {
   }
 
   Future<void> _handleSubmit() async {
+    final loc = context.loc;
     if (!_formKey.currentState!.validate()) return;
 
     // Validate gender selection
     if (_selectedGender == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select your child\'s gender'),
+        SnackBar(
+          content: Text(loc.t('child.form.gender_missing')),
           backgroundColor: Colors.red,
         ),
       );
@@ -89,8 +91,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
       if (newChild != null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Child profile created successfully!'),
+            SnackBar(
+              content: Text(loc.t('child.add.success')),
               backgroundColor: SafePlayColors.success,
             ),
           );
@@ -124,9 +126,10 @@ class _AddChildScreenState extends State<AddChildScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = context.loc;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Child'),
+        title: Text(loc.t('child.add.title')),
         actions: [
           if (_isLoading)
             const Padding(
@@ -151,14 +154,14 @@ class _AddChildScreenState extends State<AddChildScreen> {
 
                 // Header
                 Text(
-                  'Create Child Profile',
+                  loc.t('child.add.header'),
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Add your child to start tracking their learning journey',
+                  loc.t('child.add.subtitle'),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: SafePlayColors.neutral600,
                       ),
@@ -168,14 +171,14 @@ class _AddChildScreenState extends State<AddChildScreen> {
                 // Child Name
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Child\'s Name',
-                    prefixIcon: Icon(Icons.person_outline),
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc.t('child.form.name_label'),
+                    prefixIcon: const Icon(Icons.person_outline),
+                    border: const OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your child\'s name';
+                      return loc.t('child.form.name_error');
                     }
                     return null;
                   },
@@ -186,11 +189,11 @@ class _AddChildScreenState extends State<AddChildScreen> {
                 TextFormField(
                   controller: _ageController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Age',
-                    prefixIcon: Icon(Icons.child_care_outlined),
-                    border: OutlineInputBorder(),
-                    helperText: 'Enter an age between 6 and 12',
+                  decoration: InputDecoration(
+                    labelText: loc.t('child.form.age_label'),
+                    prefixIcon: const Icon(Icons.child_care_outlined),
+                    border: const OutlineInputBorder(),
+                    helperText: loc.t('child.form.age_helper'),
                   ),
                   onChanged: (value) {
                     final age = int.tryParse(value.trim());
@@ -209,11 +212,11 @@ class _AddChildScreenState extends State<AddChildScreen> {
                   },
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your child\'s age';
+                      return loc.t('child.form.age_error');
                     }
                     final age = int.tryParse(value.trim());
                     if (age == null || age < 6 || age > 12) {
-                      return 'Age must be a number between 6 and 12';
+                      return loc.t('child.form.age_range_error');
                     }
                     return null;
                   },
@@ -222,7 +225,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
 
                 // Gender Selection
                 Text(
-                  'Gender',
+                  loc.t('child.form.gender_label'),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -231,12 +234,18 @@ class _AddChildScreenState extends State<AddChildScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: _buildGenderCard('male', 'Male', Icons.boy,
+                      child: _buildGenderCard(
+                          'male',
+                          loc.t('child.form.gender_male'),
+                          Icons.boy,
                           SafePlayColors.brandTeal500),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: _buildGenderCard('female', 'Female', Icons.girl,
+                      child: _buildGenderCard(
+                          'female',
+                          loc.t('child.form.gender_female'),
+                          Icons.girl,
                           SafePlayColors.brandOrange500),
                     ),
                   ],
@@ -245,7 +254,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
 
                 // Age Group Selection
                 Text(
-                  'Age Group',
+                  loc.t('child.form.age_group_label'),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -256,8 +265,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
                     Expanded(
                       child: _buildAgeGroupCard(
                         AgeGroup.junior,
-                        'Junior Explorer',
-                        'Ages 6-8',
+                        loc.t('child.form.age_group_junior'),
+                        loc.t('child.form.age_group_junior_desc'),
                         Icons.child_care,
                         SafePlayColors.brandTeal500,
                       ),
@@ -266,8 +275,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
                     Expanded(
                       child: _buildAgeGroupCard(
                         AgeGroup.bright,
-                        'Bright Minds',
-                        'Ages 9-12',
+                        loc.t('child.form.age_group_bright'),
+                        loc.t('child.form.age_group_bright_desc'),
                         Icons.school,
                         SafePlayColors.brandOrange500,
                       ),
@@ -297,9 +306,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
                                 AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : const Text(
-                          'Create Child Profile',
-                          style: TextStyle(
+                      : Text(
+                          loc.t('child.add.submit'),
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -396,8 +405,10 @@ class _AddChildScreenState extends State<AddChildScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'Age ${typedAge}',
-                  style: const TextStyle(
+                  context.loc
+                      .t('child.age_value')
+                      .replaceFirst('{age}', '$typedAge'),
+                  style: TextStyle(
                     fontSize: 10,
                     color: Colors.orange,
                     fontWeight: FontWeight.w500,
@@ -451,8 +462,10 @@ class _AddChildScreenState extends State<AddChildScreen> {
   }
 
   void _showAgeMismatchAlert(AgeGroup selectedGroup, int childAge) {
-    final groupName =
-        selectedGroup == AgeGroup.junior ? 'Junior Explorer' : 'Bright Minds';
+    final loc = context.loc;
+    final groupName = selectedGroup == AgeGroup.junior
+        ? loc.t('child.form.age_group_junior')
+        : loc.t('child.form.age_group_bright');
     final ageRange = selectedGroup == AgeGroup.junior ? '6-8' : '9-12';
 
     showDialog(
@@ -466,7 +479,7 @@ class _AddChildScreenState extends State<AddChildScreen> {
               size: 24,
             ),
             const SizedBox(width: 8),
-            const Text('Age Mismatch'),
+            Text(loc.t('child.form.age_mismatch_title')),
           ],
         ),
         content: Column(
@@ -474,19 +487,23 @@ class _AddChildScreenState extends State<AddChildScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Your child is ${childAge} years old, but $groupName is designed for ages $ageRange.',
+              loc
+                  .t('child.form.age_mismatch_body')
+                  .replaceFirst('{age}', '$childAge')
+                  .replaceFirst('{group}', groupName)
+                  .replaceFirst('{range}', ageRange),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Please select the appropriate age group or adjust the birth date.',
-              style: TextStyle(fontWeight: FontWeight.w500),
+            Text(
+              loc.t('child.form.age_mismatch_hint'),
+              style: const TextStyle(fontWeight: FontWeight.w500),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+            child: Text(loc.t('action.ok')),
           ),
         ],
       ),
