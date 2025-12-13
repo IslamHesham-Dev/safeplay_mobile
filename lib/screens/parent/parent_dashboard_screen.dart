@@ -2874,7 +2874,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    loc.t('browser.summary_hint'),
+                    loc.t('browser.note_privacy'),
                     style: TextStyle(
                       color: SafePlayColors.neutral600,
                       fontSize: 12,
@@ -3349,8 +3349,6 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                         selectedChild,
                         wellbeingProvider,
                       ),
-                      const SizedBox(height: 20),
-                      _buildWellbeingPrivacyNote(context),
                     ],
                   );
                 },
@@ -3625,7 +3623,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            loc.t('browser.summary_hint'),
+            loc.t('wellbeing.ai_overview'),
             style: TextStyle(
               color: SafePlayColors.neutral600,
               fontSize: 13,
@@ -3688,7 +3686,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    loc.t('label.privacy_note'),
+                    loc.t('wellbeing.ai_privacy_note'),
                     style: TextStyle(
                       color: SafePlayColors.neutral600,
                       fontSize: 12,
@@ -3841,39 +3839,6 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     : loc.t('wellbeing.no_note_added'),
               ),
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWellbeingPrivacyNote(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: SafePlayColors.neutral50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: SafePlayColors.neutral200,
-        ),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.info_outline_rounded,
-            color: SafePlayColors.neutral600,
-            size: 18,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              context.loc.t('wellbeing.note_privacy'),
-              style: TextStyle(
-                color: SafePlayColors.neutral600,
-                fontSize: 12,
-                height: 1.4,
-              ),
-            ),
-          ),
         ],
       ),
     );

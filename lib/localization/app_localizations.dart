@@ -124,7 +124,7 @@ class AppLocalizations {
       'wellbeing.overview': 'Overall wellbeing',
       'wellbeing.recent_checkins': 'Recent check-ins',
       'wellbeing.note_privacy':
-          "Meta-level summaries keep kids' privacy intact while still showing trends parents can act on.",
+          '??? ?????? ????? ??? ???????? ???????? ?? ?????? ???????? ???? ???? ????.',
       'wellbeing.add_child_title': 'Add a child first',
       'wellbeing.add_child_subtitle':
           'You need to add a child before viewing wellbeing reports.',
@@ -224,6 +224,10 @@ class AppLocalizations {
       'messaging.chat_load_error': 'Error loading chat: {error}',
       'messaging.chat_context_note':
           'Showing messages around the flagged incident from the database.',
+      'wellbeing.ai_overview':
+          "AI insights based on your child's latest check-ins, highlighting mood shifts and what to focus on next.",
+      'wellbeing.ai_privacy_note':
+          'Insights come from real check-ins to help you spot patterns and start supportive conversations.',
       'activity.teacher_assigned': 'Teacher-assigned session',
       'activity.single_min_session': '1 min session',
       'activity.minutes_session': '{minutes} min session',
@@ -756,6 +760,10 @@ class AppLocalizations {
       'messaging.chat_load_error': 'تعذّر تحميل المحادثة: {error}',
       'messaging.chat_context_note':
           'يتم عرض الرسائل حول الواقعة المعلَّمة من قاعدة البيانات.',
+      'wellbeing.ai_overview':
+          'تحليلات الذكاء الاصطناعي مبنية على أحدث تسجيلات الشعور لطفلك، لتسليط الضوء على التغيرات وما يمكن التركيز عليه.',
+      'wellbeing.ai_privacy_note':
+          'هذه الرؤى مبنية على بيانات فعلية من تسجيلات طفلك لمساعدتك على ملاحظة الأنماط وبدء حوارات داعمة.',
       'activity.teacher_assigned': 'جلسة مخصصة من المعلم',
       'activity.single_min_session': 'جلسة دقيقة واحدة',
       'activity.minutes_session': 'جلسة لمدة {minutes} دقيقة',
