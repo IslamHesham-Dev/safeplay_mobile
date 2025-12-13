@@ -22,6 +22,7 @@ class TeacherMessagingScreen extends StatefulWidget {
 class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  int _currentTabIndex = 0;
   String _selectedAgeGroup = 'bright'; // 'junior' or 'bright'
   final TextEditingController _customMessageController =
       TextEditingController();
@@ -550,6 +551,13 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (mounted && !_tabController.indexIsChanging) {
+        setState(() {
+          _currentTabIndex = _tabController.index;
+        });
+      }
+    });
     _messagingService = MessagingService();
     _studentMessages = List<StudentMessage>.from(_mockStudentMessages);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -772,7 +780,7 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
         children: [
           _buildHeader(),
           _buildAgeGroupSelector(),
-          _buildCategoryFilter(),
+          if (_currentTabIndex == 0) _buildCategoryFilter(),
           Expanded(
             child: TabBarView(
               controller: _tabController,
