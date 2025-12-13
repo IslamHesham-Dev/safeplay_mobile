@@ -87,7 +87,10 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
           child: Opacity(
             opacity: _fadeAnimation.value,
             child: Container(
-              height: MediaQuery.of(context).size.height * 0.7,
+              constraints: BoxConstraints(
+                // Allow content to fully show; only scroll if it exceeds this cap
+                maxHeight: MediaQuery.of(context).size.height * 0.9,
+              ),
               decoration: const BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(
@@ -95,178 +98,191 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
                   topRight: Radius.circular(24),
                 ),
               ),
-              child: Column(
-                children: [
-                  // Handle bar
-                  Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(top: 12),
-                    decoration: BoxDecoration(
-                      color: SafePlayColors.neutral300,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-
-                  // Header
-                  Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Row(
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Column(
                       children: [
+                        // Handle bar
                         Container(
-                          width: 48,
-                          height: 48,
+                          width: 40,
+                          height: 4,
+                          margin: const EdgeInsets.only(top: 12),
                           decoration: BoxDecoration(
-                            color: SafePlayColors.brandTeal500.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.settings_outlined,
-                            color: SafePlayColors.brandTeal500,
-                            size: 24,
+                            color: SafePlayColors.neutral300,
+                            borderRadius: BorderRadius.circular(2),
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+
+                        // Header
+                        Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Row(
                             children: [
-                              Text(
-                                loc.t('settings.title'),
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: SafePlayColors.neutral900,
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color:
+                                      SafePlayColors.brandTeal500.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.settings_outlined,
+                                  color: SafePlayColors.brandTeal500,
+                                  size: 24,
                                 ),
                               ),
-                              Text(
-                                loc.t('settings.subtitle'),
-                                style: TextStyle(
-                                  fontSize: 14,
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      loc.t('settings.title'),
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: SafePlayColors.neutral900,
+                                      ),
+                                    ),
+                                    Text(
+                                      loc.t('settings.subtitle'),
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: SafePlayColors.neutral500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                icon: const Icon(
+                                  Icons.close,
                                   color: SafePlayColors.neutral500,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        IconButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(
-                            Icons.close,
-                            color: SafePlayColors.neutral500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
 
-                  // Menu items
-                  Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      children: [
-                        _buildMenuItem(
-                          icon: Icons.lock_outline,
-                          title: loc.t('settings.change_password'),
-                          subtitle: loc.t('settings.change_password_desc'),
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            context.push(RouteNames.parentChangePassword);
-                          },
-                        ),
-                        _buildMenuItem(
-                          icon: Icons.language,
-                          title: loc.t('label.language_setting'),
-                          subtitle: loc.t('label.language_setting_desc'),
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            _showLanguagePicker();
-                          },
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // Danger Zone
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.red.withOpacity(0.2),
-                            ),
-                          ),
+                        // Menu items
+                        Padding(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 24),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.warning_amber_rounded,
-                                    color: Colors.red,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Danger Zone',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.red,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
                               _buildMenuItem(
-                                icon: Icons.delete_forever_outlined,
-                                title: loc.t('settings.delete_account'),
-                                subtitle:
-                                    loc.t('settings.delete_account_desc'),
+                                icon: Icons.lock_outline,
+                                title: loc.t('settings.change_password'),
+                                subtitle: loc.t('settings.change_password_desc'),
                                 onTap: () {
                                   Navigator.of(context).pop();
-                                  context.push(RouteNames.parentDeleteAccount);
+                                  context.push(RouteNames.parentChangePassword);
                                 },
-                                isDanger: true,
+                              ),
+                              _buildMenuItem(
+                                icon: Icons.language,
+                                title: loc.t('label.language_setting'),
+                                subtitle: loc.t('label.language_setting_desc'),
+                                onTap: () {
+                                  Navigator.of(context).pop();
+                                  _showLanguagePicker();
+                                },
+                              ),
+
+                              const SizedBox(height: 24),
+
+                              // Danger Zone
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withOpacity(0.05),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.red.withOpacity(0.2),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.warning_amber_rounded,
+                                          color: Colors.red,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Danger Zone',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.red,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildMenuItem(
+                                      icon: Icons.delete_forever_outlined,
+                                      title: loc.t('settings.delete_account'),
+                                      subtitle:
+                                          loc.t('settings.delete_account_desc'),
+                                      onTap: () {
+                                        Navigator.of(context).pop();
+                                        context
+                                            .push(RouteNames.parentDeleteAccount);
+                                      },
+                                      isDanger: true,
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 24),
+
+                              // Logout button
+                              Container(
+                                width: double.infinity,
+                                margin: const EdgeInsets.only(bottom: 24),
+                                child: OutlinedButton.icon(
+                                  onPressed: () async {
+                                    Navigator.of(context).pop();
+                                    final authProvider =
+                                        context.read<AuthProvider>();
+                                    final localeProvider =
+                                        context.read<LocaleProvider>();
+                                    await localeProvider
+                                        .setLocale(const Locale('en'));
+                                    await authProvider.signOut();
+                                    if (context.mounted) {
+                                      context.go(RouteNames.login);
+                                    }
+                                  },
+                                  icon: const Icon(Icons.logout, size: 20),
+                                  label: Text(loc.t('settings.sign_out')),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.red,
+                                    side: const BorderSide(color: Colors.red),
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
                               ),
                             ],
                           ),
                         ),
-
-                        const SizedBox(height: 24),
-
-                        // Logout button
-                        Container(
-                          width: double.infinity,
-                          margin: const EdgeInsets.only(bottom: 24),
-                          child: OutlinedButton.icon(
-                            onPressed: () async {
-                              Navigator.of(context).pop();
-                              final authProvider = context.read<AuthProvider>();
-                              final localeProvider =
-                                  context.read<LocaleProvider>();
-                              await localeProvider.setLocale(const Locale('en'));
-                              await authProvider.signOut();
-                              if (context.mounted) {
-                                context.go(RouteNames.login);
-                              }
-                            },
-                            icon: const Icon(Icons.logout, size: 20),
-                            label: Text(loc.t('settings.sign_out')),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.red,
-                              side: const BorderSide(color: Colors.red),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           ),
