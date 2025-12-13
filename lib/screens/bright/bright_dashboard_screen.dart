@@ -102,6 +102,9 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   // Audio player for the welcome dashboard voiceover
   final AudioPlayer _voiceoverPlayer = AudioPlayer();
   bool _backgroundMusicPausedForVoiceover = false;
+  // Background music state
+  bool _isMusicMuted = false;
+  final double _backgroundMusicVolume = 0.7;
 
   // Animation bookkeeping for the hero coin counter
   int _coinAnimationStartValue = 0;
@@ -172,7 +175,8 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
       // Configure background music player to use media player mode for proper looping
       await _audioPlayer.setPlayerMode(PlayerMode.mediaPlayer);
       await _audioPlayer.setReleaseMode(ReleaseMode.loop);
-      await _audioPlayer.setVolume(0.7); // Set volume to 70%
+      await _audioPlayer
+          .setVolume(_isMusicMuted ? 0 : _backgroundMusicVolume); // Set volume
       await _audioPlayer.play(AssetSource('audio/third.mp3'));
       debugPrint('✅ Background music started: third.mp3');
 
@@ -236,6 +240,26 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
       if (wasBackgroundPlaying) {
         await _ensureBackgroundMusicPlaying();
       }
+    }
+  }
+
+  Future<void> _toggleBackgroundMusic() async {
+    _playClickSound();
+    final targetMuted = !_isMusicMuted;
+    try {
+      if (targetMuted) {
+        await _audioPlayer.setVolume(0);
+      } else {
+        await _audioPlayer.setVolume(_backgroundMusicVolume);
+        if (_audioPlayer.state != PlayerState.playing) {
+          await _audioPlayer.resume();
+        }
+      }
+      if (mounted) {
+        setState(() => _isMusicMuted = targetMuted);
+      }
+    } catch (e) {
+      debugPrint('Error toggling background music: $e');
     }
   }
 
@@ -786,6 +810,21 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
                           JuniorTheme.backgroundLight
                         ],
                       ),
+                    ),
+                  ),
+                ),
+                // Mute button in top-left corner (mirrors logout style)
+                SafeArea(
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        top: JuniorTheme.spacingXSmall,
+                        left: JuniorTheme.spacingMedium,
+                        right: JuniorTheme.spacingMedium,
+                        bottom: JuniorTheme.spacingMedium,
+                      ),
+                      child: _buildMuteButton(),
                     ),
                   ),
                 ),
@@ -2510,6 +2549,42 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
         content: Text('Starting ${task.title}...'),
         backgroundColor: JuniorTheme.primaryGreen,
         duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  /// Build mute toggle button with same styling as logout
+  Widget _buildMuteButton() {
+    return Semantics(
+      label: _isMusicMuted
+          ? 'Unmute background music'
+          : 'Mute background music',
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _toggleBackgroundMusic,
+          borderRadius: BorderRadius.circular(JuniorTheme.radiusMedium),
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(JuniorTheme.radiusMedium),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.3),
+                width: 1.5,
+              ),
+            ),
+            child: Center(
+              child: Icon(
+                _isMusicMuted ? Icons.volume_off : Icons.volume_up,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
