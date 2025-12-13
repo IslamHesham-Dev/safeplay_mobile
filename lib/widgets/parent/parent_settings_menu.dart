@@ -175,63 +175,6 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
                           },
                         ),
                         _buildMenuItem(
-                          icon: Icons.notifications_outlined,
-                          title: loc.t('settings.notifications'),
-                          subtitle: loc.t('settings.notifications_desc'),
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content:
-                                    Text('Notifications settings coming soon'),
-                                backgroundColor: SafePlayColors.info,
-                              ),
-                            );
-                          },
-                        ),
-                        _buildMenuItem(
-                          icon: Icons.privacy_tip_outlined,
-                          title: loc.t('settings.privacy'),
-                          subtitle: loc.t('settings.privacy_desc'),
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Privacy settings coming soon'),
-                                backgroundColor: SafePlayColors.info,
-                              ),
-                            );
-                          },
-                        ),
-                        _buildMenuItem(
-                          icon: Icons.help_outline,
-                          title: loc.t('settings.help'),
-                          subtitle: loc.t('settings.help_desc'),
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Help & support coming soon'),
-                                backgroundColor: SafePlayColors.info,
-                              ),
-                            );
-                          },
-                        ),
-                        _buildMenuItem(
-                          icon: Icons.info_outline,
-                          title: 'About',
-                          subtitle: 'App version and information',
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('About section coming soon'),
-                                backgroundColor: SafePlayColors.info,
-                              ),
-                            );
-                          },
-                        ),
-                        _buildMenuItem(
                           icon: Icons.language,
                           title: loc.t('label.language_setting'),
                           subtitle: loc.t('label.language_setting_desc'),
@@ -239,65 +182,6 @@ class _ParentSettingsMenuState extends State<ParentSettingsMenu>
                             Navigator.of(context).pop();
                             _showLanguagePicker();
                           },
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // Demo section
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: SafePlayColors.warning.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: SafePlayColors.warning.withOpacity(0.3),
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.science_outlined,
-                                    color: SafePlayColors.warning,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Demo Features',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: SafePlayColors.warning,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              _buildMenuItem(
-                                icon: Icons.warning_amber_rounded,
-                                title: 'Send Incident Alert',
-                                subtitle: 'Demo incident notification',
-                                onTap: () async {
-                                  Navigator.of(context).pop();
-                                  final notificationService =
-                                      context.read<NotificationService>();
-                                  final childProvider =
-                                      context.read<ChildProvider>();
-                                  final child = childProvider.selectedChild;
-                                  await notificationService.showIncidentAlert(
-                                    incidentId:
-                                        'incident-${DateTime.now().millisecondsSinceEpoch}',
-                                    childName: child?.name ?? 'Learner',
-                                    summary:
-                                        'Requested a break after a challenging activity.',
-                                  );
-                                },
-                                isDemo: true,
-                              ),
-                            ],
-                          ),
                         ),
 
                         const SizedBox(height: 24),
