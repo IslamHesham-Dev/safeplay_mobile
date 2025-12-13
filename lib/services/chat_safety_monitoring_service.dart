@@ -191,6 +191,8 @@ If everything is safe, respond with {"incidents": []} and no narration.''';
     return {
       'model': 'deepseek/deepseek-chat-v3.1',
       'temperature': 0.2,
+      // Keep the response affordable on free OpenRouter tiers
+      'max_tokens': 2000,
       'messages': [
         {'role': 'system', 'content': instructions},
         {
