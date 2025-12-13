@@ -182,7 +182,7 @@ class _WellbeingCheckScreenState extends State<WellbeingCheckScreen>
               ],
             ).createShader(bounds),
             child: const Text(
-              'Weekly Check-in',
+              'Daily Check-in',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
