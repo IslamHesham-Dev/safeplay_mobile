@@ -1035,37 +1035,6 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 ),
               ),
             ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: SafePlayColors.neutral50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: SafePlayColors.neutral200,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.info_outline_rounded,
-                  color: SafePlayColors.neutral600,
-                  size: 18,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    context.loc.t('browser.note_privacy'),
-                    style: TextStyle(
-                      color: SafePlayColors.neutral600,
-                      fontSize: 12,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
