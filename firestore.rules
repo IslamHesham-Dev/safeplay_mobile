@@ -144,8 +144,31 @@ service cloud.firestore {
 
     // Teacher inbox messages (teachers read, children submit replies)
     match /teacherInboxMessages/{messageId} {
-      allow read: if request.auth != null &&
+      allow read: if
+        // Teachers can read their inbox
+        (request.auth != null && request.auth.uid == resource.data.teacherId) ||
+        // Children (unauthenticated) and their parents can read their own sent messages
+        childExists(resource.data.childId) ||
+        (request.auth != null &&
+          resource.data.childId is string &&
+          request.auth.uid in get(/databases/$(database)/documents/children/$(resource.data.childId)).data.parentIds);
+      allow create: if request.auth != null ||
+        childExists(request.resource.data.childId);
+      allow update, delete: if request.auth != null &&
         request.auth.uid == resource.data.teacherId;
+    }
+
+    // Teacher replies delivered to children
+    match /childInboxMessages/{messageId} {
+      allow read: if
+        // Allow the child device (unauthenticated) to read replies addressed to them
+        childExists(resource.data.childId) ||
+        // Allow teachers/parents to read the thread for moderation
+        (request.auth != null && (
+          request.auth.uid == resource.data.teacherId ||
+          (resource.data.childId is string &&
+            request.auth.uid in get(/databases/$(database)/documents/children/$(resource.data.childId)).data.parentIds)
+        ));
       allow create: if request.auth != null ||
         childExists(request.resource.data.childId);
       allow update, delete: if request.auth != null &&

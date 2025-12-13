@@ -642,6 +642,39 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
     });
   }
 
+  Future<void> _refreshInbox() async {
+    final auth = context.read<AuthProvider>();
+    final teacherId = auth.currentUser?.id;
+    if (teacherId == null) {
+      return;
+    }
+
+    try {
+      final messages = await _messagingService.fetchTeacherInboxOnce(
+        teacherId: teacherId,
+        limit: 40,
+      );
+      final firebaseMessages =
+          messages.map(_mapInboxMessage).toList(growable: false);
+      if (!mounted) return;
+      setState(() {
+        _studentMessages = [
+          ...firebaseMessages,
+          ..._mockStudentMessages,
+        ];
+      });
+    } catch (error, stackTrace) {
+      debugPrint('Teacher inbox refresh error: $error');
+      debugPrint('$stackTrace');
+      if (mounted) {
+        _showSnack(
+          'Unable to refresh inbox. Please try again.',
+          SafePlayColors.error,
+        );
+      }
+    }
+  }
+
   StudentMessage _mapInboxMessage(TeacherInboxMessage message) {
     return StudentMessage(
       id: message.id,
@@ -1841,15 +1874,7 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
           child: _studentMessages.isEmpty
               ? _buildEmptyStudentMessages()
               : RefreshIndicator(
-                  onRefresh: () async {
-                    // Refresh student messages
-                    final auth = context.read<AuthProvider>();
-                    final teacherId = auth.currentUser?.id;
-                    if (teacherId != null) {
-                      _subscribeToInbox();
-                      await Future.delayed(const Duration(milliseconds: 500));
-                    }
-                  },
+                  onRefresh: _refreshInbox,
                   child: ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: _studentMessages.length,

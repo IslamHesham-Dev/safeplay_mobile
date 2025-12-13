@@ -115,16 +115,34 @@ class MessagingService {
     required String teacherId,
     int limit = 30,
   }) {
+    // Prefer ordered stream; fall back to unordered to avoid index errors.
+    try {
+      return _firestore
+          .collection(teacherInboxCollection)
+          .where('teacherId', isEqualTo: teacherId)
+          .orderBy('createdAt', descending: true)
+          .limit(limit)
+          .snapshots()
+          .map(
+            (snapshot) =>
+                snapshot.docs.map(TeacherInboxMessage.fromFirestore).toList(),
+          );
+    } on FirebaseException catch (error) {
+      if (error.code != 'failed-precondition') rethrow;
+    }
+
+    // Fallback: no orderBy (no composite index required), sort locally.
     return _firestore
         .collection(teacherInboxCollection)
         .where('teacherId', isEqualTo: teacherId)
-        .orderBy('createdAt', descending: true)
         .limit(limit)
         .snapshots()
-        .map(
-          (snapshot) =>
-              snapshot.docs.map(TeacherInboxMessage.fromFirestore).toList(),
-        );
+        .map((snapshot) {
+      final messages =
+          snapshot.docs.map(TeacherInboxMessage.fromFirestore).toList();
+      messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return messages;
+    });
   }
 
   Stream<List<TeacherInboxMessage>> listenToChildReplies({
@@ -154,15 +172,30 @@ class MessagingService {
     required String teacherId,
     int limit = 30,
   }) async {
+    try {
+      final snapshot = await _firestore
+          .collection(teacherInboxCollection)
+          .where('teacherId', isEqualTo: teacherId)
+          .orderBy('createdAt', descending: true)
+          .limit(limit)
+          .get();
+      return snapshot.docs
+          .map(TeacherInboxMessage.fromFirestore)
+          .toList(growable: false);
+    } on FirebaseException catch (error) {
+      if (error.code != 'failed-precondition') rethrow;
+    }
+
+    // Fallback without orderBy; sort locally to mimic latest-first.
     final snapshot = await _firestore
         .collection(teacherInboxCollection)
         .where('teacherId', isEqualTo: teacherId)
-        .orderBy('createdAt', descending: true)
         .limit(limit)
         .get();
-    return snapshot.docs
-        .map(TeacherInboxMessage.fromFirestore)
-        .toList(growable: false);
+    final messages =
+        snapshot.docs.map(TeacherInboxMessage.fromFirestore).toList();
+    messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return messages;
   }
 
   Future<List<TeacherBroadcastMessage>> fetchTeacherBroadcastsOnce({
