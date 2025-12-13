@@ -28,7 +28,7 @@ class _WellbeingCheckScreenState extends State<WellbeingCheckScreen>
   bool _isSubmitting = false;
 
   final List<WellbeingMoodDefinition> _moods = kWellbeingMoods;
-  static const List<String> _quickResponses = [
+  static const List<String> _defaultQuickResponses = [
     'Had fun today!',
     'Made a new friend',
     'Learned something cool',
@@ -36,6 +36,44 @@ class _WellbeingCheckScreenState extends State<WellbeingCheckScreen>
     'I miss my friends',
     'Excited for tomorrow',
   ];
+  static const Map<String, List<String>> _moodQuickResponses = {
+    'amazing': [
+      'Best day ever!',
+      'I’m super proud of myself',
+      'Everything felt awesome today',
+      'I loved what we did today',
+    ],
+    'happy': [
+      'I felt really happy today',
+      'I laughed a lot with friends',
+      'Something good happened!',
+      'I enjoyed my classes',
+    ],
+    'good': [
+      'I had a pretty good day',
+      'Things went smoothly',
+      'I felt calm and comfy',
+      'I liked what we learned',
+    ],
+    'okay': [
+      'I felt just okay today',
+      'Some parts were fine, some meh',
+      'Nothing big happened',
+      'I’m a bit neutral today',
+    ],
+    'sad': [
+      'I felt a little down',
+      'I missed someone today',
+      'Something made me feel sad',
+      'I could use a hug',
+    ],
+    'upset': [
+      'I felt frustrated',
+      'Something bothered me',
+      'I need to talk about it',
+      'I felt stressed today',
+    ],
+  };
 
   @override
   void initState() {
@@ -279,6 +317,7 @@ class _WellbeingCheckScreenState extends State<WellbeingCheckScreen>
   }
 
   Widget _buildQuickResponses() {
+    final responses = _currentQuickResponses();
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -305,7 +344,7 @@ class _WellbeingCheckScreenState extends State<WellbeingCheckScreen>
           Wrap(
             spacing: 10,
             runSpacing: 10,
-            children: _quickResponses
+            children: responses
                 .map(
                   (text) => _buildQuickResponseChip(text),
                 )
@@ -351,6 +390,12 @@ class _WellbeingCheckScreenState extends State<WellbeingCheckScreen>
         ),
       ),
     );
+  }
+
+  List<String> _currentQuickResponses() {
+    if (_selectedMoodIndex == null) return _defaultQuickResponses;
+    final moodLabel = _moods[_selectedMoodIndex!].label.toLowerCase().trim();
+    return _moodQuickResponses[moodLabel] ?? _defaultQuickResponses;
   }
 
   Widget _buildNoteSection() {

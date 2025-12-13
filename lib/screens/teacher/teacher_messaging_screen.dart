@@ -894,7 +894,7 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
           Expanded(
             child: _buildAgeGroupButton(
               'junior',
-              'Junior (3-6)',
+              'Junior (6-8)',
               '👶',
               SafePlayColors.juniorPurple,
             ),
@@ -902,7 +902,7 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
           Expanded(
             child: _buildAgeGroupButton(
               'bright',
-              'Bright (7-10)',
+              'Bright (9-12)',
               '🧒',
               SafePlayColors.brightIndigo,
             ),
@@ -1626,7 +1626,7 @@ class _TeacherMessagingScreenState extends State<TeacherMessagingScreen>
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'This message will be sent to all ${_selectedAgeGroup == 'junior' ? 'Junior (3-6)' : 'Bright (7-10)'} students',
+                      'This message will be sent to all ${_selectedAgeGroup == 'junior' ? 'Junior (6-8)' : 'Bright (9-12)'} students',
                       style: TextStyle(
                         color: _selectedAgeGroup == 'junior'
                             ? SafePlayColors.juniorPurple
