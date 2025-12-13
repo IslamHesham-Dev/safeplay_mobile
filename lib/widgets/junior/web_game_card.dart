@@ -51,94 +51,99 @@ class WebGameCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Icon and duration
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Icon
-                      Container(
-                        width: 64,
-                        height: 64,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Center(
-                          child: Text(
-                            game.iconEmoji,
-                            style: const TextStyle(fontSize: 36),
-                          ),
-                        ),
-                      ),
-                      // Duration badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
+                  // Top content expands to use available space
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Icon and duration
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Icon(
-                              Icons.access_time,
-                              color: Colors.white,
-                              size: 16,
+                            // Icon
+                            Container(
+                              width: 64,
+                              height: 64,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.3),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  game.iconEmoji,
+                                  style: const TextStyle(fontSize: 36),
+                                ),
+                              ),
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${game.estimatedMinutes}m',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
+                            // Duration badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.3),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.access_time,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${game.estimatedMinutes}m',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  // Title - constrained to prevent overflow
-                  SizedBox(
-                    height: 48, // Fixed height for 2 lines of title
-                    child: Text(
-                      game.title,
-                      style: JuniorTheme.headingMedium.copyWith(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black.withValues(alpha: 0.25),
-                            blurRadius: 2,
-                            offset: const Offset(0, 1),
+                        const SizedBox(height: 12),
+                        // Title can use extra vertical space before description
+                        Text(
+                          game.title,
+                          style: JuniorTheme.headingMedium.copyWith(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black.withValues(alpha: 0.25),
+                                blurRadius: 2,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        // Description - allow title to borrow space by capping lines
+                        Expanded(
+                          child: Text(
+                            game.description,
+                            style: JuniorTheme.bodySmall.copyWith(
+                              color: Colors.white.withValues(alpha: 0.95),
+                              fontSize: 16,
+                              height: 1.35,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  // Description - constrained to prevent overflow
-                  Expanded(
-                    child: Text(
-                      game.description,
-                      style: JuniorTheme.bodySmall.copyWith(
-                        color: Colors.white.withValues(alpha: 0.95),
-                        fontSize: 16,
-                        height: 1.35,
-                      ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // Play button
+                  const SizedBox(height: 6),
+                  // Play button pinned to bottom of card with minimal padding below
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 12),
