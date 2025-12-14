@@ -729,10 +729,10 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     final baseTop = height * 0.40 - 50;
     final dynamicTop = math.max(baseTop - 70 * collapseProgress, baseTop - 70);
     // Slight movement on scroll (small parallax) without scaling
-    final avatarAlignmentY = -0.60 - 0.18 * collapseProgress;
+    final avatarAlignmentY = -0.65 - 0.20 * collapseProgress;
     final avatarSize = height * 0.15 + 40; // keep size fixed
-    final coinYOffset = -10.0 - 5 * collapseProgress;
-    final coinLabelTop = 54.0 - 5 * collapseProgress;
+    final coinYOffset = -10.0 - 6 * collapseProgress;
+    final coinLabelTop = 54.0 - 6 * collapseProgress;
     const coinScale = 1.0;
     final screenTimeProvider = context.watch<ScreenTimeLimitProvider>();
     final lockedChildId = _currentChild?.id;
