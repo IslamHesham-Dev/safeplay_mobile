@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
+
 import '../design_system/colors.dart';
 
 /// Popup dialog shown when a child's screen time limit is reached
@@ -13,14 +15,31 @@ class ScreenTimeLimitPopup extends StatelessWidget {
   final String childName;
   final int dailyLimitMinutes;
   final VoidCallback onConfirm;
+  static final AudioPlayer _audioPlayer = AudioPlayer();
 
-  static void show(
+  static Future<void> show(
     BuildContext context, {
     required String childName,
     required int dailyLimitMinutes,
     required VoidCallback onConfirm,
   }) {
-    showDialog(
+    // Play time-up voiceover (fire and forget; do not block UI)
+    () async {
+      try {
+        await _audioPlayer.stop();
+        // Use mediaPlayer mode for longer clips to avoid truncation
+        await _audioPlayer.setPlayerMode(PlayerMode.mediaPlayer);
+        await _audioPlayer.setReleaseMode(ReleaseMode.stop);
+        await _audioPlayer.setVolume(1.0);
+        await _audioPlayer.play(
+          AssetSource('audio/voiceovers/time_up.mp3'),
+        );
+      } catch (_) {
+        // Ignore audio errors so the dialog still shows
+      }
+    }();
+
+    return showDialog(
       context: context,
       barrierDismissible: false, // Prevent dismissing by tapping outside
       builder: (context) => ScreenTimeLimitPopup(

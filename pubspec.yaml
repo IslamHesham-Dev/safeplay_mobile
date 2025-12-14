@@ -120,5 +120,16 @@ flutter:
     - assets/audio/sound effects/sound effects/back to dashboard.wav
     - assets/audio/sound effects/sound effects/click.mp3
     - assets/audio/sound effects/sound effects/correct question.wav
-    - assets/books/
-    - assets/books/thumbnails/
+    # Books currently used in the app (explicitly listed to avoid bundling unused PDFs)
+    - assets/books/hamza_adventure-6.pdf
+    - assets/books/hamza_adventure-7.pdf
+    - assets/books/hugh_adventure.pdf
+    - assets/books/nada_adventure.pdf
+    - assets/books/Sarah_adventure-2.pdf
+    - assets/books/youssef_adventure.pdf
+    - assets/books/thumbnails/hamza_adventure-6.PNG
+    - assets/books/thumbnails/hamza_adventure-7.PNG
+    - assets/books/thumbnails/hugh_adventure.PNG
+    - assets/books/thumbnails/nada_adventure.PNG
+    - assets/books/thumbnails/sarah_adventure-2.PNG
+    - assets/books/thumbnails/youssef_adventure.PNG
