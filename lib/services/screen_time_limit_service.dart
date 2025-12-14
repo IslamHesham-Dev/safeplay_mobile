@@ -111,4 +111,20 @@ class ScreenTimeLimitService {
       return updated;
     });
   }
+
+  /// Listen for real-time updates to a child's screen time settings.
+  Stream<ScreenTimeLimitSettings> listenSettings(String childId) {
+    if (childId.isEmpty) {
+      return const Stream.empty();
+    }
+    final docRef = _collectionRef.doc(childId);
+    return docRef.snapshots().map((snapshot) {
+      if (!snapshot.exists || snapshot.data() == null) {
+        return ScreenTimeLimitSettings.initial();
+      }
+      final settings =
+          ScreenTimeLimitSettings.fromMap(snapshot.data()!).resetIfNeeded(DateTime.now());
+      return settings;
+    });
+  }
 }

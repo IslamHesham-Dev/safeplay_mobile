@@ -95,4 +95,17 @@ class ScreenTimeLimitProvider extends ChangeNotifier {
       return null;
     }
   }
+
+  /// Real-time stream of settings for a child, updates local cache.
+  Stream<ScreenTimeLimitSettings> watchSettings(String childId) {
+    if (childId.isEmpty) {
+      return const Stream.empty();
+    }
+    return _service.listenSettings(childId).map((settings) {
+      _settingsByChild[childId] = settings;
+      _errors.remove(childId);
+      notifyListeners();
+      return settings;
+    });
+  }
 }

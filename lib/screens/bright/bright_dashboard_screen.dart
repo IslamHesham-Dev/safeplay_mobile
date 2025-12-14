@@ -105,6 +105,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
   // Background music state
   bool _isMusicMuted = false;
   final double _backgroundMusicVolume = 0.7;
+  StreamSubscription<ScreenTimeLimitSettings>? _screenTimeSub;
 
   // Animation bookkeeping for the hero coin counter
   int _coinAnimationStartValue = 0;
@@ -496,6 +497,7 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     _clickSoundPlayer.dispose();
     _rewardSoundPlayer.dispose();
     _voiceoverPlayer.dispose();
+    _screenTimeSub?.cancel();
     _scrollController.removeListener(_handleScroll);
     _scrollController.dispose();
     super.dispose();
@@ -528,8 +530,26 @@ class _BrightDashboardScreenState extends State<BrightDashboardScreen>
     final child = authProvider.currentChild;
     if (child == null) return;
     await context.read<ScreenTimeLimitProvider>().loadSettings(child.id);
+    _subscribeToScreenTimeLimit(child.id);
     if (!mounted) return;
     _maybeShowScreenTimeLimitPopup();
+  }
+
+  void _subscribeToScreenTimeLimit(String childId) {
+    _screenTimeSub?.cancel();
+    if (childId.isEmpty) return;
+    final provider = context.read<ScreenTimeLimitProvider>();
+    _screenTimeSub = provider.watchSettings(childId).listen((settings) {
+      if (!mounted) return;
+      if (!settings.shouldLock && _screenLimitDialogShown) {
+        Navigator.of(context, rootNavigator: true).maybePop();
+        _screenLimitDialogShown = false;
+      }
+      if (settings.shouldLock) {
+        final childName = _currentChild?.name ?? 'Learner';
+        _showScreenTimeLimitDialog(settings, childName);
+      }
+    });
   }
 
   void _maybeShowScreenTimeLimitPopup() {
