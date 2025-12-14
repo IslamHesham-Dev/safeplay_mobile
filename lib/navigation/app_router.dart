@@ -293,6 +293,8 @@ class AppRouter {
 
   static const Set<String> _publicRoutes = {
     RouteNames.login,
+    RouteNames.parentOnboarding,
+    RouteNames.childOnboarding,
     RouteNames.parentLogin,
     RouteNames.parentSignup,
     RouteNames.teacherLogin,
@@ -302,7 +304,5 @@ class AppRouter {
     RouteNames.deleteAccount,
     RouteNames.childSelector,
     RouteNames.unifiedChildLogin,
-    RouteNames.childOnboarding,
-    RouteNames.parentOnboarding,
   };
 }
