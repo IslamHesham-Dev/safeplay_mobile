@@ -197,6 +197,12 @@ class AppRouter {
       return null;
     }
 
+    // Always allow onboarding flows without redirect (prevents bounce on iOS)
+    if (location == RouteNames.parentOnboarding ||
+        location == RouteNames.childOnboarding) {
+      return null;
+    }
+
     if (!_requiresAuth(location)) {
       print('🔄 Router: Public route, checking if user is authenticated');
       if (hasParent || hasChild || hasTeacher) {
