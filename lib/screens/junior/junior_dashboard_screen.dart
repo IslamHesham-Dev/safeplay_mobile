@@ -661,12 +661,12 @@ class _JuniorDashboardScreenState extends State<JuniorDashboardScreen>
     final collapseProgress = _collapseProgress;
     final baseTop = height * 0.40 - 50;
     final dynamicTop = math.max(baseTop - 70 * collapseProgress, baseTop - 70);
-    final avatarAlignmentY = -0.50 - 0.50 * collapseProgress;
-    final avatarSize = (height * 0.15 + 40) - (18 * collapseProgress);
-    final coinYOffset = -10 - 8 * collapseProgress;
-    final coinLabelTop = 54 - 8 * collapseProgress;
-    double coinScale = 1 - 0.25 * collapseProgress;
-    if (coinScale < 0.75) coinScale = 0.75;
+    // Slight movement on scroll (small parallax) without scaling
+    final avatarAlignmentY = -0.60 - 0.18 * collapseProgress;
+    final avatarSize = height * 0.15 + 40; // keep size fixed
+    final coinYOffset = -10.0 - 5 * collapseProgress;
+    final coinLabelTop = 54.0 - 5 * collapseProgress;
+    const coinScale = 1.0;
 
     // For Messages (Notifications), show full-screen content with navbar
     if (_currentBottomNavIndex == 1) {
