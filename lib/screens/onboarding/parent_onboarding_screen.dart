@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import '../../design_system/colors.dart';
 import '../../navigation/route_names.dart';
 import '../../localization/app_localizations.dart';
+import '../../providers/locale_provider.dart';
+import 'package:provider/provider.dart';
 
 /// Professional onboarding screen for parents
 class ParentOnboardingScreen extends StatefulWidget {
@@ -194,15 +196,43 @@ class _ParentOnboardingScreenState extends State<ParentOnboardingScreen> {
                       ),
                     ),
                   ),
-                  // Skip button
+                  // Skip + language toggle
                   TextButton(
                     onPressed: _finishOnboarding,
-                    child: Text(
-                      loc.t('action.skip'),
-                      style: TextStyle(
-                        color: SafePlayColors.neutral500,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          loc.t('action.skip'),
+                          style: TextStyle(
+                            color: SafePlayColors.neutral500,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () async {
+                            final localeProvider =
+                                context.read<LocaleProvider>();
+                            final isArabic =
+                                localeProvider.locale?.languageCode == 'ar';
+                            await localeProvider.setLocale(
+                                isArabic ? const Locale('en') : const Locale('ar'));
+                            if (mounted) setState(() {});
+                          },
+                          child: Text(
+                            context.read<LocaleProvider>().locale?.languageCode ==
+                                    'ar'
+                                ? 'English'
+                                : 'العربية',
+                            style: const TextStyle(
+                              color: SafePlayColors.brandTeal500,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

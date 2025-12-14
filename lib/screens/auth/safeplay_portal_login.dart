@@ -18,19 +18,8 @@ class SafePlayPortalLoginScreen extends StatefulWidget {
 
 class _SafePlayPortalLoginScreenState extends State<SafePlayPortalLoginScreen> {
   Future<void> _handleParentPortalTap(BuildContext context) async {
-    final localeProvider = context.read<LocaleProvider>();
-    final selected = await showDialog<Locale>(
-      context: context,
-      useRootNavigator: true,
-      builder: (_) => const LanguageSelectorDialog(),
-    );
-
-    if (selected != null) {
-      await localeProvider.setLocale(selected);
-    }
-
+    // Directly proceed to onboarding without a language popup
     if (!mounted) return;
-    // Replace the stack entry to avoid bouncing back after splash/login rebuilds
     context.go(RouteNames.parentOnboarding);
   }
 
