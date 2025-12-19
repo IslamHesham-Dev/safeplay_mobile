@@ -93,9 +93,6 @@
       letter-spacing: 0.2px;
       color: #e2e8f0;
       min-width: 0;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
     }
     .safeplay-state-modal {
       position: fixed;
@@ -192,10 +189,92 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
       </div>
     </div>
   </div>
+  <div class="safeplay-state-modal" id="safeplay-heat-modal" role="dialog" aria-modal="true"
+    aria-labelledby="safeplay-heat-modal-title">
+    <div class="safeplay-state-modal-card">
+      <button class="safeplay-state-modal-close" id="safeplay-heat-modal-close" type="button"
+        aria-label="Close heating explanation"
+        onclick="window.safeplayDismissHeatModal && window.safeplayDismissHeatModal();">Close</button>
+      <div class="safeplay-state-modal-title" id="safeplay-heat-modal-title">How heating changes particles</div>
+      <div class="safeplay-state-modal-body">
+        <p><strong>Solid:</strong> adding heat increases vibrations; with enough energy the solid can melt as particles break
+          free of fixed positions.</p>
+        <p><strong>Liquid:</strong> heating makes particles move faster and spread apart; with more heat the liquid can boil
+          into gas.</p>
+        <p><strong>Gas:</strong> heated particles move much faster and spread out to fill more space, raising pressure if the
+          volume is fixed.</p>
+      </div>
+    </div>
+  </div>
+  <div class="safeplay-state-modal" id="safeplay-cool-modal" role="dialog" aria-modal="true"
+    aria-labelledby="safeplay-cool-modal-title">
+    <div class="safeplay-state-modal-card">
+      <button class="safeplay-state-modal-close" id="safeplay-cool-modal-close" type="button"
+        aria-label="Close cooling explanation"
+        onclick="window.safeplayDismissCoolModal && window.safeplayDismissCoolModal();">Close</button>
+      <div class="safeplay-state-modal-title" id="safeplay-cool-modal-title">How cooling changes particles</div>
+      <div class="safeplay-state-modal-body">
+        <p><strong>Solid:</strong> cooling reduces vibrations, helping particles lock more firmly in place.</p>
+        <p><strong>Liquid:</strong> cooling slows particles so they draw closer; with enough cooling the liquid can freeze
+          into a solid.</p>
+        <p><strong>Gas:</strong> cooling slows particles and brings them closer; with enough cooling the gas can condense into
+          a liquid.</p>
+      </div>
+    </div>
+  </div>
+  <div class="safeplay-state-modal" id="safeplay-choose-modal" role="dialog" aria-modal="true"
+    aria-labelledby="safeplay-choose-modal-title">
+    <div class="safeplay-state-modal-card">
+      <button class="safeplay-state-modal-close" id="safeplay-choose-modal-close" type="button"
+        aria-label="Close substance explanation"
+        onclick="window.safeplayDismissChooseModal && window.safeplayDismissChooseModal();">Close</button>
+      <div class="safeplay-state-modal-title" id="safeplay-choose-modal-title">Why choose different substances?</div>
+      <div class="safeplay-state-modal-body">
+        <p><strong>Neon:</strong> light atoms with very weak attraction; stays gaseous easily and moves quickly at the same
+          temperature.</p>
+        <p><strong>Argon:</strong> heavier atoms than neon, still weakly interacting; particles move slower than neon but stay
+          gaseous under many conditions.</p>
+        <p><strong>Water:</strong> molecules with strong hydrogen bonding; attracts tightly in liquid, needs more energy to
+          boil, and can form ice structure when cooled.</p>
+        <p><strong>Oxygen:</strong> diatomic molecules; heavier than neon, lighter than argon; forms a liquid/gas more easily
+          than water, and moves faster than water at the same temperature.</p>
+        <p>Comparing them shows how mass and intermolecular forces affect melting/boiling points, speed, and spacing at the
+          same temperature.</p>
+      </div>
+    </div>
+  </div>
+  <div class="safeplay-state-modal" id="safeplay-extreme-heat-modal" role="dialog" aria-modal="true"
+    aria-labelledby="safeplay-extreme-heat-modal-title">
+    <div class="safeplay-state-modal-card">
+      <button class="safeplay-state-modal-close" id="safeplay-extreme-heat-modal-close" type="button"
+        aria-label="Close extreme heating explanation"
+        onclick="window.safeplayDismissExtremeHeatModal && window.safeplayDismissExtremeHeatModal();">Close</button>
+      <div class="safeplay-state-modal-title" id="safeplay-extreme-heat-modal-title">Extreme heating effects</div>
+      <div class="safeplay-state-modal-body">
+        <p>Lots of heat can push solids to melt faster and liquids to boil faster, dramatically increasing particle speed
+          and spacing.</p>
+        <p>Watch for phase changes: solids lose fixed structure, liquids break free into gas.</p>
+      </div>
+    </div>
+  </div>
+  <div class="safeplay-state-modal" id="safeplay-extreme-cool-modal" role="dialog" aria-modal="true"
+    aria-labelledby="safeplay-extreme-cool-modal-title">
+    <div class="safeplay-state-modal-card">
+      <button class="safeplay-state-modal-close" id="safeplay-extreme-cool-modal-close" type="button"
+        aria-label="Close extreme cooling explanation"
+        onclick="window.safeplayDismissExtremeCoolModal && window.safeplayDismissExtremeCoolModal();">Close</button>
+      <div class="safeplay-state-modal-title" id="safeplay-extreme-cool-modal-title">Extreme cooling effects</div>
+      <div class="safeplay-state-modal-body">
+        <p>Deep cooling slows particles so much that gases condense faster, and liquids freeze faster into solids.</p>
+        <p>Particles pack closer, motion drops sharply, and materials become more rigid.</p>
+      </div>
+    </div>
+  </div>
   <script>
     (function () {
       var tips = [
         'Welcome! Explore how particles behave in solids, liquids, and gases.',
+        'Tap the States button to start exploring.',
         'Tap Solid / Liquid / Gas to switch states and compare particle spacing.',
         'Use the heater/cooler to change temperature.',
         'Heat up: particles move faster and spread out.',
@@ -203,11 +282,10 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
         'Watch the thermometer for temperature changes. Use the menu to select the temperature unit: K or Celsius.',
         'Choose a substance (Neon, Argon, Water, Oxygen) to compare behavior.',
         'Press Play/Pause to stop the motion and observe carefully.',
-        'Use Step to move forward one moment at a time.',
         'Try extreme heating to see melting/boiling happen faster.',
         'Try extreme cooling to see freezing/condensation happen faster.',
         'Use Reset anytime to start over and test a new idea.',
-        'Switch screens with the bottom tabs to explore Phase Changes.'
+        'Switch screens with the tabs at the bottom of the app to explore Phase Changes.'
       ];
 
       var index = 0;
@@ -215,144 +293,139 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
       var prevEl = document.getElementById('safeplay-instruction-prev');
       var nextEl = document.getElementById('safeplay-instruction-next');
       var barEl = document.getElementById('safeplay-instruction-bar');
-      var stateModalEl = document.getElementById('safeplay-state-modal');
-      var stateModalCloseEl = document.getElementById('safeplay-state-modal-close');
-      var stateModalDismissed = false;
-      var stateModalClosedOnce = false;
-      var baseTextFontSize = null;
+      var modals = [];
 
       if (!textEl || !prevEl || !nextEl || !barEl) {
         return;
       }
 
-      function fitInstructionTextToOneLine() {
-        if (!textEl) {
-          return;
+      function registerModal(config) {
+        var el = document.getElementById(config.id);
+        var closeEl = document.getElementById(config.closeId);
+        if (!el) {
+          return null;
         }
 
-        if (baseTextFontSize === null) {
-          var computed = window.getComputedStyle(textEl);
-          baseTextFontSize = parseFloat(computed.fontSize) || 30;
-        }
+        var dismissed = false;
+        var closedOnce = false;
 
-        var minFontSize = Math.min(baseTextFontSize, 8);
-
-        // Reset to default size before fitting (so it can grow again on resize).
-        textEl.style.fontSize = baseTextFontSize + 'px';
-
-        if (textEl.scrollWidth <= textEl.clientWidth) {
-          return;
-        }
-
-        // Binary search for the largest font size that fits on one line.
-        var low = minFontSize;
-        var high = baseTextFontSize;
-        for (var i = 0; i < 12; i++) {
-          var mid = (low + high) / 2;
-          textEl.style.fontSize = mid + 'px';
-          if (textEl.scrollWidth <= textEl.clientWidth) {
-            low = mid;
-          }
-          else {
-            high = mid;
-          }
-        }
-
-        textEl.style.fontSize = low + 'px';
-      }
-
-      function showStateModal() {
-        if (!stateModalEl || stateModalDismissed) {
-          return;
-        }
-        stateModalEl.style.display = 'flex';
-      }
-
-      function hideStateModal() {
-        if (stateModalEl) {
-          stateModalEl.style.display = 'none';
-        }
-      }
-
-      function dismissStateModal() {
-        stateModalDismissed = true;
-        hideStateModal();
-      }
-
-      function closeModalAndAdvance() {
-        if (stateModalClosedOnce) {
-          hideStateModal();
-          return;
-        }
-        stateModalClosedOnce = true;
-        dismissStateModal();
-        // Advance just like tapping Next.
-        changeTip(1);
-      }
-
-      // Expose a global helper so inline handlers or external contexts can close reliably.
-      window.safeplayDismissModal = closeModalAndAdvance;
-
-      function wireStateModalClose() {
-        if (!stateModalCloseEl) {
-          return;
-        }
-
-        function handleClose(e) {
-          if (e) {
-            // Stop propagation immediately so the sim doesn't process this event.
-            if (typeof e.preventDefault === 'function') {
-              e.preventDefault();
-            }
-            if (typeof e.stopPropagation === 'function') {
-              e.stopPropagation();
-            }
-            if (typeof e.stopImmediatePropagation === 'function') {
-              e.stopImmediatePropagation();
-            }
-          }
-          closeModalAndAdvance();
-        }
-
-        // Bind standard properties
-        stateModalCloseEl.onclick = handleClose;
-
-        // Add a global capture listener on window to catch events before anything else (like PhET sim).
-        // Including pointerdown/mousedown/touchstart is critical because PhET often consumes these.
-        function globalCaptureHandler(e) {
-          if (!e || !e.target) {
+        function show() {
+          if (dismissed) {
             return;
           }
-          var t = e.target;
-          // Check if target is the close button or inside it
-          if (t.id === 'safeplay-state-modal-close' || (t.closest && t.closest('#safeplay-state-modal-close'))) {
-            handleClose(e);
-          }
+          el.style.display = 'flex';
         }
 
-        // Expanded list of events to capture
+        function hide() {
+          el.style.display = 'none';
+        }
+
+        function dismiss() {
+          dismissed = true;
+          hide();
+        }
+
+        function closeAndStay(e) {
+          if (e) {
+            if (typeof e.preventDefault === 'function') { e.preventDefault(); }
+            if (typeof e.stopPropagation === 'function') { e.stopPropagation(); }
+            if (typeof e.stopImmediatePropagation === 'function') { e.stopImmediatePropagation(); }
+          }
+          if (!closedOnce) {
+            closedOnce = true;
+          }
+          dismiss();
+        }
+
+        window[config.globalCloseName] = closeAndStay;
+
+        if (closeEl) {
+          closeEl.setAttribute('type', 'button');
+          var closeEvents = ['click', 'pointerup', 'touchend', 'keydown'];
+          closeEvents.forEach(function (evt) {
+            closeEl.addEventListener(evt, function (ev) {
+              if (evt === 'keydown' && ev && ev.key !== 'Enter' && ev.key !== ' ') {
+                return;
+              }
+              closeAndStay(ev);
+            }, { capture: true, passive: false });
+          });
+        }
+
         var captureEvents = ['pointerdown', 'mousedown', 'touchstart', 'click', 'pointerup', 'touchend'];
         captureEvents.forEach(function (evt) {
-          window.addEventListener(evt, globalCaptureHandler, { capture: true, passive: false });
+          window.addEventListener(evt, function (e) {
+            var t = e && e.target;
+            if (t && (t.id === config.closeId || (t.closest && t.closest('#' + config.closeId)))) {
+              closeAndStay(e);
+            }
+          }, { capture: true, passive: false });
         });
 
-        // Also expose directly for the HTML onclick attribute just in case
-        window.__safeplayCloseModal = handleClose;
-      }
-      wireStateModalClose();
-
-      if (stateModalEl) {
-        // Close when clicking the backdrop (outside the card)
-        stateModalEl.addEventListener('click', function (e) {
-          if (e.target === stateModalEl) {
-            dismissStateModal();
+        el.addEventListener('click', function (e) {
+          if (e.target === el) {
+            closeAndStay(e);
           }
         });
+
+        return {
+          shouldShow: function (prevIndex, nextIndex) {
+            return prevIndex === config.openAfterIndex && nextIndex > config.openAfterIndex && !dismissed;
+          },
+          show: show,
+          dismiss: dismiss
+        };
       }
+
+      modals.push(registerModal({
+        id: 'safeplay-state-modal',
+        closeId: 'safeplay-state-modal-close',
+        openAfterIndex: 2,
+        globalCloseName: 'safeplayDismissModal'
+      }));
+
+      modals.push(registerModal({
+        id: 'safeplay-heat-modal',
+        closeId: 'safeplay-heat-modal-close',
+        openAfterIndex: 4,
+        globalCloseName: 'safeplayDismissHeatModal'
+      }));
+
+      modals.push(registerModal({
+        id: 'safeplay-cool-modal',
+        closeId: 'safeplay-cool-modal-close',
+        openAfterIndex: 5,
+        globalCloseName: 'safeplayDismissCoolModal'
+      }));
+
+      modals.push(registerModal({
+        id: 'safeplay-choose-modal',
+        closeId: 'safeplay-choose-modal-close',
+        openAfterIndex: 7,
+        globalCloseName: 'safeplayDismissChooseModal'
+      }));
+
+      modals.push(registerModal({
+        id: 'safeplay-extreme-heat-modal',
+        closeId: 'safeplay-extreme-heat-modal-close',
+        openAfterIndex: 9,
+        globalCloseName: 'safeplayDismissExtremeHeatModal'
+      }));
+
+      modals.push(registerModal({
+        id: 'safeplay-extreme-cool-modal',
+        closeId: 'safeplay-extreme-cool-modal-close',
+        openAfterIndex: 10,
+        globalCloseName: 'safeplayDismissExtremeCoolModal'
+      }));
 
       window.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
-          dismissStateModal();
+          modals.forEach(function (m) {
+            if (m && typeof m.dismiss === 'function') {
+              m.dismiss();
+            }
+          });
         }
       });
 
@@ -377,7 +450,6 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
       }
 
       function adjustPaddingTop() {
-        fitInstructionTextToOneLine();
         document.body.style.paddingTop = barEl.offsetHeight + 'px';
       }
 
@@ -405,15 +477,15 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
           return;
         }
 
-        var advancedFromStateTip = currentIndex === 1 && nextIndex > 1 && !stateModalDismissed;
-
         index = nextIndex;
         render();
         adjustPaddingTop();
 
-        if (advancedFromStateTip) {
-          showStateModal();
-        }
+        modals.forEach(function (modal) {
+          if (modal && modal.shouldShow(currentIndex, nextIndex)) {
+            modal.show();
+          }
+        });
       }
       function prevTip() { changeTip(-1); }
       function nextTip() { changeTip(1); }
