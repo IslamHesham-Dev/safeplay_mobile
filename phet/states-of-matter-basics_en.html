@@ -337,12 +337,11 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
         'Try extreme cooling to see freezing/condensation happen faster.',
         'Use Reset anytime to start over and test a new idea.',
         'Switch screens with the tabs at the bottom of the app to explore Phase Changes.',
-        'On the Phase Changes screen, add or remove energy to watch melting, freezing, boiling, or condensation.',
-        'Use the Phase Changes graph to see how temperature holds flat during phase changes while energy keeps changing.',
-        'Check the pressure meter and see how particle hits change pressure—give it a try.',
-        'Use the particle pump to add or remove particles and watch the effects on pressure and state.',
-        'Press the lid to compress the gas and see how pressure and phase respond.',
-        'Open the phase diagram to see where temperature/pressure put you—watch it as you change things.',
+        'Push the lid down or lift it to change pressure on the particles.',
+        'Watch the pressure meter to see how lid changes affect collisions and pressure.',
+        'You can also pump in more particles using the blower on the left.',
+        'Heat things up or cool them down to see how temperature and pressure shift the state.',
+        'Don’t forget to check the phase diagram on the top left.',
         'Experiment freely with all tools to see how temperature, pressure, and particle count work together.'
       ];
 
@@ -480,28 +479,28 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
       modals.push(registerModal({
         id: 'safeplay-press-modal',
         closeId: 'safeplay-press-modal-close',
-        openAfterIndex: 15,
+        openAfterIndex: 14,
         globalCloseName: 'safeplayDismissPressModal'
       }));
 
       modals.push(registerModal({
         id: 'safeplay-pump-modal',
         closeId: 'safeplay-pump-modal-close',
-        openAfterIndex: 16,
+        openAfterIndex: 15,
         globalCloseName: 'safeplayDismissPumpModal'
       }));
 
       modals.push(registerModal({
         id: 'safeplay-lid-modal',
         closeId: 'safeplay-lid-modal-close',
-        openAfterIndex: 17,
+        openAfterIndex: 13,
         globalCloseName: 'safeplayDismissLidModal'
       }));
 
       modals.push(registerModal({
         id: 'safeplay-phase-diagram-modal',
         closeId: 'safeplay-phase-diagram-modal-close',
-        openAfterIndex: 18,
+        openAfterIndex: 16,
         globalCloseName: 'safeplayDismissPhaseDiagramModal'
       }));
 
