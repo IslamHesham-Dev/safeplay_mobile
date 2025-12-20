@@ -164,7 +164,7 @@ class SimulationService {
         description:
             'Explore how atoms and molecules behave in different states of matter',
         iframeUrl:
-            'https://phet.colorado.edu/sims/html/states-of-matter-basics/latest/states-of-matter-basics_en.html',
+            'https://safeplay-portal.web.app/phet/states-of-matter-basics_en.html',
         topics: [
           'Atoms',
           'Molecules',
