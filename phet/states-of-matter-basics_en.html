@@ -392,6 +392,10 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
             closedOnce = true;
           }
           dismiss();
+          if (config.advanceOnClose && typeof changeTip === 'function') {
+            // advance to the next instruction after closing
+            changeTip(1);
+          }
         }
 
         window[config.globalCloseName] = closeAndStay;
@@ -429,6 +433,7 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
           shouldShow: function (prevIndex, nextIndex) {
             return prevIndex === config.openAfterIndex && nextIndex > prevIndex && !dismissed;
           },
+          isDismissed: function () { return dismissed; },
           show: show,
           dismiss: dismiss
         };
@@ -438,70 +443,80 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
         id: 'safeplay-state-modal',
         closeId: 'safeplay-state-modal-close',
         openAfterIndex: 2,
-        globalCloseName: 'safeplayDismissModal'
+        globalCloseName: 'safeplayDismissModal',
+        advanceOnClose: true
       }));
 
       modals.push(registerModal({
         id: 'safeplay-heat-modal',
         closeId: 'safeplay-heat-modal-close',
         openAfterIndex: 4,
-        globalCloseName: 'safeplayDismissHeatModal'
+        globalCloseName: 'safeplayDismissHeatModal',
+        advanceOnClose: true
       }));
 
       modals.push(registerModal({
         id: 'safeplay-cool-modal',
         closeId: 'safeplay-cool-modal-close',
         openAfterIndex: 5,
-        globalCloseName: 'safeplayDismissCoolModal'
+        globalCloseName: 'safeplayDismissCoolModal',
+        advanceOnClose: true
       }));
 
       modals.push(registerModal({
         id: 'safeplay-choose-modal',
         closeId: 'safeplay-choose-modal-close',
         openAfterIndex: 7,
-        globalCloseName: 'safeplayDismissChooseModal'
+        globalCloseName: 'safeplayDismissChooseModal',
+        advanceOnClose: true
       }));
 
       modals.push(registerModal({
         id: 'safeplay-extreme-heat-modal',
         closeId: 'safeplay-extreme-heat-modal-close',
         openAfterIndex: 9,
-        globalCloseName: 'safeplayDismissExtremeHeatModal'
+        globalCloseName: 'safeplayDismissExtremeHeatModal',
+        advanceOnClose: true
       }));
 
       modals.push(registerModal({
         id: 'safeplay-extreme-cool-modal',
         closeId: 'safeplay-extreme-cool-modal-close',
         openAfterIndex: 10,
-        globalCloseName: 'safeplayDismissExtremeCoolModal'
+        globalCloseName: 'safeplayDismissExtremeCoolModal',
+        advanceOnClose: true
       }));
 
       modals.push(registerModal({
         id: 'safeplay-press-modal',
         closeId: 'safeplay-press-modal-close',
         openAfterIndex: 14,
-        globalCloseName: 'safeplayDismissPressModal'
+        globalCloseName: 'safeplayDismissPressModal',
+        advanceOnClose: true
       }));
 
       modals.push(registerModal({
         id: 'safeplay-pump-modal',
         closeId: 'safeplay-pump-modal-close',
         openAfterIndex: 15,
-        globalCloseName: 'safeplayDismissPumpModal'
+        globalCloseName: 'safeplayDismissPumpModal',
+        advanceOnClose: true
       }));
 
       modals.push(registerModal({
         id: 'safeplay-lid-modal',
         closeId: 'safeplay-lid-modal-close',
         openAfterIndex: 13,
-        globalCloseName: 'safeplayDismissLidModal'
+        globalCloseName: 'safeplayDismissLidModal',
+        advanceOnClose: true
       }));
 
       modals.push(registerModal({
         id: 'safeplay-phase-diagram-modal',
         closeId: 'safeplay-phase-diagram-modal-close',
         openAfterIndex: 16,
-        globalCloseName: 'safeplayDismissPhaseDiagramModal'
+        globalCloseName: 'safeplayDismissPhaseDiagramModal',
+        advanceOnClose: true
       }));
 
       window.addEventListener('keydown', function (e) {
@@ -559,6 +574,19 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
 
         if (nextIndex === index) {
           updateArrows();
+          return;
+        }
+
+        var interceptModal = null;
+        for (var j = 0; j < modals.length; j++) {
+          if (modals[j] && typeof modals[j].shouldShow === 'function' && modals[j].shouldShow(currentIndex, nextIndex)) {
+            interceptModal = modals[j];
+            break;
+          }
+        }
+
+        if (interceptModal) {
+          interceptModal.show();
           return;
         }
 
