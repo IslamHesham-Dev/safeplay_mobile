@@ -94,6 +94,7 @@
       color: #e2e8f0;
       min-width: 0;
     }
+
     .safeplay-state-modal {
       position: fixed;
       inset: 0;
@@ -107,6 +108,7 @@
       padding: 24px;
       z-index: 2147483647;
     }
+
     .safeplay-state-modal-card {
       width: min(900px, 90vw);
       max-height: 90vh;
@@ -120,17 +122,20 @@
       gap: 12px;
       pointer-events: auto;
     }
+
     .safeplay-state-modal-title {
       font-size: 24px;
       font-weight: 700;
       letter-spacing: 0.2px;
       color: #e2e8f0;
     }
+
     .safeplay-state-modal-body {
       font-size: 16px;
       line-height: 1.5;
       color: #e2e8f0;
     }
+
     .safeplay-state-modal-close {
       align-self: flex-end;
       pointer-events: auto;
@@ -143,6 +148,7 @@
       cursor: pointer;
       transition: all 0.15s ease;
     }
+
     .safeplay-state-modal-close:hover {
       background: rgba(255, 255, 255, 0.18);
     }
@@ -178,12 +184,15 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
     aria-labelledby="safeplay-state-modal-title">
     <div class="safeplay-state-modal-card">
       <button class="safeplay-state-modal-close" id="safeplay-state-modal-close" type="button"
-        aria-label="Close particle states explanation" onclick="window.safeplayDismissModal && window.safeplayDismissModal();">Close</button>
+        aria-label="Close particle states explanation"
+        onclick="window.safeplayDismissModal && window.safeplayDismissModal();">Close</button>
       <div class="safeplay-state-modal-title" id="safeplay-state-modal-title">How particles differ</div>
       <div class="safeplay-state-modal-body">
-        <p><strong>Solid:</strong> particles are tightly packed in fixed positions and only vibrate in place, so solids keep
+        <p><strong>Solid:</strong> particles are tightly packed in fixed positions and only vibrate in place, so solids
+          keep
           their shape.</p>
-        <p><strong>Liquid:</strong> particles stay close but can slide past one another, letting liquids flow and take the
+        <p><strong>Liquid:</strong> particles stay close but can slide past one another, letting liquids flow and take
+          the
           shape of their container.</p>
         <p><strong>Gas:</strong> particles are far apart, move freely, and spread out to fill all available space.</p>
       </div>
@@ -197,11 +206,14 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
         onclick="window.safeplayDismissHeatModal && window.safeplayDismissHeatModal();">Close</button>
       <div class="safeplay-state-modal-title" id="safeplay-heat-modal-title">How heating changes particles</div>
       <div class="safeplay-state-modal-body">
-        <p><strong>Solid:</strong> adding heat increases vibrations; with enough energy the solid can melt as particles break
+        <p><strong>Solid:</strong> adding heat increases vibrations; with enough energy the solid can melt as particles
+          break
           free of fixed positions.</p>
-        <p><strong>Liquid:</strong> heating makes particles move faster and spread apart; with more heat the liquid can boil
+        <p><strong>Liquid:</strong> heating makes particles move faster and spread apart; with more heat the liquid can
+          boil
           into gas.</p>
-        <p><strong>Gas:</strong> heated particles move much faster and spread out to fill more space, raising pressure if the
+        <p><strong>Gas:</strong> heated particles move much faster and spread out to fill more space, raising pressure
+          if the
           volume is fixed.</p>
       </div>
     </div>
@@ -215,9 +227,11 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
       <div class="safeplay-state-modal-title" id="safeplay-cool-modal-title">How cooling changes particles</div>
       <div class="safeplay-state-modal-body">
         <p><strong>Solid:</strong> cooling reduces vibrations, helping particles lock more firmly in place.</p>
-        <p><strong>Liquid:</strong> cooling slows particles so they draw closer; with enough cooling the liquid can freeze
+        <p><strong>Liquid:</strong> cooling slows particles so they draw closer; with enough cooling the liquid can
+          freeze
           into a solid.</p>
-        <p><strong>Gas:</strong> cooling slows particles and brings them closer; with enough cooling the gas can condense into
+        <p><strong>Gas:</strong> cooling slows particles and brings them closer; with enough cooling the gas can
+          condense into
           a liquid.</p>
       </div>
     </div>
@@ -230,15 +244,20 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
         onclick="window.safeplayDismissChooseModal && window.safeplayDismissChooseModal();">Close</button>
       <div class="safeplay-state-modal-title" id="safeplay-choose-modal-title">Why choose different substances?</div>
       <div class="safeplay-state-modal-body">
-        <p><strong>Neon:</strong> light atoms with very weak attraction; stays gaseous easily and moves quickly at the same
+        <p><strong>Neon:</strong> light atoms with very weak attraction; stays gaseous easily and moves quickly at the
+          same
           temperature.</p>
-        <p><strong>Argon:</strong> heavier atoms than neon, still weakly interacting; particles move slower than neon but stay
+        <p><strong>Argon:</strong> heavier atoms than neon, still weakly interacting; particles move slower than neon
+          but stay
           gaseous under many conditions.</p>
-        <p><strong>Water:</strong> molecules with strong hydrogen bonding; attracts tightly in liquid, needs more energy to
+        <p><strong>Water:</strong> molecules with strong hydrogen bonding; attracts tightly in liquid, needs more energy
+          to
           boil, and can form ice structure when cooled.</p>
-        <p><strong>Oxygen:</strong> diatomic molecules; heavier than neon, lighter than argon; forms a liquid/gas more easily
+        <p><strong>Oxygen:</strong> diatomic molecules; heavier than neon, lighter than argon; forms a liquid/gas more
+          easily
           than water, and moves faster than water at the same temperature.</p>
-        <p>Comparing them shows how mass and intermolecular forces affect melting/boiling points, speed, and spacing at the
+        <p>Comparing them shows how mass and intermolecular forces affect melting/boiling points, speed, and spacing at
+          the
           same temperature.</p>
       </div>
     </div>
@@ -251,7 +270,8 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
         onclick="window.safeplayDismissExtremeHeatModal && window.safeplayDismissExtremeHeatModal();">Close</button>
       <div class="safeplay-state-modal-title" id="safeplay-extreme-heat-modal-title">Extreme heating effects</div>
       <div class="safeplay-state-modal-body">
-        <p>Lots of heat can push solids to melt faster and liquids to boil faster, dramatically increasing particle speed
+        <p>Lots of heat can push solids to melt faster and liquids to boil faster, dramatically increasing particle
+          speed
           and spacing.</p>
         <p>Watch for phase changes: solids lose fixed structure, liquids break free into gas.</p>
       </div>
@@ -300,7 +320,8 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
     aria-labelledby="safeplay-lid-modal-title">
     <div class="safeplay-state-modal-card">
       <button class="safeplay-state-modal-close" id="safeplay-lid-modal-close" type="button"
-        aria-label="Close lid explanation" onclick="window.safeplayDismissLidModal && window.safeplayDismissLidModal();">Close</button>
+        aria-label="Close lid explanation"
+        onclick="window.safeplayDismissLidModal && window.safeplayDismissLidModal();">Close</button>
       <div class="safeplay-state-modal-title" id="safeplay-lid-modal-title">Press the lid</div>
       <div class="safeplay-state-modal-body">
         <p>Pushing the lid compresses the gas: volume drops, particles collide more, and pressure rises.</p>
@@ -340,8 +361,8 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
         'Push the lid down or lift it to change pressure on the particles.',
         'Watch the pressure meter to see how lid changes affect collisions and pressure.',
         'You can also pump in more particles using the blower on the left.',
-        'Heat things up or cool them down to see how temperature and pressure shift the state.',
         'Don’t forget to check the phase diagram on the top left.',
+        'Heat things up or cool them down to see how temperature and pressure shift the state.',
         'Experiment freely with all tools to see how temperature, pressure, and particle count work together.'
       ];
 
