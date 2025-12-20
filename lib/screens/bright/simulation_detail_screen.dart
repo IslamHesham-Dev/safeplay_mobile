@@ -875,7 +875,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
                   ),
                   Positioned(
                     top: originalPadding.top + 16,
-                    left: 16,
+                    right: 16,
                     child: SafeArea(
                       child: Material(
                         color: Colors.black.withValues(alpha: 0.6),
