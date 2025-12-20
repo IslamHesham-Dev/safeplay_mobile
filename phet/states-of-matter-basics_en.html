@@ -270,6 +270,57 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
       </div>
     </div>
   </div>
+  <div class="safeplay-state-modal" id="safeplay-press-modal" role="dialog" aria-modal="true"
+    aria-labelledby="safeplay-press-modal-title">
+    <div class="safeplay-state-modal-card">
+      <button class="safeplay-state-modal-close" id="safeplay-press-modal-close" type="button"
+        aria-label="Close pressure meter explanation"
+        onclick="window.safeplayDismissPressModal && window.safeplayDismissPressModal();">Close</button>
+      <div class="safeplay-state-modal-title" id="safeplay-press-modal-title">Try the pressure meter</div>
+      <div class="safeplay-state-modal-body">
+        <p>The pressure meter shows how often and how hard particles hit the walls.</p>
+        <p>As temperature or particle count rises, collisions increase and the pressure reading goes up.</p>
+      </div>
+    </div>
+  </div>
+  <div class="safeplay-state-modal" id="safeplay-pump-modal" role="dialog" aria-modal="true"
+    aria-labelledby="safeplay-pump-modal-title">
+    <div class="safeplay-state-modal-card">
+      <button class="safeplay-state-modal-close" id="safeplay-pump-modal-close" type="button"
+        aria-label="Close particle pump explanation"
+        onclick="window.safeplayDismissPumpModal && window.safeplayDismissPumpModal();">Close</button>
+      <div class="safeplay-state-modal-title" id="safeplay-pump-modal-title">Use the particle pump</div>
+      <div class="safeplay-state-modal-body">
+        <p>Pumping particles in raises density and pressure; pumping them out lowers both.</p>
+        <p>Watch how adding particles also shifts the state on the phase diagram.</p>
+      </div>
+    </div>
+  </div>
+  <div class="safeplay-state-modal" id="safeplay-lid-modal" role="dialog" aria-modal="true"
+    aria-labelledby="safeplay-lid-modal-title">
+    <div class="safeplay-state-modal-card">
+      <button class="safeplay-state-modal-close" id="safeplay-lid-modal-close" type="button"
+        aria-label="Close lid explanation" onclick="window.safeplayDismissLidModal && window.safeplayDismissLidModal();">Close</button>
+      <div class="safeplay-state-modal-title" id="safeplay-lid-modal-title">Press the lid</div>
+      <div class="safeplay-state-modal-body">
+        <p>Pushing the lid compresses the gas: volume drops, particles collide more, and pressure rises.</p>
+        <p>Hold it down to see if compression plus temperature moves the substance to a new phase.</p>
+      </div>
+    </div>
+  </div>
+  <div class="safeplay-state-modal" id="safeplay-phase-diagram-modal" role="dialog" aria-modal="true"
+    aria-labelledby="safeplay-phase-diagram-modal-title">
+    <div class="safeplay-state-modal-card">
+      <button class="safeplay-state-modal-close" id="safeplay-phase-diagram-modal-close" type="button"
+        aria-label="Close phase diagram explanation"
+        onclick="window.safeplayDismissPhaseDiagramModal && window.safeplayDismissPhaseDiagramModal();">Close</button>
+      <div class="safeplay-state-modal-title" id="safeplay-phase-diagram-modal-title">Check the phase diagram</div>
+      <div class="safeplay-state-modal-body">
+        <p>The phase diagram shows the current temperature/pressure point and which phase it belongs to.</p>
+        <p>Try moving the point by heating, cooling, pumping particles, or pressing the lid to see phase boundaries.</p>
+      </div>
+    </div>
+  </div>
   <script>
     (function () {
       var tips = [
@@ -285,7 +336,14 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
         'Try extreme heating to see melting/boiling happen faster.',
         'Try extreme cooling to see freezing/condensation happen faster.',
         'Use Reset anytime to start over and test a new idea.',
-        'Switch screens with the tabs at the bottom of the app to explore Phase Changes.'
+        'Switch screens with the tabs at the bottom of the app to explore Phase Changes.',
+        'On the Phase Changes screen, add or remove energy to watch melting, freezing, boiling, or condensation.',
+        'Use the Phase Changes graph to see how temperature holds flat during phase changes while energy keeps changing.',
+        'Check the pressure meter and see how particle hits change pressure—give it a try.',
+        'Use the particle pump to add or remove particles and watch the effects on pressure and state.',
+        'Press the lid to compress the gas and see how pressure and phase respond.',
+        'Open the phase diagram to see where temperature/pressure put you—watch it as you change things.',
+        'Experiment freely with all tools to see how temperature, pressure, and particle count work together.'
       ];
 
       var index = 0;
@@ -370,7 +428,7 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
 
         return {
           shouldShow: function (prevIndex, nextIndex) {
-            return prevIndex === config.openAfterIndex && nextIndex > config.openAfterIndex && !dismissed;
+            return prevIndex === config.openAfterIndex && nextIndex > prevIndex && !dismissed;
           },
           show: show,
           dismiss: dismiss
@@ -417,6 +475,34 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
         closeId: 'safeplay-extreme-cool-modal-close',
         openAfterIndex: 10,
         globalCloseName: 'safeplayDismissExtremeCoolModal'
+      }));
+
+      modals.push(registerModal({
+        id: 'safeplay-press-modal',
+        closeId: 'safeplay-press-modal-close',
+        openAfterIndex: 15,
+        globalCloseName: 'safeplayDismissPressModal'
+      }));
+
+      modals.push(registerModal({
+        id: 'safeplay-pump-modal',
+        closeId: 'safeplay-pump-modal-close',
+        openAfterIndex: 16,
+        globalCloseName: 'safeplayDismissPumpModal'
+      }));
+
+      modals.push(registerModal({
+        id: 'safeplay-lid-modal',
+        closeId: 'safeplay-lid-modal-close',
+        openAfterIndex: 17,
+        globalCloseName: 'safeplayDismissLidModal'
+      }));
+
+      modals.push(registerModal({
+        id: 'safeplay-phase-diagram-modal',
+        closeId: 'safeplay-phase-diagram-modal-close',
+        openAfterIndex: 18,
+        globalCloseName: 'safeplayDismissPhaseDiagramModal'
       }));
 
       window.addEventListener('keydown', function (e) {
