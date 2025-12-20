@@ -372,6 +372,41 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
       var nextEl = document.getElementById('safeplay-instruction-next');
       var barEl = document.getElementById('safeplay-instruction-bar');
       var modals = [];
+      var currentAudio = null;
+
+      var tipAudioMap = {
+        0: '../assets/audio/voiceovers/science/states_of_matter2/1.mp3',
+        1: '../assets/audio/voiceovers/science/states_of_matter2/2.mp3',
+        2: '../assets/audio/voiceovers/science/states_of_matter2/3.mp3',
+        3: '../assets/audio/voiceovers/science/states_of_matter2/5.mp3',
+        4: '../assets/audio/voiceovers/science/states_of_matter2/6.mp3',
+        5: '../assets/audio/voiceovers/science/states_of_matter2/8.mp3',
+        6: '../assets/audio/voiceovers/science/states_of_matter2/10.mp3',
+        7: '../assets/audio/voiceovers/science/states_of_matter2/11.mp3',
+        8: '../assets/audio/voiceovers/science/states_of_matter2/13.mp3',
+        9: '../assets/audio/voiceovers/science/states_of_matter2/14.mp3',
+        10: '../assets/audio/voiceovers/science/states_of_matter2/16.mp3',
+        11: '../assets/audio/voiceovers/science/states_of_matter2/18.mp3',
+        12: '../assets/audio/voiceovers/science/states_of_matter2/19.mp3',
+        13: '../assets/audio/voiceovers/science/states_of_matter2/20.mp3',
+        14: '../assets/audio/voiceovers/science/states_of_matter2/21.mp3',
+        15: '../assets/audio/voiceovers/science/states_of_matter2/23.mp3',
+        16: '../assets/audio/voiceovers/science/states_of_matter2/25.mp3',
+        17: '../assets/audio/voiceovers/science/states_of_matter2/26.mp3',
+        18: '../assets/audio/voiceovers/science/states_of_matter2/29.mp3'
+      };
+
+      function playAudio(src) {
+        if (!src) return;
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio.currentTime = 0;
+        }
+        currentAudio = new Audio(src);
+        currentAudio.play().catch(function (e) {
+          console.log('Audio playback failed:', e);
+        });
+      }
 
       if (!textEl || !prevEl || !nextEl || !barEl) {
         return;
@@ -392,6 +427,9 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
             return;
           }
           el.style.display = 'flex';
+          if (config.audio) {
+            playAudio(config.audio);
+          }
         }
 
         function hide() {
@@ -465,7 +503,8 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
         closeId: 'safeplay-state-modal-close',
         openAfterIndex: 2,
         globalCloseName: 'safeplayDismissModal',
-        advanceOnClose: true
+        advanceOnClose: true,
+        audio: '../assets/audio/voiceovers/science/states_of_matter2/4.mp3'
       }));
 
       modals.push(registerModal({
@@ -473,7 +512,8 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
         closeId: 'safeplay-heat-modal-close',
         openAfterIndex: 4,
         globalCloseName: 'safeplayDismissHeatModal',
-        advanceOnClose: true
+        advanceOnClose: true,
+        audio: '../assets/audio/voiceovers/science/states_of_matter2/7.mp3'
       }));
 
       modals.push(registerModal({
@@ -481,7 +521,8 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
         closeId: 'safeplay-cool-modal-close',
         openAfterIndex: 5,
         globalCloseName: 'safeplayDismissCoolModal',
-        advanceOnClose: true
+        advanceOnClose: true,
+        audio: '../assets/audio/voiceovers/science/states_of_matter2/9.mp3'
       }));
 
       modals.push(registerModal({
@@ -489,7 +530,8 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
         closeId: 'safeplay-choose-modal-close',
         openAfterIndex: 7,
         globalCloseName: 'safeplayDismissChooseModal',
-        advanceOnClose: true
+        advanceOnClose: true,
+        audio: '../assets/audio/voiceovers/science/states_of_matter2/12.mp3'
       }));
 
       modals.push(registerModal({
@@ -497,7 +539,8 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
         closeId: 'safeplay-extreme-heat-modal-close',
         openAfterIndex: 9,
         globalCloseName: 'safeplayDismissExtremeHeatModal',
-        advanceOnClose: true
+        advanceOnClose: true,
+        audio: '../assets/audio/voiceovers/science/states_of_matter2/15.mp3'
       }));
 
       modals.push(registerModal({
@@ -505,7 +548,8 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
         closeId: 'safeplay-extreme-cool-modal-close',
         openAfterIndex: 10,
         globalCloseName: 'safeplayDismissExtremeCoolModal',
-        advanceOnClose: true
+        advanceOnClose: true,
+        audio: '../assets/audio/voiceovers/science/states_of_matter2/17.mp3'
       }));
 
       modals.push(registerModal({
@@ -513,7 +557,8 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
         closeId: 'safeplay-press-modal-close',
         openAfterIndex: 14,
         globalCloseName: 'safeplayDismissPressModal',
-        advanceOnClose: true
+        advanceOnClose: true,
+        audio: '../assets/audio/voiceovers/science/states_of_matter2/22.mp3'
       }));
 
       modals.push(registerModal({
@@ -521,7 +566,8 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
         closeId: 'safeplay-pump-modal-close',
         openAfterIndex: 15,
         globalCloseName: 'safeplayDismissPumpModal',
-        advanceOnClose: true
+        advanceOnClose: true,
+        audio: '../assets/audio/voiceovers/science/states_of_matter2/24.mp3'
       }));
 
       modals.push(registerModal({
@@ -529,7 +575,8 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
         closeId: 'safeplay-lid-modal-close',
         openAfterIndex: 13,
         globalCloseName: 'safeplayDismissLidModal',
-        advanceOnClose: true
+        advanceOnClose: true,
+        audio: '../assets/audio/voiceovers/science/states_of_matter2/28.mp3'
       }));
 
       modals.push(registerModal({
@@ -537,7 +584,8 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
         closeId: 'safeplay-phase-diagram-modal-close',
         openAfterIndex: 17,
         globalCloseName: 'safeplayDismissPhaseDiagramModal',
-        advanceOnClose: true
+        advanceOnClose: true,
+        audio: '../assets/audio/voiceovers/science/states_of_matter2/27.mp3'
       }));
 
       window.addEventListener('keydown', function (e) {
@@ -568,6 +616,9 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
       function render() {
         textEl.textContent = tips[index] || '';
         updateArrows();
+        if (tipAudioMap[index]) {
+          playAudio(tipAudioMap[index]);
+        }
       }
 
       function adjustPaddingTop() {
