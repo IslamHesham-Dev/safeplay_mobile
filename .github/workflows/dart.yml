@@ -27,7 +27,7 @@ jobs:
       # Clean iOS cache and Pods to fix Xcode 16 compatibility
       - name: Clean Pods & DerivedData
         run: |
-          rm -rf ios/Pods ios/Podfile.lock build/ ios/Flutter/Flutter.framework ios/Flutter/Flutter.podspec
+          rm -rf ios/Pods ios/Podfile.lock ios/Flutter
           pod install --repo-update
         working-directory: ios
 
