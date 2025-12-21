@@ -6,33 +6,36 @@ on:
 jobs:
   build-ios:
     name: iOS Flutter Build (Unsigned)
-    runs-on: macos-15  # use macOS Sequoia explicitly
+    runs-on: macos-15  # macOS Sequoia (Xcode 16.4)
 
     steps:
       - uses: actions/checkout@v4
 
-      # Set up Flutter with correct version
+      # Set up Flutter (pin version explicitly)
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.27.0'  # or your current version
+          flutter-version: '3.27.0'
           channel: 'stable'
           architecture: x64
 
-      - run: flutter doctor -v
+      # Optional but useful for visibility
+      - name: Flutter doctor
+        run: flutter doctor -v
 
+      # Fetch Dart dependencies
       - name: Install dependencies
         run: flutter pub get
 
-      # Clean iOS cache and Pods to fix Xcode 16 compatibility
-      - name: Clean Pods & DerivedData
+      # Clean ONLY what CocoaPods owns
+      - name: Clean Pods and reinstall
+        working-directory: ios
         run: |
-          rm -rf ios/Pods ios/Podfile.lock ios/Flutter
+          rm -rf Pods Podfile.lock
           pod install --repo-update
           pod update Firebase/Messaging
-        working-directory: ios
 
-      # Ensure xcodebuild can compile without codesigning
+      # Build without code signing
       - name: Build iOS Release (No Code Sign)
         run: |
           flutter build ios --release --no-codesign \
@@ -43,7 +46,7 @@ jobs:
           COCOAPODS_DISABLE_STATS: true
           LANG: en_US.UTF-8
 
-      # Manual packaging
+      # Manually package the IPA
       - name: Package IPA
         run: |
           cd build/ios/iphoneos
