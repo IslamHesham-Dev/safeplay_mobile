@@ -404,7 +404,18 @@ University of Colorado. Contact phethelp@colorado.edu regarding licensing.
         }
         currentAudio = new Audio(src);
         currentAudio.play().catch(function (e) {
-          console.log('Audio playback failed:', e);
+          console.log('Audio playback failed (likely autoplay policy). Waiting for interaction...', e);
+          var onInteraction = function () {
+            if (currentAudio && currentAudio.paused) {
+              currentAudio.play();
+            }
+            document.removeEventListener('click', onInteraction);
+            document.removeEventListener('keydown', onInteraction);
+            document.removeEventListener('touchstart', onInteraction);
+          };
+          document.addEventListener('click', onInteraction);
+          document.addEventListener('keydown', onInteraction);
+          document.addEventListener('touchstart', onInteraction);
         });
       }
 
