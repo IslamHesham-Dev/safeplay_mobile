@@ -208,7 +208,7 @@ class _SimulationDetailScreenState extends State<SimulationDetailScreen> {
     }
   }
 
-  Future<void> _enterFullscreen() async {
+  Future<void> _enterFullscreen() async { await _voiceoverPlayer.stop();
     _overlayTimer?.cancel();
     setState(() {
       _isFullscreen = true;
