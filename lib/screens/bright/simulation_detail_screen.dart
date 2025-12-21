@@ -26,18 +26,9 @@ class _PostStartVoiceover {
   const _PostStartVoiceover(this.delay, this.assetPath);
 }
 
-const Map<String, List<_PostStartVoiceover>>
-    _postStartVoiceoverSequences = {
-  'states-of-matter': [
-    _PostStartVoiceover(
-      Duration(seconds: 10),
-      'audio/voiceovers/science/states_of_matter/2.mp3',
-    ),
-    _PostStartVoiceover(
-      Duration(seconds: 20),
-      'audio/voiceovers/science/states_of_matter/3.mp3',
-    ),
-  ],
+const Map<String, List<_PostStartVoiceover>> _postStartVoiceoverSequences = {
+  // Only play the initial voiceover for states-of-matter (no follow-up clips)
+  'states-of-matter': const [],
   'balloons-static-electricity': [
     _PostStartVoiceover(
       Duration(seconds: 10),

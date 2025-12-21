@@ -110,6 +110,7 @@ flutter:
     - assets/audio/voiceovers/
     - assets/audio/voiceovers/onboarding_screen/
     - assets/audio/voiceovers/science/states_of_matter/
+    - assets/audio/voiceovers/science/states_of_matter2/
     - assets/audio/voiceovers/science/balloons_and_static/
     - assets/audio/voiceovers/science/exploring_density/
     - assets/audio/voiceovers/math/area_model/
