@@ -29,6 +29,7 @@ jobs:
         run: |
           rm -rf ios/Pods ios/Podfile.lock ios/Flutter
           pod install --repo-update
+          pod update Firebase/Messaging
         working-directory: ios
 
       # Ensure xcodebuild can compile without codesigning
